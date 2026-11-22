@@ -25,6 +25,7 @@ let profile = null;
 let contents = [];
 let currentPage = 'dashboard';
 let uploadBusy = false;
+let currentSubject = null;
 
 const subjects = ['Physics', 'Chemistry', 'Higher Math', 'Biology'];
 const icons = ['⚡', '🧪', '📐', '🧬'];
@@ -372,10 +373,40 @@ function subjectsPage() {
         <article class="subject-card">
           <span>${icons[index]}</span>
           <h3>${subject}</h3>
-          <p>Study materials and practice</p>
+          <p>${contents.filter(c => c.subject === subject).length} contents</p>
+          <button class="outline-btn" data-subject="${subject}">
+            Open Subject
+          </button>
         </article>
       `).join('')}
     </div>
+  `;
+}
+
+// ---------------- SUBJECT DETAIL ----------------
+
+function subjectDetailPage() {
+  const subject = currentSubject || subjects[0];
+  const items = contents.filter(c => c.subject === subject);
+
+  return `
+    <div class="topbar">
+      <div>
+        <p class="eyebrow">SUBJECT</p>
+        <h1>${escapeHTML(subject)}</h1>
+      </div>
+      <button class="outline-btn" data-page="subjects">
+        ← Back
+      </button>
+    </div>
+
+    <section class="section-heading">
+      <div>
+        <h2>${items.length} Study Content</h2>
+      </div>
+    </section>
+
+    ${renderContentCards(items)}
   `;
 }
 
@@ -829,6 +860,7 @@ async function openPage(page) {
   const pages = {
     dashboard: dashboardPage,
     subjects: subjectsPage,
+    subject: subjectDetailPage,
     library: libraryPage,
     admin: adminPage,
     upload: uploadPage
@@ -838,7 +870,8 @@ async function openPage(page) {
 
   document.querySelectorAll('[data-subject]').forEach(button => {
     button.onclick = () => {
-      notify(`${button.dataset.subject} materials coming soon.`);
+      currentSubject = button.dataset.subject;
+      openPage('subject');
     };
   });
 
