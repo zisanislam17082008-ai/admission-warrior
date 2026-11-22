@@ -763,9 +763,13 @@ async function publishContent(event) {
 // ---------------- OPEN CONTENT ----------------
 
 async function openContent(id) {
-  const item = contents.find(c => c.id === id);
+  // id number hole (bigint) dataset-er string-er shathe match korto na
+  const item = contents.find(c => String(c.id) === String(id));
 
-  if (!item) return;
+  if (!item) {
+    notify('Content paoa jayni. Page refresh kore abar try koro.');
+    return;
+  }
 
   if (item.video_url) {
     window.open(item.video_url, '_blank', 'noopener');
