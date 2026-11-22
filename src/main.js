@@ -277,7 +277,7 @@ function updAI() {
 
 function openKey() {
   if ($('#keyinfo')) {
-    $('#keyinfo').textContent = SERVER ? 'Server key চালু আছে (.env)।' : 'Free key: aistudio.google.com/apikey';
+    $('#keyinfo').textContent = SERVER ? 'Server key চালু আছে (.env)।' : 'Browser-এ সেভ থাকে। Free key: aistudio.google.com/apikey';
   }
   if ($('#keyin')) $('#keyin').value = LS.get('aw_key', '');
   if ($('#keym')) $('#keym').classList.add('on');
