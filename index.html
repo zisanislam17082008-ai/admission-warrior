@@ -1,230 +1,456 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="bn" class="dark">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Admission Warrior — HSC Science & Admission Prep</title>
-<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&family=Plus+Jakarta+Sans:wght@500;700;800&display=swap" rel="stylesheet">
-<script>window.MathJax={tex:{inlineMath:[['$','$']]},options:{skipHtmlTags:['script','style','textarea']}};</script>
-<script async src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js"></script>
-<style>
-:root{--bg:#f5f7fb;--card:#fff;--ink:#1c2740;--mut:#66728a;--line:#e1e7f2;--pri:#3b6fd4;--pri-ink:#fff;--acc:#6b9bf2;--bad:#e11d48;--warn:#d97706;--soft:#eef2fa;
-box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
-body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.6 'Plus Jakarta Sans','Hind Siliguri',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
-header{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
-.bar{max-width:1080px;margin:auto;padding:10px 14px;display:flex;align-items:center;gap:10px;justify-content:space-between}
-.logo{font-weight:800;font-size:16px;display:flex;align-items:center;gap:8px}.logo i{width:30px;height:30px;border-radius:10px;background:linear-gradient(135deg,var(--pri),var(--acc));display:grid;place-items:center;color:var(--pri-ink);font-style:normal}
-nav{display:flex;gap:4px;padding:0 14px 8px;max-width:1080px;margin:auto;overflow-x:auto}
-nav button{flex:1;white-space:nowrap}
-button,select,input,textarea{font:inherit;color:inherit}
-.btn{border:1px solid var(--line);background:var(--card);padding:8px 13px;border-radius:12px;font-weight:700;font-size:12.5px;cursor:pointer;transition:.15s}
-.btn:hover{border-color:var(--pri)}.btn:active{transform:scale(.97)}.btn:disabled{opacity:.45;cursor:default}
-.btn.p{background:var(--pri);color:var(--pri-ink);border-color:transparent}.btn.on{background:var(--pri);color:var(--pri-ink);border-color:transparent}
-.btn.w{color:var(--warn)}.btn.d{color:var(--bad)}
-main{max-width:1080px;margin:auto;padding:16px 14px 40px}
-.grid{display:grid;gap:14px;grid-template-columns:1fr}@media(min-width:900px){.g2{grid-template-columns:5fr 7fr}}
-.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;box-shadow:0 8px 24px -18px rgba(0,0,0,.35);animation:in .25s ease}
-@keyframes in{from{opacity:0;transform:translateY(5px)}}
-.card h3{margin:0 0 10px;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--mut)}
-label{display:block;font-size:12px;color:var(--mut);margin:8px 0 3px}
-input,select,textarea{width:100%;background:var(--soft);border:1px solid var(--line);border-radius:12px;padding:9px 11px}
-input:focus,select:focus,textarea:focus{outline:2px solid color-mix(in srgb,var(--pri) 45%,transparent);border-color:var(--pri)}
-.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.row>*{flex:0 0 auto}.row .f{flex:1}
-.tag{font-size:11px;padding:2px 9px;border-radius:99px;border:1px solid var(--line);font-weight:700;background:var(--soft)}
-.ok{color:var(--pri)}.bd{color:var(--bad)}.wn{color:var(--warn)}.mut{color:var(--mut)}
-.q{border:1px solid var(--line);background:var(--soft);border-radius:14px;padding:13px;margin-top:10px}
-.opt{display:flex;gap:8px;width:100%;text-align:left;margin-top:7px;padding:9px 12px;border:1px solid var(--line);border-radius:12px;background:var(--card);cursor:pointer}
-.opt.c{border-color:var(--pri);background:color-mix(in srgb,var(--pri) 14%,var(--card))}.opt.x{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 12%,var(--card))}.opt.s{border-color:var(--acc)}
-.bar2{height:6px;border-radius:9px;background:var(--line);overflow:hidden}.bar2>div{height:100%;background:linear-gradient(90deg,var(--pri),var(--acc));transition:width .3s}
-.pal{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}.pal button{height:32px;padding:0}
-.banner{display:none;max-width:1080px;margin:12px auto 0;padding:12px 14px;border-radius:14px;border:1px solid var(--bad);background:color-mix(in srgb,var(--bad) 10%,var(--card));color:var(--bad);font-weight:600}
-.hide{display:none!important}
-#toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:12px;font-weight:700;font-size:12.5px;z-index:9;display:none}
-#drawer{position:fixed;top:0;right:0;height:100%;width:min(400px,100%);background:var(--card);border-left:1px solid var(--line);z-index:8;display:none;flex-direction:column;padding-top:env(safe-area-inset-top,0px)}
-#msgs{flex:1;overflow:auto;padding:12px;display:flex;flex-direction:column;gap:8px}.m{padding:9px 12px;border-radius:14px;background:var(--soft);white-space:pre-wrap}.m.u{background:var(--pri);color:var(--pri-ink);margin-left:30px}
-.scroll{overflow-x:auto}
-.ok{color:#15803d!important}.tag.ok{background:#e9f8ef;border-color:#bfe8cd}.opt.c{border-color:#22a55a;background:#e9f8ef}.fm{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}.fm div{padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--soft)}.fm b{display:block;font-size:12px;color:var(--pri);margin-bottom:4px}</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admission Warrior — HSC &amp; BD University Admission AI</title>
+
+  <!-- Fonts: Inter + Hind Siliguri for crisp English & Bangla rendering -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'Hind Siliguri', 'system-ui', 'sans-serif'],
+          },
+          colors: {
+            base: '#0B0F17',
+            surface: '#121824',
+            elevated: '#182030',
+            borderSoft: 'rgba(255,255,255,0.08)',
+            accent: '#34D399',
+            accentSoft: 'rgba(52, 211, 153, 0.14)',
+            indigoSoft: 'rgba(129, 140, 248, 0.14)',
+          },
+        },
+      },
+    };
+  </script>
+
+  <!-- MathJax for Physics / Math / Chemistry formulas -->
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']], displayMath: [['$$', '$$']] },
+      svg: { fontCache: 'global' },
+      startup: { typeset: false }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+
+  <!-- PDF.js for Question Bank PDF extraction -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
+  <style>
+    body {
+      background-color: #0B0F17;
+      color: #E2E8F0;
+      -webkit-font-smoothing: antialiased;
+    }
+    .soft-card {
+      background: linear-gradient(180deg, rgba(24, 32, 48, 0.78) 0%, rgba(18, 24, 36, 0.92) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      box-shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.55);
+      backdrop-filter: blur(14px);
+    }
+    .soft-input {
+      background: rgba(11, 15, 23, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .soft-input:focus {
+      outline: none;
+      border-color: #34D399;
+      box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.15);
+    }
+    .nav-pill.active {
+      background: rgba(52, 211, 153, 0.14);
+      color: #34D399;
+      border-color: rgba(52, 211, 153, 0.35);
+    }
+    .omr-option {
+      transition: all 0.18s ease;
+    }
+    .omr-option:hover:not(:disabled) {
+      border-color: rgba(52, 211, 153, 0.45);
+      background: rgba(52, 211, 153, 0.06);
+    }
+    .omr-option.selected {
+      border-color: #34D399;
+      background: rgba(52, 211, 153, 0.14);
+      color: #ECFDF5;
+    }
+    .omr-option.correct-reveal {
+      border-color: #10B981 !important;
+      background: rgba(16, 185, 129, 0.18) !important;
+      color: #D1FAE5 !important;
+    }
+    .omr-option.wrong-reveal {
+      border-color: #F43F5E !important;
+      background: rgba(244, 63, 94, 0.16) !important;
+      color: #FFE4E6 !important;
+    }
+    /* Custom subtle scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0B0F17; }
+    ::-webkit-scrollbar-thumb { background: #263147; border-radius: 999px; }
+  </style>
 </head>
-<body>
-<header>
- <div class="bar">
-  <div class="logo"><i>▲</i>Admission Warrior</div>
-  <div class="row"><span class="tag" id="who">Guest</span><button class="btn" id="ab" onclick="adminLogin()">Admin</button></div>
- </div>
- <nav id="tabs">
-  <button class="btn" data-t="bank">Question Bank</button><button class="btn" data-t="quiz">Quiz</button><button class="btn" data-t="formulas">Formula Sheet</button><button class="btn" data-t="users" id="tab-users">Users</button>
- </nav>
-</header>
-<div class="banner" id="ban"></div>
-<main>
-<!-- BANK -->
-<section id="v-bank" class="grid g2">
- <div class="grid" style="align-content:start">
-  <div class="card"><h3>1 · Question bank</h3>
-   <div class="row"><button class="btn" onclick="sample1()">Load sample</button><label class="btn" style="margin:0;cursor:pointer">Upload .txt/.json<input type="file" accept=".txt,.md,.csv,.json" hidden onchange="upl(event)"></label><button class="btn d" onclick="$('#bt').value='';saveB()">Clear</button></div>
-   <textarea id="bt" rows="7" oninput="saveB()" placeholder="প্রশ্ন paste করো (1. প্রশ্ন / A) B) C) D)) অথবা JSON" style="margin-top:10px"></textarea>
-  </div>
-  <div class="card"><h3>2 · Generate</h3>
-   <div class="row"><div class="f"><label>Subject</label><select id="sub" onchange="chaps()"></select></div><div class="f"><label>Chapter</label><select id="chap"></select></div></div>
-   <div class="row"><div class="f"><label>Topic</label><input id="top" placeholder="Carnot, Mole, Matrix"></div><div class="f"><label>Count</label><select id="cnt"><option>3</option><option selected>5</option><option>8</option></select></div></div>
-   <div class="row" style="margin-top:12px"><button class="btn w" onclick="analyze()">Analyze</button><button class="btn" onclick="gen('copy')">Exact Copy</button><button class="btn p" onclick="gen('new')">Generate New</button></div>
-   <p class="mut" id="mode" style="font-size:12px;margin:10px 0 0"></p>
-  </div>
- </div>
- <div class="card">
-  <div class="row" style="justify-content:space-between"><div class="row"><b>Questions</b><span class="tag" id="qn">0</span><span class="mut" id="st"></span></div><div class="row"><button class="btn" onclick="recheck(1)">Recheck</button><button class="btn" onclick="exp()">Export</button><button class="btn p" onclick="go('quiz');startQuiz()">Take Quiz</button></div></div>
-  <div id="an" class="q" style="white-space:pre-line">"Analyze", "Exact Copy" বা "Generate New" চাপো।</div>
-  <div id="ql"></div>
- </div>
-</section>
-<!-- QUIZ -->
-<section id="v-quiz" class="hide grid">
- <div class="card row" style="justify-content:space-between">
-  <div class="row"><select id="qm" style="width:auto"><option value="3">3 min</option><option value="5" selected>5 min</option><option value="10">10 min</option></select><select id="neg" style="width:auto"><option value=".25">-0.25</option><option value=".5">-0.5</option><option value="0">No neg</option></select><button class="btn p" onclick="startQuiz()">Start / Reset</button></div>
-  <div class="row"><b class="tag ok" id="tm">05:00</b><button class="btn" id="sbm" onclick="submitQ()">Submit</button></div>
- </div>
- <div class="bar2"><div id="pg" style="width:0"></div></div>
- <div class="grid g2" style="grid-template-columns:1fr"><div class="card" id="qs"></div><div class="card"><h3>Palette <span id="pm"></span></h3><div class="pal" id="pal"></div></div></div>
- <div class="card hide" id="sum"></div>
-</section>
-<section id="v-formulas" class="hide grid"><div class="card"><h3>Key formulas & traps</h3><div class="fm">
-<div><b>Physics · তাপগতিবিদ্যা</b>কার্নো দক্ষতা $\eta=1-\frac{T_2}{T_1}$ (তাপমাত্রা কেলভিনে)</div>
-<div><b>Physics · কাজ-শক্তি</b>$KE=\frac12mv^2,\;W=Fs\cos\theta$</div>
-<div><b>Physics · চল তড়িৎ</b>$V=IR,\;P=VI=I^2R$</div>
-<div><b>Chemistry · পরিমাণগত</b>$n=\frac{m}{M},\;PV=nRT$; STP-তে 1 mol = 22.4 L</div>
-<div><b>Chemistry · pH</b>$pH=-\log[H^+]$, $pH+pOH=14$</div>
-<div><b>Chemistry · জৈব</b>অ্যালডল ঘনীভবনে $\alpha$-হাইড্রোজেন আবশ্যক</div>
-<div><b>Math · যোগজীকরণ</b>$\int_0^a f(x)dx=\int_0^a f(a-x)dx$; $\int x^n dx=\frac{x^{n+1}}{n+1}$</div>
-<div><b>Math · ম্যাট্রিক্স</b>$\det\begin{pmatrix}a&b\\c&d\end{pmatrix}=ad-bc$</div>
-<div><b>Math · বৃত্ত</b>$(x-h)^2+(y-k)^2=r^2$</div>
-<div><b>Biology</b>ক্রসিং ওভার: মায়োসিস-১ এর প্যাকাইটিন; DNA-তে A=T, G≡C</div>
-<div><b>ICT</b>NAND ও NOR = Universal Gate; $(1010)_2=(10)_{10}=(A)_{16}$</div>
-<div><b>Exam tip</b>Negative marking থাকলে দুটো option বাদ না দিতে পারলে guess এড়াও; একক (unit) আগে SI-তে আনো।</div>
-</div></div></section>
-<!-- USERS -->
-<section id="v-users" class="hide grid g2">
- <div class="card" style="align-content:start"><h3>Open sign-up · instant access</h3>
-  <label>Name</label><input id="sn" placeholder="Tanvir Ahmed"><label>Track</label><select id="stk"><option>HSC Science + Engineering</option><option>HSC Science + Medical</option><option>HSC Science + Varsity</option></select>
-  <button class="btn p" style="width:100%;margin-top:12px" onclick="signup()">Sign up & use now</button>
-  <p class="mut" style="font-size:12px">Approval লাগে না — sign up করেই general user হিসেবে ব্যবহার করা যায়। শুধু Admin (PIN দিয়ে login) suspend/ban করতে পারে।</p>
- </div>
- <div class="card"><div class="row" style="justify-content:space-between"><b>Members <span class="tag" id="un">0</span></b><input id="reason" class="hide" placeholder="Reason (optional)" style="max-width:220px"></div><div id="ul"></div></div>
-</section>
-</main>
+<body class="min-h-screen flex flex-col selection:bg-emerald-500/30 selection:text-emerald-200">
 
-<div id="toast"></div>
+  <!-- Top Navigation Header -->
+  <header class="sticky top-0 z-40 border-b border-white/10 bg-[#0B0F17]/85 backdrop-blur-xl">
+    <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between gap-3">
+      <!-- Brand Logo -->
+      <div class="flex items-center gap-3 cursor-pointer" onclick="AWApp.navigate('home')">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center shadow-lg shadow-emerald-500/20">
+          <svg class="w-5 h-5 text-slate-950" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+            <polyline points="2 17 12 22 22 17"></polyline>
+            <polyline points="2 12 12 17 22 12"></polyline>
+          </svg>
+        </div>
+        <div>
+          <span class="font-bold tracking-tight text-white text-base sm:text-lg">Admission Warrior</span>
+          <span class="hidden sm:inline-block ml-2 text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">HSC &amp; BD Uni</span>
+        </div>
+      </div>
 
-<script>
-const $=s=>document.querySelector(s),esc=t=>String(t??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const CH={'All':['Mixed'],Physics:['ভেক্টর','তাপগতিবিদ্যা','চল তড়িৎ','ভৌত আলোকবিজ্ঞান'],Chemistry:['জৈব রসায়ন','পরিমাণগত রসায়ন','তড়িৎ রসায়ন'],'Higher Math':['ম্যাট্রিক্স','যোগজীকরণ','বৃত্ত','কনিক'],Biology:['কোষ বিভাজন','জিনতত্ত্ব','রক্ত ও সঞ্চালন'],ICT:['সংখ্যা পদ্ধতি','HTML','ডেটাবেজ']};
-const SAMPLE=`1. কার্নো ইঞ্জিনের তাপ উৎসের তাপমাত্রা 400 K এবং গ্রাহকের 300 K। গৃহীত তাপ 800 J হলে বর্জিত তাপ কত?
-A) 200 J  B) 600 J  C) 400 J  D) 500 J
-2. নিচের কোন যৌগটি অ্যালডল ঘনীভবন দেয়?
-A) HCHO  B) C6H5CHO  C) CH3CHO  D) (CH3)3CCHO
-3. মায়োসিস-১ এর কোন উপ-পর্যায়ে ক্রসিং ওভার ঘটে?
-A) লেপ্টোটিন  B) জাইগোটিন  C) প্যাকাইটিন  D) ডিপ্লোটিন`;
-const INIT=[
-{id:'i1',subject:'Physics',chapter:'তাপগতিবিদ্যা',src:'Sample',q:'কার্নো ইঞ্জিনের উৎস $400\\text{ K}$, গ্রাহক $300\\text{ K}$ এবং গৃহীত তাপ $800\\text{ J}$ হলে বর্জিত তাপ কত?',options:['$200\\text{ J}$','$600\\text{ J}$','$400\\text{ J}$','$500\\text{ J}$'],correctIndex:1,explanation:'$Q_2=Q_1\\frac{T_2}{T_1}=800\\cdot\\frac{300}{400}=600\\text{ J}$'},
-{id:'i2',subject:'Chemistry',chapter:'জৈব রসায়ন',src:'Sample',q:'কোন যৌগটি অ্যালডল ঘনীভবন দেয়?',options:['$HCHO$','$C_6H_5CHO$','$CH_3CHO$','$(CH_3)_3CCHO$'],correctIndex:2,explanation:'$CH_3CHO$-এ $\\alpha$-H আছে।'},
-{id:'i3',subject:'Higher Math',chapter:'যোগজীকরণ',src:'Sample',q:'$\\int_0^{\\pi/2}\\frac{\\sin x}{\\sin x+\\cos x}dx$ এর মান?',options:['$\\frac{\\pi}{2}$','$\\frac{\\pi}{4}$','$1$','$0$'],correctIndex:1,explanation:'$2I=\\frac{\\pi}{2}\\Rightarrow I=\\frac{\\pi}{4}$'}];
-const FALL=[
-{subject:'Physics',chapter:'ভেক্টর',q:'দুটি ভেক্টর পরস্পর লম্ব হলে তাদের স্কেলার গুণফল $\\vec A\\cdot\\vec B$ কত?',options:['$0$','$AB$','$1$','$A+B$'],correctIndex:0,explanation:'$\\vec A\\cdot\\vec B=AB\\cos90^\\circ=0$'},
-{subject:'Physics',chapter:'কাজ, শক্তি ও ক্ষমতা',q:'$2\\text{ kg}$ ভরের বস্তু $3\\text{ m/s}$ বেগে চললে গতিশক্তি কত?',options:['$6\\text{ J}$','$9\\text{ J}$','$18\\text{ J}$','$3\\text{ J}$'],correctIndex:1,explanation:'$KE=\\frac12\\cdot2\\cdot3^2=9\\text{ J}$'},
-{subject:'Physics',chapter:'তাপগতিবিদ্যা',q:'গ্যাসের তাপমাত্রা (K) দ্বিগুণ করলে $v_{rms}$ কত গুণ হয়?',options:['$2$','$\\sqrt2$','$4$','$\\frac1{\\sqrt2}$'],correctIndex:1,explanation:'$v_{rms}\\propto\\sqrt T$'},
-{subject:'Physics',chapter:'চল তড়িৎ',q:'$6\\,\\Omega$ রোধে $12\\text{ V}$ প্রয়োগ করলে তড়িৎ প্রবাহ কত?',options:['$0.5\\text{ A}$','$72\\text{ A}$','$2\\text{ A}$','$18\\text{ A}$'],correctIndex:2,explanation:'$I=V/R=12/6=2\\text{ A}$'},
-{subject:'Chemistry',chapter:'গুণগত রসায়ন',q:'$0.01\\text{ M}$ HCl দ্রবণের pH কত?',options:['$1$','$12$','$7$','$2$'],correctIndex:3,explanation:'$pH=-\\log(10^{-2})=2$'},
-{subject:'Chemistry',chapter:'পরিমাণগত রসায়ন',q:'STP-তে 1 mol আদর্শ গ্যাসের আয়তন কত?',options:['$22.4\\text{ L}$','$24.5\\text{ L}$','$11.2\\text{ L}$','$44.8\\text{ L}$'],correctIndex:0,explanation:'STP ($0^\\circ C$, 1 atm)-তে মোলার আয়তন $22.4\\text{ L}$।'},
-{subject:'Chemistry',chapter:'জৈব রসায়ন',q:'ইথানলের কার্যকরী মূলক কোনটি?',options:['$-CHO$','$-COOH$','$-OH$','$>C=O$'],correctIndex:2,explanation:'অ্যালকোহলের কার্যকরী মূলক হাইড্রক্সিল $-OH$।'},
-{subject:'Higher Math',chapter:'ম্যাট্রিক্স ও নির্ণায়ক',q:'$\\begin{vmatrix}1&2\\\\3&4\\end{vmatrix}$ এর মান কত?',options:['$2$','$10$','$-10$','$-2$'],correctIndex:3,explanation:'$1\\cdot4-2\\cdot3=-2$'},
-{subject:'Higher Math',chapter:'বৃত্ত',q:'$x^2+y^2=25$ বৃত্তের ব্যাসার্ধ কত?',options:['$5$','$25$','$\\sqrt5$','$10$'],correctIndex:0,explanation:'$r^2=25\\Rightarrow r=5$'},
-{subject:'Higher Math',chapter:'যোগজীকরণ',q:'$\\int_0^1 x\\,dx$ এর মান কত?',options:['$1$','$\\frac12$','$0$','$2$'],correctIndex:1,explanation:'$\\left[\\frac{x^2}{2}\\right]_0^1=\\frac12$'},
-{subject:'Biology',chapter:'কোষ ও এর গঠন',q:'কোষের শক্তিঘর বলা হয় কোনটিকে?',options:['রাইবোসোম','গলগি বডি','লাইসোসোম','মাইটোকন্ড্রিয়া'],correctIndex:3,explanation:'মাইটোকন্ড্রিয়ায় ATP তৈরি হয়।'},
-{subject:'Biology',chapter:'জিনতত্ত্ব ও বিবর্তন',q:'DNA-তে থাইমিনের সাথে কোন bases জোড়া বাঁধে?',options:['গুয়ানিন','সাইটোসিন','অ্যাডেনিন','ইউরাসিল'],correctIndex:2,explanation:'A=T এবং G≡C জোড়া বাঁধে।'},
-{subject:'Biology',chapter:'কোষ বিভাজন',q:'কোন বিভাজনে ক্রোমোজোম সংখ্যা অর্ধেক হয়?',options:['মাইটোসিস','মায়োসিস','অ্যামাইটোসিস','সাইটোকাইনেসিস'],correctIndex:1,explanation:'মায়োসিস হ্রাসমূলক বিভাজন।'},
-{subject:'ICT',chapter:'সংখ্যা পদ্ধতি ও ডিজিটাল ডিভাইস',q:'$(1010)_2$ এর দশমিক মান কত?',options:['$8$','$12$','$10$','$14$'],correctIndex:2,explanation:'$8+0+2+0=10$'},
-{subject:'ICT',chapter:'সংখ্যা পদ্ধতি ও ডিজিটাল ডিভাইস',q:'কোন গেটকে Universal Gate বলে?',options:['NAND ও NOR','AND ও OR','XOR ও XNOR','NOT'],correctIndex:0,explanation:'শুধু NAND বা NOR দিয়ে সব গেট বানানো যায়।'},
-{subject:'ICT',chapter:'ওয়েব ডিজাইন পরিচিতি ও HTML',q:'HTML-এ সবচেয়ে বড় হেডিং ট্যাগ কোনটি?',options:['h6','head','h1','hr'],correctIndex:2,explanation:'h1 সবচেয়ে বড়, h6 সবচেয়ে ছোট।'}];
-const L=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k));return v??d}catch{return d}},S=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}};
-let Q=L('aw_q',INIT),view='bank',sample=null,me={id:null,name:'Guest'},qz=[],qi=0,qa={},qdone=false,qt=0,qh=null,photo=null,busy=false,isOwner=false,myStatus='active';
-function toast(m){const t=$('#toast');t.textContent=m;t.style.display='block';clearTimeout(toast.h);toast.h=setTimeout(()=>t.style.display='none',2300)}
-function tex(el){try{MathJax.typesetPromise&&MathJax.typesetPromise(el?[el]:undefined).catch(()=>{})}catch{}}
-function allowed(what){if(myStatus!=='active'&&!isOwner){toast('Your account is '+myStatus+' — cannot '+what);return false}return true}
-function go(v){view=v;document.querySelectorAll('main>section').forEach(s=>s.classList.toggle('hide',s.id!=='v-'+v));document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===v));location.hash=v;tex(document.body)}
-$('#tabs').onclick=e=>{const t=e.target.dataset?.t;if(t)go(t)};
-/* ---------- bank ---------- */
-function chaps(){const s=$('#sub').value;$('#chap').innerHTML=(CH[s]||CH.All).map(c=>`<option>${esc(c)}</option>`).join('')}
-function saveB(){S('aw_bank',$('#bt').value)}
-function sample1(){if(!allowed('load'))return;$('#bt').value=SAMPLE;saveB()}
-async function upl(e){if(!allowed('upload'))return;const f=e.target.files[0];if(f){$('#bt').value=(await f.text()).trim();saveB();toast('Uploaded')}e.target.value=''}
-function parseBank(txt,sub,ch){
- txt=txt.trim();if(!txt)return[];
- try{const p=JSON.parse(txt),a=Array.isArray(p)?p:p.questions;if(a?.length)return a.map((x,i)=>({q:String(x.q||x.question||'Q'+(i+1)),options:(x.options||[]).slice(0,4).map(String),correctIndex:Number.isInteger(x.correctIndex)?x.correctIndex:0,explanation:String(x.explanation||''),subject:x.subject||sub,chapter:x.chapter||ch}))}catch{}
- return txt.split(/\n(?=\s*\d+[.)])/).filter(b=>b.trim().length>5).map((b,i)=>{const ls=b.trim().split('\n').map(l=>l.trim()).filter(Boolean);
-  const m=ls.slice(1).join(' ').match(/[A-D][).]\s*.+?(?=\s+[A-D][).]|$)/g)||[];
-  return{q:ls[0].replace(/^\d+[.)]\s*/,''),options:m.slice(0,4).map(o=>o.replace(/^[A-D][).]\s*/,'')),correctIndex:i%4,explanation:'Bank item — উত্তর যাচাই করো।',subject:sub,chapter:ch}})}
-function ctx(){return{sub:$('#sub').value,ch:$('#chap').value,top:$('#top').value.trim(),n:+$('#cnt').value,bank:$('#bt').value.trim()}}
-function status(m){$('#st').textContent=m}
-async function analyze(){
- if(!allowed('analyze'))return;const c=ctx(),n=parseBank(c.bank,c.sub,c.ch).length;status('Analyzing...');
- let out=`Bank Analysis (${c.sub} · ${c.ch})\n• ${n} টি প্রশ্ন পাওয়া গেছে।\n• Focus: সূত্র ও এককের রূপান্তর, তত্ত্বের ব্যতিক্রম, উপপাদ্যের শর্ত।`;
- if(sample){try{const r=await sample(`Concise structured analysis (in Bangla/English mix) of recurring concepts, common distractors, high-yield subtopics for Bangladesh HSC/admission. Subject ${c.sub}, chapter ${c.ch}.\n${c.bank.slice(0,5000)}`);out=r.text}catch{}}
- $('#an').textContent=out;tex($('#an'));status('Analyzed')}
-async function gen(mode){
- if(!allowed('generate'))return;const c=ctx();status(mode==='copy'?'Copying...':'Generating...');let list=null;
- if(sample){try{const j=await sample.json(`${mode==='copy'?'Extract faithfully':'Create new admission-level'} ${c.n} MCQs for Bangladesh HSC Science. Subject ${c.sub}, chapter ${c.ch}${c.top?', topic '+c.top:''}. Use LaTeX with $...$. Return ONLY JSON {"questions":[{"q":"","options":["","","",""],"correctIndex":0,"explanation":"","subject":"","chapter":""}]}\nBank:\n${c.bank.slice(0,5000)}`);list=j.questions?.slice(0,c.n)}catch{}}
- if(!list?.length){const base=mode==='copy'&&parseBank(c.bank,c.sub,c.ch).length?parseBank(c.bank,c.sub,c.ch):(FALL.filter(f=>c.sub==='All'||f.subject===c.sub));
-  if(!base.length)base.push(...FALL);
-  list=Array.from({length:Math.min(c.n,base.length)},(_,i)=>({...base[i%base.length],q:base[i%base.length].q+(mode==='new'&&c.top?` [${c.top}]`:'')}))}
- Q=list.map((x,i)=>({id:'g'+Date.now()+i,subject:x.subject||c.sub,chapter:x.chapter||c.ch,src:mode==='copy'?'Exact Copy':'Predictive',q:x.q,options:x.options,correctIndex:x.correctIndex,explanation:x.explanation}));
- recheck(0);status('Done & rechecked ✓');toast(Q.length+' questions ready')}
-function recheck(notify){let fx=0;Q=Q.map((it,i)=>{let f=0,q=String(it.q||'').trim();if(!q){q='প্রশ্ন '+(i+1);f=1}
- let o=(it.options||[]).slice(0,4).map(x=>String(x||'').trim());while(o.length<4){o.push('বিকল্প '+'ABCD'[o.length]);f=1}
- const seen=new Set();o=o.map((v,j)=>{v=v||'বিকল্প '+'ABCD'[j];const k=v.toLowerCase();if(seen.has(k)){v+=' ('+'ABCD'[j]+')';f=1}seen.add(v.toLowerCase());return v});
- let a=it.correctIndex;if(!Number.isInteger(a)||a<0||a>3){a=0;f=1}fx+=f;return{...it,q,options:o,correctIndex:a,fixed:!!f}});
- S('aw_q',Q);renderQ();if(notify)toast(fx?`Fixed ${fx} question(s)`:'All options verified ✓')}
-function renderQ(){$('#qn').textContent=Q.length;$('#ql').innerHTML=Q.map((x,i)=>`<div class="q"><div class="row mut" style="font-size:11px;justify-content:space-between"><span>Q${i+1} · ${esc(x.subject)} · ${esc(x.chapter)} · ${esc(x.src)}</span><span class="tag ${x.fixed?'wn':'ok'}">${x.fixed?'Fixed ✓':'Rechecked ✓'}</span></div><p style="font-weight:700;margin:8px 0">${esc(x.q)}</p>${x.options.map((o,j)=>`<div class="opt ${j===x.correctIndex?'c':''}"><b>${'ABCD'[j]}.</b><span>${esc(o)}</span></div>`).join('')}<p style="font-size:12.5px;margin:10px 0 0"><b class="ok">Answer ${'ABCD'[x.correctIndex]}:</b> ${esc(x.explanation)}</p></div>`).join('')||'<div class="q mut">কোনো প্রশ্ন নেই।</div>';tex($('#ql'))}
-async function exp(){if(!allowed('export'))return;try{const d=await claude.use('downloads');if(!d)return toast('Export এখানে চালু নেই');await d.save({filename:'questions.json',data:JSON.stringify(Q,null,2)});toast('Exported')}catch{toast('Export হয়নি')}}
-/* ---------- quiz ---------- */
-function startQuiz(){if(!allowed('start quiz'))return;clearInterval(qh);qz=[...Q];qi=0;qa={};qdone=false;qt=+$('#qm').value*60;$('#sum').classList.add('hide');$('#sbm').disabled=false;clock();
- qh=setInterval(()=>{qt--;clock();if(qt<=0)submitQ('Time up · ')},1000);paintQ()}
-function clock(){const s=Math.max(0,qt);$('#tm').textContent=String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')}
-function paintQ(){const q=qz[qi],st=$('#qs');if(!q){st.innerHTML='<p class="mut">Question bank খালি।</p>';return}const sel=qa[q.id],show=qdone||sel!==undefined;
- $('#pg').style.width=Math.round(Object.keys(qa).length/qz.length*100)+'%';
- st.innerHTML=`<div class="row mut" style="justify-content:space-between;font-size:12px"><span>Question ${qi+1}/${qz.length}</span><span>${esc(q.subject)} · ${esc(q.chapter)}</span></div><p style="font-weight:700;font-size:15px">${esc(q.q)}</p>${q.options.map((o,j)=>`<button class="opt ${show?(j===q.correctIndex?'c':j===sel?'x':''):(j===sel?'s':'')}" ${qdone?'disabled':''} onclick="pickA('${q.id}',${j})"><b>${'ABCD'[j]}.</b><span>${esc(o)}</span></button>`).join('')}${show?`<div class="q"><b class="ok">Explanation:</b> ${esc(q.explanation)}</div>`:''}<div class="row" style="justify-content:space-between;margin-top:14px"><button class="btn" ${qi?'':'disabled'} onclick="qi--;paintQ()">Previous</button><button class="btn p" ${qi<qz.length-1?'':'disabled'} onclick="qi++;paintQ()">Next</button></div>`;
- $('#pm').textContent=Object.keys(qa).length+'/'+qz.length;$('#pal').innerHTML=qz.map((x,i)=>`<button class="btn ${i===qi?'on':''}" style="${qa[x.id]!==undefined&&i!==qi?'border-color:var(--pri)':''}" onclick="qi=${i};paintQ()">${i+1}</button>`).join('');tex(st)}
-function pickA(id,j){if(qdone||!allowed('answer'))return;qa[id]=j;paintQ()}
-function submitQ(pre=''){if(!qz.length)return;clearInterval(qh);qdone=true;$('#sbm').disabled=true;const ng=+$('#neg').value;let c=0,w=0;qz.forEach(q=>{const a=qa[q.id];if(a===undefined)return;a===q.correctIndex?c++:w++});const net=Math.max(0,c-w*ng).toFixed(2),s=$('#sum');s.classList.remove('hide');
- s.innerHTML=`<div class="row" style="justify-content:space-between"><b>${pre}Score: ${net} / ${qz.length}</b><button class="btn p" onclick="startQuiz()">Try again</button></div><div class="row" style="margin-top:10px"><span class="tag ok">Correct ${c}</span><span class="tag bd">Wrong ${w}</span><span class="tag">Net (−${ng}) ${net}</span></div>`;paintQ()}
-function updKey(){$('#mode').textContent='Built-in smart generator + automatic option recheck (কোনো API key লাগে না)'}
-/* ---------- users: open sign-up + admin-only moderation (this browser) ---------- */
-let users=L('aw_users',[{id:'guest',name:'General Student',track:'HSC Science + Engineering',status:'active',note:''}]),aid=L('aw_aid','guest');
-const cur=()=>users.find(u=>u.id===aid)||users[0];
-function saveU(){S('aw_users',users);S('aw_aid',aid)}
-function setBanner(){const u=cur(),b=$('#ban');if(u.status==='active'||isOwner){b.style.display='none';return}b.style.display='block';b.textContent=(u.status==='banned'?'Account banned. ':'Account suspended. ')+(u.note||'')}
-function refreshUser(){const u=cur();me={id:u.id,name:u.name};myStatus=u.status;$('#who').textContent=(isOwner?'Admin · ':'')+u.name;$('#ab').textContent=isOwner?'Admin ✓ (logout)':'Admin';$('#reason').classList.toggle('hide',!isOwner);setBanner();renderUsers()}
-function adminLogin(){
- if(isOwner){isOwner=false;refreshUser();return toast('Admin logged out')}
- const pin=L('aw_pin',null);
- if(!pin){const p=prompt('Admin PIN সেট করো (মনে রাখো):');if(!p)return;S('aw_pin',p);isOwner=true;toast('PIN set — admin mode')}
- else{if(prompt('Admin PIN:')!==pin)return toast('ভুল PIN');isOwner=true;toast('Admin mode on')}
- refreshUser()}
-function renderUsers(){$('#un').textContent=users.length;
- $('#ul').innerHTML=users.map(u=>{const c=u.status==='banned'?'bd':u.status==='suspended'?'wn':'ok';
-  return`<div class="q row" style="justify-content:space-between"><div><b>${esc(u.name)}</b> <span class="tag ${c}">${u.status}</span>${u.id===aid?' <span class="tag">you</span>':''}<div class="mut" style="font-size:12px">${esc(u.track)}${u.note?' · '+esc(u.note):''}</div></div>${isOwner?`<div class="row">${u.id!==aid?`<button class="btn" onclick="useU('${u.id}')">Select</button>`:''}${u.status!=='active'?`<button class="btn" onclick="mod('${u.id}','active')">Restore</button>`:''}${u.status!=='suspended'?`<button class="btn w" onclick="mod('${u.id}','suspended')">Suspend</button>`:''}${u.status!=='banned'?`<button class="btn d" onclick="mod('${u.id}','banned')">Ban</button>`:''}</div>`:''}</div>`}).join('')}
-function useU(id){aid=id;saveU();refreshUser()}
-function mod(id,status){if(!isOwner)return;const u=users.find(x=>x.id===id);if(!u)return;u.status=status;u.note=status==='active'?'':($('#reason').value.trim()||(status==='banned'?'Banned by admin':'Suspended by admin'));saveU();refreshUser();toast(u.name+' → '+status)}
-function signup(){const name=$('#sn').value.trim();if(!name)return toast('নাম লেখো');
- let u=users.find(x=>x.name.toLowerCase()===name.toLowerCase());
- if(u){aid=u.id;toast(u.status==='active'?'Signed in as '+u.name:'এই account '+u.status)}
- else{u={id:'u'+Date.now(),name,track:$('#stk').value,status:'active',note:''};users.unshift(u);aid=u.id;$('#sn').value='';toast('Signed up — instant access ✓')}
- saveU();refreshUser()}
-function boot(){
- $('#sub').innerHTML=Object.keys(CH).map(s=>`<option value="${s}">${s==='All'?'All HSC Science':s}</option>`).join('');chaps();
- $('#bt').value=L('aw_bank',SAMPLE);renderQ();updKey();refreshUser();
- go(['bank','quiz','formulas','users'].includes(location.hash.slice(1))?location.hash.slice(1):'bank')}
-addEventListener('keydown',e=>{});
-boot();
-</script>
+      <!-- Primary Nav Pills -->
+      <nav class="hidden md:flex items-center gap-1.5 bg-slate-900/80 p-1 rounded-xl border border-white/10">
+        <button data-nav="home" onclick="AWApp.navigate('home')" class="nav-pill active px-3.5 py-1.5 rounded-lg text-sm font-medium border border-transparent text-slate-300">Dashboard</button>
+        <button data-nav="qnbank" onclick="AWApp.navigate('qnbank')" class="nav-pill px-3.5 py-1.5 rounded-lg text-sm font-medium border border-transparent text-slate-300">Qn Bank &amp; Predict</button>
+        <button data-nav="exam" onclick="AWApp.navigate('exam')" class="nav-pill px-3.5 py-1.5 rounded-lg text-sm font-medium border border-transparent text-slate-300">MCQ Exam (60)</button>
+        <button data-nav="syllabus" onclick="AWApp.navigate('syllabus')" class="nav-pill px-3.5 py-1.5 rounded-lg text-sm font-medium border border-transparent text-slate-300">HSC Syllabus</button>
+      </nav>
+
+      <!-- Action Controls -->
+      <div class="flex items-center gap-2">
+        <button id="btnSafeBack" onclick="AWApp.goBack()" title="In-App Back" class="px-2.5 py-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-800 border border-white/10 text-xs font-medium text-slate-300 flex items-center gap-1">
+          <span>←</span><span class="hidden sm:inline">Back</span>
+        </button>
+        <button onclick="AWApp.toggleChat(true)" class="px-3 py-1.5 rounded-xl bg-indigo-500/15 hover:bg-indigo-500/25 border border-indigo-400/30 text-indigo-200 text-xs sm:text-sm font-medium flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-indigo-400 animate-pulse"></span>
+          <span>Gemini AI</span>
+        </button>
+        <button onclick="AWApp.openKeyModal()" id="btnApiStatus" class="px-3 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-400/30 text-emerald-300 text-xs sm:text-sm font-medium">
+          API Key
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile Bottom-Style Strip -->
+    <div class="flex md:hidden items-center justify-around border-t border-white/5 bg-[#0B0F17] py-1.5 px-2 text-xs">
+      <button data-nav="home" onclick="AWApp.navigate('home')" class="nav-pill active px-2.5 py-1 rounded-lg border border-transparent">Home</button>
+      <button data-nav="qnbank" onclick="AWApp.navigate('qnbank')" class="nav-pill px-2.5 py-1 rounded-lg border border-transparent">Qn Bank</button>
+      <button data-nav="exam" onclick="AWApp.navigate('exam')" class="nav-pill px-2.5 py-1 rounded-lg border border-transparent">Quiz Exam</button>
+      <button data-nav="syllabus" onclick="AWApp.navigate('syllabus')" class="nav-pill px-2.5 py-1 rounded-lg border border-transparent">Syllabus</button>
+    </div>
+  </header>
+
+  <!-- Main Workspace -->
+  <main class="flex-1 max-w-6xl w-full mx-auto px-4 py-6 space-y-6">
+
+    <!-- Toast Banner -->
+    <div id="toastBox" class="hidden fixed bottom-5 right-5 z-50 max-w-sm px-4 py-3 rounded-2xl bg-slate-900/95 border border-emerald-400/40 text-sm text-emerald-100 shadow-2xl"></div>
+
+    <!-- ==================== VIEW 1: DASHBOARD ==================== -->
+    <section id="view-home" class="view-section space-y-6">
+      <div class="soft-card rounded-3xl p-6 sm:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+        <div class="space-y-2 max-w-2xl">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-xs text-emerald-300 font-medium">
+            DU A-Unit • BUET • GST • Medical Admission Prep
+          </div>
+          <h1 class="text-2xl sm:text-3xl font-bold text-white tracking-tight">
+            Question Bank Analysis &amp; Smart MCQ Exam
+          </h1>
+          <p class="text-sm sm:text-base text-slate-400 leading-relaxed">
+            Upload past university question banks, analyze recurring HSC chapters, generate up to <strong class="text-slate-200">60 predictable MCQs</strong>, and take timed exams where answers &amp; explanations unlock after submission.
+          </p>
+        </div>
+        <div class="flex flex-wrap gap-3 shrink-0">
+          <button onclick="AWApp.navigate('qnbank')" class="px-5 py-3 rounded-2xl bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-semibold text-sm shadow-lg shadow-emerald-500/20 transition">
+            Upload Qn Bank
+          </button>
+          <button onclick="AWApp.quickStartExam()" class="px-5 py-3 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-sm border border-white/10 transition">
+            Start Quick Quiz
+          </button>
+        </div>
+      </div>
+
+      <!-- Subject Quick Launch Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div onclick="AWApp.selectSubjectAndGo('Physics')" class="soft-card rounded-2xl p-5 cursor-pointer hover:border-emerald-400/40 transition group">
+          <div class="flex items-center justify-between mb-3">
+            <span class="px-2.5 py-1 rounded-lg bg-sky-500/15 text-sky-300 text-xs font-semibold">Physics 1st &amp; 2nd</span>
+            <span class="text-slate-500 group-hover:text-emerald-300 transition">→</span>
+          </div>
+          <h3 class="font-semibold text-white">পদার্থবিজ্ঞান</h3>
+          <p class="text-xs text-slate-400 mt-1">Vector, Mechanics, Electricity, Modern Physics</p>
+        </div>
+
+        <div onclick="AWApp.selectSubjectAndGo('Higher Math')" class="soft-card rounded-2xl p-5 cursor-pointer hover:border-emerald-400/40 transition group">
+          <div class="flex items-center justify-between mb-3">
+            <span class="px-2.5 py-1 rounded-lg bg-indigo-500/15 text-indigo-300 text-xs font-semibold">Math 1st &amp; 2nd</span>
+            <span class="text-slate-500 group-hover:text-emerald-300 transition">→</span>
+          </div>
+          <h3 class="font-semibold text-white">উচ্চতর গণিত</h3>
+          <p class="text-xs text-slate-400 mt-1">Matrix, Calculus, Trigonometry, Conics, Complex</p>
+        </div>
+
+        <div onclick="AWApp.selectSubjectAndGo('Chemistry')" class="soft-card rounded-2xl p-5 cursor-pointer hover:border-emerald-400/40 transition group">
+          <div class="flex items-center justify-between mb-3">
+            <span class="px-2.5 py-1 rounded-lg bg-amber-500/15 text-amber-300 text-xs font-semibold">Chemistry 1st &amp; 2nd</span>
+            <span class="text-slate-500 group-hover:text-emerald-300 transition">→</span>
+          </div>
+          <h3 class="font-semibold text-white">রসায়ন</h3>
+          <p class="text-xs text-slate-400 mt-1">Qualitative, Chemical Change, Organic, Quantitative</p>
+        </div>
+
+        <div onclick="AWApp.selectSubjectAndGo('Biology')" class="soft-card rounded-2xl p-5 cursor-pointer hover:border-emerald-400/40 transition group">
+          <div class="flex items-center justify-between mb-3">
+            <span class="px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-300 text-xs font-semibold">Botany &amp; Zoology</span>
+            <span class="text-slate-500 group-hover:text-emerald-300 transition">→</span>
+          </div>
+          <h3 class="font-semibold text-white">জীববিজ্ঞান</h3>
+          <p class="text-xs text-slate-400 mt-1">Cell, Genetics, Human Physiology, Plant Physiology</p>
+        </div>
+      </div>
+
+      <!-- Status & Metrics Bar -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div class="soft-card rounded-2xl p-4">
+          <p class="text-xs text-slate-400">Bank Chunks Loaded</p>
+          <p id="statBankCount" class="text-2xl font-bold text-white mt-1">0</p>
+        </div>
+        <div class="soft-card rounded-2xl p-4">
+          <p class="text-xs text-slate-400">Generated MCQ Set</p>
+          <p id="statGeneratedCount" class="text-2xl font-bold text-emerald-400 mt-1">0</p>
+        </div>
+        <div class="soft-card rounded-2xl p-4">
+          <p class="text-xs text-slate-400">Max Exam Limit</p>
+          <p class="text-2xl font-bold text-indigo-300 mt-1">60 MCQs</p>
+        </div>
+        <div class="soft-card rounded-2xl p-4">
+          <p class="text-xs text-slate-400">Last Exam Score</p>
+          <p id="statLastScore" class="text-2xl font-bold text-amber-300 mt-1">—</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== VIEW 2: QN BANK & PREDICTABLE GENERATOR ==================== -->
+    <section id="view-qnbank" class="view-section hidden space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Left: Upload & Paste Qn Bank -->
+        <div class="lg:col-span-6 soft-card rounded-3xl p-6 space-y-4">
+          <div class="flex items-center justify-between">
+            <h2 class="text-lg font-bold text-white">1. Upload Question Bank</h2>
+            <span class="text-xs px-2.5 py-1 rounded-full bg-slate-800 text-slate-300">PDF / TXT / Paste</span>
+          </div>
+          <p class="text-xs text-slate-400">
+            DU, GST, Engineering বা Medical বিগত বছরের প্রশ্নব্যাংক ফাইল আপলোড করুন অথবা নিচে পেস্ট করুন। AI প্যাটার্ন বিশ্লেষণ করে সম্ভাব্য নতুন প্রশ্ন তৈরি করবে।
+          </p>
+
+          <label class="flex flex-col items-center justify-center border-2 border-dashed border-white/15 hover:border-emerald-400/50 rounded-2xl p-5 cursor-pointer bg-slate-950/40 transition">
+            <input id="qnFileInput" type="file" accept=".pdf,.txt,.md,.json" class="hidden" onchange="AWApp.handleBankFileUpload(event)" />
+            <span class="text-sm font-semibold text-emerald-300">+ Select Question Bank File (.pdf, .txt)</span>
+            <span id="uploadedFileName" class="text-xs text-slate-400 mt-1">No file selected yet</span>
+          </label>
+
+          <div>
+            <label class="block text-xs font-medium text-slate-300 mb-1.5">Or Paste Question Bank Text / Past Questions</label>
+            <textarea id="qnBankText" rows="7" placeholder="উদাহরণ:&#10;১. দুটি ভেক্টরের স্কেলার গুণফল শূন্য হলে তাদের মধ্যবর্তী কোণ কত? (DU 22-23)&#10;২. গ্লুকোজের সবাত শ্বসনে মোট কতটি ATP উৎপন্ন হয়?..." class="soft-input w-full rounded-2xl p-3.5 text-sm text-slate-200 placeholder-slate-500"></textarea>
+          </div>
+
+          <div class="flex flex-wrap gap-2.5">
+            <button onclick="AWApp.analyzeQuestionBank()" class="flex-1 py-2.5 px-4 rounded-xl bg-indigo-500 hover:bg-indigo-400 text-white font-semibold text-sm transition">
+              Analyze Pattern
+            </button>
+            <button onclick="AWApp.loadSampleBank()" class="py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-white/10">
+              Load HSC Sample Bank
+            </button>
+          </div>
+
+          <!-- Pattern Analysis Result -->
+          <div id="analysisResultBox" class="hidden rounded-2xl bg-slate-950/70 border border-indigo-400/25 p-4 space-y-2 text-xs text-slate-300"></div>
+        </div>
+
+        <!-- Right: Predictable MCQ Generator (Up to 60 MCQs) -->
+        <div class="lg:col-span-6 soft-card rounded-3xl p-6 space-y-4">
+          <div class="flex items-center justify-between">
+            <h2 class="text-lg font-bold text-white">2. Generate Predictable MCQs</h2>
+            <span class="text-xs px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-300">Max 60 MCQs</span>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs text-slate-400 mb-1">Subject (HSC Science)</label>
+              <select id="genSubject" onchange="AWApp.syncChapterOptions()" class="soft-input w-full rounded-xl px-3 py-2.5 text-sm text-white">
+                <option value="All Science">All Science (PCM + Bio)</option>
+                <option value="Physics">Physics (পদার্থবিজ্ঞান)</option>
+                <option value="Higher Math">Higher Math (উচ্চতর গণিত)</option>
+                <option value="Chemistry">Chemistry (রসায়ন)</option>
+                <option value="Biology">Biology (জীববিজ্ঞান)</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs text-slate-400 mb-1">Target University Standard</label>
+              <select id="genStandard" class="soft-input w-full rounded-xl px-3 py-2.5 text-sm text-white">
+                <option value="DU A-Unit">Dhaka University (DU A-Unit)</option>
+                <option value="BUET / Engineering">BUET / CKRUET Engineering</option>
+                <option value="GST / Agri">GST Cluster &amp; Agricultural</option>
+                <option value="Medical / Dental">Medical &amp; Dental Admission</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs text-slate-400 mb-1">HSC Chapter Focus</label>
+              <select id="genChapter" class="soft-input w-full rounded-xl px-3 py-2.5 text-sm text-white">
+                <option value="Full HSC Syllabus">Full HSC Syllabus</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs text-slate-400 mb-1">Number of MCQs (1 – 60)</label>
+              <input id="genCount" type="number" min="1" max="60" value="15" class="soft-input w-full rounded-xl px-3 py-2.5 text-sm text-white" />
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs text-slate-400 mb-1">Generation Mode</label>
+            <select id="genMode" class="soft-input w-full rounded-xl px-3 py-2.5 text-sm text-white">
+              <option value="predictable">Predictable Admission MCQs (From Qn Bank Pattern)</option>
+              <option value="exact_extract">Extract &amp; Format Directly from Uploaded Qn Bank</option>
+              <option value="high_yield">High-Yield HSC Board + Admission Mix</option>
+            </select>
+          </div>
+
+          <button id="btnGenerateMcqs" onclick="AWApp.generateQuestions()" class="w-full py-3 rounded-2xl bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-bold text-sm shadow-lg shadow-emerald-500/20 transition">
+            Generate MCQs &amp; Start Quiz
+          </button>
+
+          <div id="genProgressBox" class="hidden rounded-2xl bg-slate-950/75 border border-emerald-400/25 p-4 text-xs text-emerald-200"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==================== VIEW 3: QUIZ EXAM ARENA (ANSWERS AFTER SUBMIT) ==================== -->
+    <section id="view-exam" class="view-section hidden space-y-5">
+      <!-- Exam Top Control Bar -->
+      <div class="soft-card rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h2 id="examHeaderTitle" class="text-base sm:text-lg font-bold text-white">Admission Model Test</h2>
+          <p id="examMetaSubtitle" class="text-xs text-slate-400">Select answers for all questions. Correct answers &amp; solutions appear after Submit.</p>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <div class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950 border border-white/10">
+            <span class="text-xs text-slate-400">Time:</span>
+            <span id="examTimerDisplay" class="font-mono font-bold text-emerald-400 text-sm">15:00</span>
+          </div>
+
+          <label class="hidden sm:flex items-center gap-1.5 text-xs text-slate-300 cursor-pointer">
+            <input id="negMarkToggle" type="checkbox" checked class="accent-emerald-400 rounded" />
+            <span>-0.25 Negative</span>
+          </label>
+
+          <button id="btnSubmitExam" onclick="AWApp.submitExam()" class="px-5 py-2 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-bold text-sm transition">
+            Submit Exam
+          </button>
+        </div>
+      </div>
+
+      <!-- Post-Submit Score Summary Card (Hidden until Submit) -->
+      <div id="examResultSummary" class="hidden soft-card rounded-3xl p-6 border-emerald-400/40 space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <span class="text-xs uppercase tracking-wider text-emerald-300 font-semibold">Exam Submitted • Answer Sheet Unlocked</span>
+            <h3 id="scoreHeadline" class="text-2xl font-bold text-white mt-1">Score: 0 / 0</h3>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="AWApp.retakeExam()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-white border border-white/10">Retake Quiz</button>
+            <button onclick="AWApp.navigate('qnbank')" class="px-4 py-2 rounded-xl bg-emerald-400 text-slate-950 text-xs font-bold">Generate New Set</button>
+          </div>
+        </div>
+        <div id="scoreBreakdownGrid" class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs"></div>
+      </div>
+
+      <!-- Questions List Container -->
+      <div id="examQuestionsContainer" class="space-y-4"></div>
+    </section>
+
+    <!-- ==================== VIEW 4: HSC SYLLABUS EXPLORER ==================== -->
+    <section id="view-syllabus" class="view-section hidden space-y-5">
+      <div class="soft-card rounded-3xl p-6 space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 class="text-xl font-bold text-white">Bangladesh HSC Science Syllabus</h2>
+            <p class="text-xs text-slate-400">Click any chapter to generate targeted admission MCQs immediately.</p>
+          </div>
+          <div class="flex gap-2" id="syllabusFilterTabs">
+            <button onclick="AWApp.renderSyllabus('Physics')" class="px-3 py-1.5 rounded-xl bg-slate-800 text-xs font-semibold text-sky-300">Physics</button>
+            <button onclick="AWApp.renderSyllabus('Higher Math')" class="px-3 py-1.5 rounded-xl bg-slate-800 text-xs font-semibold text-indigo-300">Math</button>
+            <button onclick="AWApp.renderSyllabus('Chemistry')" class="px-3 py-1.5 rounded-xl bg-slate-800 text-xs font-semibold text-amber-300">Chemistry</button>
+            <button onclick="AWApp.renderSyllabus('Biology')" class="px-3 py-1.5 rounded-xl bg-slate-800 text-xs font-semibold text-emerald-300">Biology</button>
+          </div>
+        </div>
+        <div id="syllabusChaptersGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ==================== GEMINI AI TUTOR DRAWER ==================== -->
+  <aside id="aiChatDrawer" class="fixed inset-y-0 right-0 z-50 w-full max-w-md bg-[#0E1420] border-l border-white/10 shadow-2xl transform translate-x-full transition-transform duration-300 flex flex-col">
+    <div class="p-4 border-b border-white/10 flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-xl bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center text-indigo-300 font-bold text-sm">AI</div>
+        <div>
+          <h3 class="text-sm font-bold text-white">Gemini Admission Tutor</h3>
+          <p class="text-[11px] text-slate-400">HSC Physics • Math • Chemistry • Biology</p>
+        </div>
+      </div>
+      <button onclick="AWApp.toggleChat(false)" class="px-2.5 py-1 rounded-lg bg-slate-800 text-slate-300 text-xs hover:text-white">✕</button>
+    </div>
+
+    <div id="chatMessagesList" class="flex-1 overflow-y-auto p-4 space-y-3 text-sm">
+      <div class="rounded-2xl bg-slate-800/80 border border-white/5 p-3.5 text-slate-200 text-xs leading-relaxed">
+        আসসালামু আলাইকুম! আমি আপনার HSC &amp; Admission AI Tutor। Physics, Math, Chemistry বা Biology-র যেকোনো অধ্যায়, শর্টকাট বা আপলোড করা Question Bank নিয়ে প্রশ্ন করতে পারেন।
+      </div>
+    </div>
+
+    <form onsubmit="AWApp.sendChatMessage(event)" class="p-3 border-t border-white/10 flex gap-2 bg-[#0B0F17]">
+      <input id="chatInputField" type="text" placeholder="Ask a question or explain a formula..." class="soft-input flex-1 rounded-xl px-3.5 py-2.5 text-sm text-white" />
+      <button type="submit" class="px-4 py-2.5 rounded-xl bg-indigo-500 hover:bg-indigo-400 text-white font-semibold text-sm">Send</button>
+    </form>
+  </aside>
+
+  <!-- ==================== GEMINI API KEY MODAL ==================== -->
+  <div id="apiKeyModal" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="soft-card rounded-3xl max-w-md w-full p-6 space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-lg font-bold text-white">Connect Free Gemini API</h3>
+        <button onclick="AWApp.closeKeyModal()" class="text-slate-400 hover:text-white text-sm">✕</button>
+      </div>
+      <p class="text-xs text-slate-400 leading-relaxed">
+        Google AI Studio (<span class="text-emerald-300">aistudio.google.com</span>) থেকে ফ্রি Gemini API Key নিয়ে নিচে সেভ করুন। Key আপনার ব্রাউজারের <code class="text-slate-200">localStorage</code>-এ নিরাপদ থাকবে।
+      </p>
+      <input id="geminiKeyInput" type="password" placeholder="AIzaSy..." class="soft-input w-full rounded-xl px-3.5 py-2.5 text-sm text-white" />
+      <div class="flex justify-end gap-2">
+        <button onclick="AWApp.closeKeyModal()" class="px-4 py-2 rounded-xl bg-slate-800 text-xs text-slate-300">Cancel</button>
+        <button onclick="AWApp.saveGeminiKey()" class="px-4 py-2 rounded-xl bg-emerald-400 text-slate-950 font-bold text-xs">Save Key</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Application Script -->
+  <script src="./main.js"></script>
 </body>
 </html>
