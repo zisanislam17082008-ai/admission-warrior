@@ -1,43 +1,626 @@
+
 import { createClient } from '@supabase/supabase-js';
 import './style.css';
 
-const url = import.meta.env.VITE_SUPABASE_URL;
-const key = import.meta.env.VITE_SUPABASE_ANON_KEY;
-const supabase = url && key && !url.includes('YOUR_PROJECT') ? createClient(url, key) : null;
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 const app = document.querySelector('#app');
-let mode = 'admission';
+
 let user = null;
 let profile = null;
 let contents = [];
-const subjects = ['Physics','Chemistry','Higher Math','Biology'];
+let currentPage = 'dashboard';
 
-function shell(content) {
-  app.innerHTML = `<header><div class="brand"><span class="logo">AW</span><div><b>Admission Warrior</b><small>লক্ষ্য বিশ্ববিদ্যালয়ে ভর্তি</small></div></div><span class="tag">${supabase ? 'Online setup' : 'Demo mode'}</span></header><main>${content}</main><footer>Admission Warrior · Learn • Practice • Win</footer>`;
+const subjects = [
+  'Physics',
+  'Chemistry',
+  'Higher Math',
+  'Biology'
+];
+
+const escapeHTML = (value = '') =>
+  String(value).replace(/[&<>"']/g, char => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  })[char]);
+
+const isAdmin = () =>
+  profile?.role === 'main_admin' &&
+  profile?.status === 'approved';
+
+const isApproved = () =>
+  profile?.status === 'approved' || isAdmin();
+
+function notify(message) {
+  alert(message);
 }
+
+function layout(content) {
+  app.innerHTML = `
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-mark small">AW</div>
+          <b>Admission Warrior</b>
+        </div>
+
+        <p class="side-label">MAIN MENU</p>
+
+        <button class="side-link" data-page="dashboard">
+          🏠 Dashboard
+        </button>
+
+        <button class="side-link" data-page="subjects">
+          📚 Subjects
+        </button>
+
+        <button class="side-link" data-page="library">
+          📖 Study Library
+        </button>
+
+        ${isAdmin() ? `
+          <p class="side-label">ADMINISTRATION</p>
+          <button class="side-link" data-page="admin">
+            🛡️ Admin Panel
+          </button>
+          <button class="side-link" data-page="upload">
+            📤 Upload Content
+          </button>
+        ` : ''}
+
+        <div class="sidebar-bottom">
+          <span>${escapeHTML(user?.email || '')}</span>
+          <button class="outline-btn" id="logout">Logout</button>
+        </div>
+      </aside>
+
+      <main class="main-panel">
+        ${content}
+      </main>
+    </div>
+  `;
+
+  document.querySelectorAll('[data-page]').forEach(button => {
+    button.onclick = () => openPage(button.dataset.page);
+  });
+
+  document.querySelector('#logout').onclick = logout;
+}
+
 function authView() {
-  shell(`<section class="hero"><p class="eyebrow">YOUR ADMISSION JOURNEY STARTS HERE</p><h1>স্বপ্নের বিশ্ববিদ্যালয়ের পথে<br><em>তুমিই Warrior</em></h1><p>বিষয়ভিত্তিক প্রস্তুতি, সাজানো স্টাডি লাইব্রেরি এবং MCQ অনুশীলন।</p></section>
-  <section class="panel"><h2>শুরু করো</h2><div class="tabs"><button class="active" id="loginTab">লগইন</button><button id="signupTab">নতুন অ্যাকাউন্ট</button></div><form id="authForm"><label>ইমেইল<input type="email" id="email" required placeholder="তোমার ইমেইল"></label><label>পাসওয়ার্ড<input type="password" id="password" minlength="6" required placeholder="কমপক্ষে ৬ অক্ষর"></label><button class="primary" type="submit" id="authSubmit">লগইন</button></form><p class="hint" id="authHint">নতুন হলে নতুন অ্যাকাউন্ট নির্বাচন করো।</p></section>`);
+  app.innerHTML = `
+    <div class="auth-layout">
+      <section class="hero-panel">
+        <div class="brand-mark">AW</div>
+        <p class="eyebrow">ADMISSION WARRIOR</p>
+        <h1>স্বপ্নের বিশ্ববিদ্যালয়ের পথে
+          <span>তুমিই Warrior</span>
+        </h1>
+        <p>Learn • Practice • Win</p>
+        <div class="hero-orbit">
+          <span>Physics</span>
+          <span>Chemistry</span>
+          <span>Math</span>
+          <span>Biology</span>
+        </div>
+      </section>
+
+      <section class="auth-card">
+        <h2 id="authTitle">Login</h2>
+
+        <div class="auth-tabs">
+          <button class="tab active" id="loginTab">Login</button>
+          <button class="tab" id="signupTab">Sign Up</button>
+        </div>
+
+        <form id="authForm">
+          <label>Email
+            <input type="email" id="email" required
+              placeholder="Enter your email">
+          </label>
+
+          <label>Password
+            <input type="password" id="password"
+              minlength="6" required placeholder="Minimum 6 characters">
+          </label>
+
+          <button class="primary-btn" id="authButton">
+            Login
+          </button>
+        </form>
+
+        <p class="notice" id="authNotice"></p>
+      </section>
+    </div>
+  `;
+
   let signup = false;
-  const loginTab = document.querySelector('#loginTab'), signupTab = document.querySelector('#signupTab');
-  function setTab(v){signup=v;loginTab.classList.toggle('active',!v);signupTab.classList.toggle('active',v);document.querySelector('#authSubmit').textContent=v?'রেজিস্ট্রেশন':'লগইন';document.querySelector('#authHint').textContent=v?'রেজিস্ট্রেশনের পর Main Admin অনুমোদন না দেওয়া পর্যন্ত অ্যাকাউন্ট Pending থাকবে।':'তোমার অ্যাকাউন্টে প্রবেশ করো।'}
-  loginTab.onclick=()=>setTab(false);signupTab.onclick=()=>setTab(true);
-  document.querySelector('#authForm').onsubmit=async e=>{e.preventDefault();const email=document.querySelector('#email').value,password=document.querySelector('#password').value; if(!supabase){alert('Demo mode: Supabase URL ও Publishable key সেট করলে অনলাইন লগইন চালু হবে।');return;} const res=signup?await supabase.auth.signUp({email,password}):await supabase.auth.signInWithPassword({email,password});if(res.error){alert(res.error.message);return;}if(signup){alert('রেজিস্ট্রেশন হয়েছে। Admin অনুমোদনের অপেক্ষা করো।');}await init();};
+
+  document.querySelector('#loginTab').onclick = () => {
+    signup = false;
+    document.querySelector('#authTitle').textContent = 'Login';
+    document.querySelector('#authButton').textContent = 'Login';
+    document.querySelector('#loginTab').classList.add('active');
+    document.querySelector('#signupTab').classList.remove('active');
+  };
+
+  document.querySelector('#signupTab').onclick = () => {
+    signup = true;
+    document.querySelector('#authTitle').textContent = 'Create Account';
+    document.querySelector('#authButton').textContent = 'Sign Up';
+    document.querySelector('#signupTab').classList.add('active');
+    document.querySelector('#loginTab').classList.remove('active');
+  };
+
+  document.querySelector('#authForm').onsubmit = async event => {
+    event.preventDefault();
+
+    const email = document.querySelector('#email').value.trim();
+    const password = document.querySelector('#password').value;
+    const button = document.querySelector('#authButton');
+    const notice = document.querySelector('#authNotice');
+
+    button.disabled = true;
+    button.textContent = 'Please wait...';
+
+    const result = signup
+      ? await supabase.auth.signUp({ email, password })
+      : await supabase.auth.signInWithPassword({ email, password });
+
+    button.disabled = false;
+    button.textContent = signup ? 'Sign Up' : 'Login';
+
+    if (result.error) {
+      notice.textContent = result.error.message;
+      notice.className = 'notice error';
+      return;
+    }
+
+    if (signup && !result.data.session) {
+      notice.textContent =
+        'Account created. Check your email for confirmation.';
+      notice.className = 'notice success';
+      return;
+    }
+
+    await init();
+  };
 }
-function dashboard() {
-  const approved = profile?.status === 'approved' || profile?.role === 'main_admin';
-  shell(`<section class="welcome"><div><p class="eyebrow">${mode==='admission'?'UNIVERSITY ADMISSION':'HSC PREPARATION'}</p><h1>স্বাগতম, Warrior!</h1><p>${approved?'আজকের প্রস্তুতি শুরু করো।':'তোমার অ্যাকাউন্ট Admin অনুমোদনের অপেক্ষায় আছে।'}</p></div><button id="logout" class="ghost">লগআউট</button></section>
-  <section class="toolbar"><div class="tabs"><button id="admissionMode" class="${mode==='admission'?'active':''}">ভর্তি প্রস্তুতি</button><button id="hscMode" class="${mode==='hsc'?'active':''}">HSC প্রস্তুতি</button></div></section>
-  <section class="grid">${subjects.map((s,i)=>`<article class="subject"><span class="num">0${i+1}</span><h3>${s}</h3><p>কনসেপ্ট রিভিশন ও MCQ অনুশীলন</p><button data-subject="${s}" class="outline">বিষয় খুলুন →</button></article>`).join('')}</section>
-  <section class="panel"><div class="panelHead"><div><p class="eyebrow">STUDY LIBRARY</p><h2>স্টাডি লাইব্রেরি</h2></div><span class="tag">${contents.length} items</span></div><div id="library">${approved?renderContents():'অনুমোদনের পর পড়ার উপকরণ দেখতে পাবে।'}</div></section>
-  ${profile?.role==='main_admin'?`<section class="panel"><p class="eyebrow">MAIN ADMIN</p><h2>কনটেন্ট যোগ করো</h2><form id="uploadForm"><label>শিরোনাম<input id="title" required placeholder="যেমন: পর্যায় সারণি"></label><label>বিষয়<select id="subject">${subjects.map(s=>`<option>${s}</option>`).join('')}</select></label><label>ধরন<select id="kind"><option value="note">নোট</option><option value="pdf">PDF</option><option value="image">ছবি</option><option value="video">ভিডিও URL</option><option value="mcq">MCQ</option></select></label><label>ফাইল / ভিডিও URL<input id="file" type="file" accept=".pdf,image/*,video/*"></label><label>ভিডিও URL (ঐচ্ছিক)<input id="videoUrl" type="url" placeholder="https://..."></label><label>বর্ণনা<textarea id="description" rows="3"></textarea></label><button class="primary">কনটেন্ট প্রকাশ করো</button></form></section>`:''}`);
-  document.querySelector('#logout').onclick=async()=>{if(supabase)await supabase.auth.signOut();user=null;profile=null;authView();};
-  document.querySelector('#admissionMode').onclick=()=>{mode='admission';dashboard();};document.querySelector('#hscMode').onclick=()=>{mode='hsc';dashboard();};
-  document.querySelectorAll('[data-subject]').forEach(b=>b.onclick=()=>alert(`${b.dataset.subject}: এখানে অধ্যায়ভিত্তিক কনটেন্ট ও পরীক্ষা যোগ করা যাবে।`));
-  document.querySelector('#uploadForm')?.addEventListener('submit',publish);
+
+async function loadProfile() {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  if (error) throw error;
+
+  profile = data;
 }
-function renderContents(){return contents.length?contents.map(c=>`<div class="contentRow"><div><b>${escapeHtml(c.title)}</b><small>${escapeHtml(c.subject||'')} · ${escapeHtml(c.kind||'')}</small></div>${c.file_url?`<a href="${c.file_url}" target="_blank" rel="noreferrer">খুলুন ↗</a>`:''}</div>`).join(''):'এখনো কোনো কনটেন্ট প্রকাশ করা হয়নি।';}
-function escapeHtml(s=''){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-async function publish(e){e.preventDefault();if(!supabase||!user){alert('অনলাইন Supabase সেটআপ প্রয়োজন।');return;}const file=document.querySelector('#file').files[0];let file_url=null;if(file){const path=`${user.id}/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g,'_')}`;const up=await supabase.storage.from('study-content').upload(path,file);if(up.error){alert(up.error.message);return;}file_url=path;}const row={title:document.querySelector('#title').value,subject:document.querySelector('#subject').value,kind:document.querySelector('#kind').value,description:document.querySelector('#description').value,video_url:document.querySelector('#videoUrl').value||null,file_path:file_url,visibility:'all',created_by:user.id};const result=await supabase.from('contents').insert(row);if(result.error){alert(result.error.message);return;}alert('কনটেন্ট যোগ হয়েছে।');await loadContents();dashboard();}
-async function loadContents(){if(!supabase||!user)return;const {data}=await supabase.from('contents').select('*').eq('visibility','all').order('created_at',{ascending:false});contents=data||[];}
-async function init(){if(!supabase){authView();return;}const {data}=await supabase.auth.getSession();user=data.session?.user||null;if(!user){authView();return;}const p=await supabase.from('profiles').select('*').eq('id',user.id).maybeSingle();profile=p.data;await loadContents();dashboard();}
+
+async function loadContents() {
+  const { data, error } = await supabase
+    .from('contents')
+    .select('*')
+    .eq('visibility', 'all')
+    .order('created_at', { ascending: false });
+
+  if (error) throw error;
+
+  contents = data || [];
+}
+
+function dashboardPage() {
+  return `
+    <div class="topbar">
+      <div>
+        <p class="eyebrow">ADMISSION WARRIOR</p>
+        <h1>Dashboard</h1>
+      </div>
+      <span class="role-pill">
+        ${isAdmin() ? 'MAIN ADMIN' : 'STUDENT'}
+      </span>
+    </div>
+
+    <section class="section-heading">
+      <div>
+        <h2>স্বাগতম, Warrior!</h2>
+        <p>${isApproved()
+          ? 'তোমার পড়াশোনা শুরু করো।'
+          : 'তোমার Account এখনো অনুমোদনের অপেক্ষায় আছে।'}
+        </p>
+      </div>
+    </section>
+
+    ${!isApproved() ? `
+      <div class="empty-state">
+        <span>⏳</span>
+        <h3>Pending Approval</h3>
+        <p>Admin অনুমোদন দিলে Study Library ব্যবহার করতে পারবে।</p>
+      </div>
+    ` : `
+      <div class="subject-grid">
+        ${subjects.map((subject, index) => `
+          <article class="subject-card">
+            <span>${['⚡','🧪','📐','🧬'][index]}</span>
+            <h3>${subject}</h3>
+            <p>Concept revision and practice</p>
+            <button class="outline-btn"
+              data-subject="${subject}">
+              Open Subject
+            </button>
+          </article>
+        `).join('')}
+      </div>
+
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">STUDY LIBRARY</p>
+          <h2>Recent Study Content</h2>
+        </div>
+        <button class="text-btn" data-page="library">
+          View All →
+        </button>
+      </div>
+
+      ${renderContentCards(contents.slice(0, 4))}
+    `}
+  `;
+}
+
+function subjectsPage() {
+  return `
+    <div class="topbar">
+      <div>
+        <p class="eyebrow">LEARN EVERY DAY</p>
+        <h1>Subjects</h1>
+      </div>
+    </div>
+
+    <div class="subject-grid">
+      ${subjects.map((subject, index) => `
+        <article class="subject-card">
+          <span>${['⚡','🧪','📐','🧬'][index]}</span>
+          <h3>${subject}</h3>
+          <p>Study materials and practice</p>
+        </article>
+      `).join('')}
+    </div>
+  `;
+}
+
+function renderContentCards(items) {
+  if (!items.length) {
+    return `
+      <div class="empty-state">
+        <span>📚</span>
+        <h3>No Content Yet</h3>
+        <p>এখনো কোনো Study Content প্রকাশ করা হয়নি।</p>
+      </div>
+    `;
+  }
+
+  return `
+    <div class="content-grid">
+      ${items.map(item => `
+        <article class="content-card">
+          <span class="content-kind">${escapeHTML(item.kind)}</span>
+          <p class="eyebrow">${escapeHTML(item.subject)}</p>
+          <h3>${escapeHTML(item.title)}</h3>
+          <p>${escapeHTML(item.description || '')}</p>
+
+          <button class="text-btn"
+            data-open-content="${item.id}">
+            Open Content →
+          </button>
+        </article>
+      `).join('')}
+    </div>
+  `;
+}
+
+function libraryPage() {
+  return `
+    <div class="topbar">
+      <div>
+        <p class="eyebrow">STUDY MATERIALS</p>
+        <h1>Study Library</h1>
+      </div>
+    </div>
+
+    ${renderContentCards(contents)}
+  `;
+}
+
+function adminPage() {
+  if (!isAdmin()) return dashboardPage();
+
+  return `
+    <div class="topbar">
+      <div>
+        <p class="eyebrow">ADMINISTRATION</p>
+        <h1>Main Admin Panel</h1>
+      </div>
+      <span class="role-pill">ADMIN</span>
+    </div>
+
+    <div class="subject-grid">
+      <article class="subject-card">
+        <span>📚</span>
+        <h3>${contents.length}</h3>
+        <p>Published Contents</p>
+      </article>
+
+      <article class="subject-card">
+        <span>🛡️</span>
+        <h3>Main Admin</h3>
+        <p>${escapeHTML(user.email)}</p>
+      </article>
+    </div>
+
+    <div class="section-heading">
+      <div>
+        <h2>Admin Actions</h2>
+        <p>Manage your study platform</p>
+      </div>
+    </div>
+
+    <div class="subject-grid">
+      <article class="subject-card">
+        <span>📤</span>
+        <h3>Upload Content</h3>
+        <p>PDF, Notes, Images and Videos</p>
+        <button class="primary-btn" data-page="upload">
+          Upload Now
+        </button>
+      </article>
+    </div>
+  `;
+}
+
+function uploadPage() {
+  if (!isAdmin()) return dashboardPage();
+
+  return `
+    <div class="topbar">
+      <div>
+        <p class="eyebrow">MAIN ADMIN</p>
+        <h1>Upload Study Content</h1>
+      </div>
+    </div>
+
+    <section class="upload-card">
+      <form id="uploadForm">
+
+        <label>Content Title
+          <input id="title" required
+            placeholder="Enter content title">
+        </label>
+
+        <div class="form-row">
+          <label>Subject
+            <select id="subject">
+              ${subjects.map(s => `<option>${s}</option>`).join('')}
+            </select>
+          </label>
+
+          <label>Content Type
+            <select id="kind">
+              <option value="note">Note</option>
+              <option value="pdf">PDF</option>
+              <option value="image">Image</option>
+              <option value="video">Video</option>
+              <option value="mcq">MCQ</option>
+            </select>
+          </label>
+        </div>
+
+        <label>Upload File
+          <input id="file" type="file"
+            accept=".pdf,image/*,video/*">
+        </label>
+
+        <label>Video URL (optional)
+          <input id="videoUrl" type="url"
+            placeholder="https://...">
+        </label>
+
+        <label>Description
+          <textarea id="description" rows="4"
+            placeholder="Write a description"></textarea>
+        </label>
+
+        <button class="primary-btn" type="submit">
+          Publish Content
+        </button>
+
+        <p class="notice" id="uploadNotice"></p>
+      </form>
+    </section>
+  `;
+}
+
+async function publishContent(event) {
+  event.preventDefault();
+
+  if (!isAdmin()) {
+    notify('Only Main Admin can upload content.');
+    return;
+  }
+
+  const button = event.submitter;
+  button.disabled = true;
+  button.textContent = 'Uploading...';
+
+  try {
+    const file = document.querySelector('#file').files[0];
+    let filePath = null;
+
+    if (file) {
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+      filePath = `${user.id}/${Date.now()}-${safeName}`;
+
+      const upload = await supabase.storage
+        .from('study-content')
+        .upload(filePath, file);
+
+      if (upload.error) throw upload.error;
+    }
+
+    const row = {
+      title: document.querySelector('#title').value.trim(),
+      subject: document.querySelector('#subject').value,
+      kind: document.querySelector('#kind').value,
+      description: document.querySelector('#description').value,
+      video_url: document.querySelector('#videoUrl').value || null,
+      file_path: filePath,
+      visibility: 'all',
+      created_by: user.id
+    };
+
+    const { error } = await supabase
+      .from('contents')
+      .insert(row);
+
+    if (error) throw error;
+
+    notify('Content successfully published!');
+    await loadContents();
+    openPage('library');
+
+  } catch (error) {
+    notify('Upload failed: ' + error.message);
+  } finally {
+    button.disabled = false;
+    button.textContent = 'Publish Content';
+  }
+}
+
+async function openContent(id) {
+  const item = contents.find(c => c.id === id);
+  if (!item) return;
+
+  if (item.video_url) {
+    window.open(item.video_url, '_blank', 'noopener');
+    return;
+  }
+
+  if (!item.file_path) {
+    notify(item.description || 'No file attached.');
+    return;
+  }
+
+  const { data, error } = await supabase.storage
+    .from('study-content')
+    .createSignedUrl(item.file_path, 300);
+
+  if (error) {
+    notify(error.message);
+    return;
+  }
+
+  window.open(data.signedUrl, '_blank', 'noopener');
+}
+
+async function openPage(page) {
+  if (!user) return authView();
+
+  if (!isApproved() && page !== 'dashboard') {
+    notify('Admin approval is required.');
+    return;
+  }
+
+  if (!isAdmin() && ['admin', 'upload'].includes(page)) {
+    notify('Admin access required.');
+    return;
+  }
+
+  currentPage = page;
+
+  const pages = {
+    dashboard: dashboardPage,
+    subjects: subjectsPage,
+    library: libraryPage,
+    admin: adminPage,
+    upload: uploadPage
+  };
+
+  layout((pages[page] || dashboardPage)());
+
+  document.querySelectorAll('[data-subject]').forEach(button => {
+    button.onclick = () => {
+      notify(`${button.dataset.subject} materials coming soon.`);
+    };
+  });
+
+  document.querySelectorAll('[data-open-content]').forEach(button => {
+    button.onclick = () => openContent(button.dataset.openContent);
+  });
+
+  document.querySelector('#uploadForm')?.addEventListener(
+    'submit',
+    publishContent
+  );
+}
+
+async function logout() {
+  await supabase.auth.signOut();
+  user = null;
+  profile = null;
+  contents = [];
+  authView();
+}
+
+async function init() {
+  try {
+    const { data, error } = await supabase.auth.getSession();
+    if (error) throw error;
+
+    user = data.session?.user || null;
+
+    if (!user) {
+      authView();
+      return;
+    }
+
+    await loadProfile();
+
+    if (!profile) {
+      app.innerHTML = `
+        <div class="status-card">
+          <div class="brand-mark">AW</div>
+          <h2>Profile Not Found</h2>
+          <p>তোমার Profile Database-এ পাওয়া যায়নি। Admin-এর সাহায্য প্রয়োজন।</p>
+          <button class="primary-btn" id="logout">Logout</button>
+        </div>
+      `;
+      document.querySelector('#logout').onclick = logout;
+      return;
+    }
+
+    await loadContents();
+    await openPage('dashboard');
+
+  } catch (error) {
+    app.innerHTML = `
+      <div class="status-card">
+        <h2>Something went wrong</h2>
+        <p>${escapeHTML(error.message)}</p>
+        <button class="primary-btn" id="retry">Try Again</button>
+      </div>
+    `;
+    document.querySelector('#retry').onclick = init;
+  }
+}
+
+supabase.auth.onAuthStateChange(() => {
+  setTimeout(init, 0);
+});
+
 init();
