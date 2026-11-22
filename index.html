@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admission Warrior — AI Study Tracker</title>
+  <title>Admission Warrior — AI Study Tracker & PDF Quiz Studio</title>
 
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -51,7 +51,6 @@
       --text-muted: #52607a;
       --border-subtle: #dbe3f0;
       --accent: #2563eb;
-      --accent-soft: rgba(37, 99, 235, 0.12);
     }
 
     html[data-theme="dark"] {
@@ -62,7 +61,6 @@
       --text-muted: #94a3b8;
       --border-subtle: #1e2d4a;
       --accent: #3b82f6;
-      --accent-soft: rgba(59, 130, 246, 0.16);
     }
 
     body {
@@ -93,9 +91,40 @@
       width: 6px;
       height: 6px;
     }
+
     .custom-scroll::-webkit-scrollbar-thumb {
       background: rgba(100, 116, 139, 0.35);
       border-radius: 999px;
+    }
+
+    .rich-block h1, .rich-block h2, .rich-block h3, .rich-block h4 {
+      font-weight: 800;
+      margin-top: 0.65rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .rich-block pre {
+      background: rgba(2, 6, 23, 0.75);
+      color: #e2e8f0;
+      padding: 0.75rem;
+      border-radius: 0.75rem;
+      overflow-x: auto;
+      font-size: 0.78rem;
+      margin: 0.5rem 0;
+      border: 1px solid rgba(148, 163, 184, 0.2);
+    }
+
+    .rich-block code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.85em;
+      padding: 0.1rem 0.35rem;
+      border-radius: 0.35rem;
+      background: rgba(59, 130, 246, 0.14);
+    }
+
+    .rich-block pre code {
+      background: transparent;
+      padding: 0;
     }
   </style>
 </head>
@@ -105,25 +134,29 @@
   <header class="sticky top-0 z-30 border-b border-[var(--border-subtle)] bg-[var(--bg-card)]/90 backdrop-blur-md">
     <div class="max-w-7xl mx-auto px-3 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-2">
       <div class="flex items-center gap-2.5 min-w-0">
-        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-600 to-cyan-500 text-white font-extrabold flex items-center justify-center shadow-sm shrink-0">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-600 via-indigo-600 to-cyan-500 text-white font-extrabold flex items-center justify-center shadow-sm shrink-0">
           ▲
         </div>
         <div class="min-w-0">
           <div class="flex items-center gap-2 flex-wrap">
             <h1 class="font-extrabold text-sm sm:text-base tracking-tight truncate">
-              Admission Warrior <span class="text-blue-500">— AI Study Tracker</span>
+              Admission Warrior <span class="text-blue-500">— AI Study Tracker & PDF Quiz Studio</span>
             </h1>
-            <span id="langBadge" class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[var(--bg-soft)] text-muted-custom">
-              HSC Science
+            <span class="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[var(--bg-soft)] text-muted-custom">
+              HSC & Admission
             </span>
           </div>
           <p class="text-[11px] text-muted-custom truncate hidden sm:block">
-            Physics · Chemistry · Higher Math · Biology · PDF Intelligence & Exam Prep
+            Physics · Chemistry · Higher Math · Biology · Saved PDF Library · Timed Quiz & Deep Analysis
           </p>
         </div>
       </div>
 
       <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+        <span id="activePdfHeaderChip" class="hidden md:inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 max-w-[210px] truncate" title="Active PDF Context">
+          📄 No PDF Active
+        </span>
+
         <button id="openApiModalBtn" type="button" class="px-2.5 py-1.5 rounded-xl text-xs font-bold border border-[var(--border-subtle)] bg-[var(--bg-soft)] hover:border-blue-500 transition flex items-center gap-1.5">
           <span id="aiDot" class="w-2 h-2 rounded-full bg-amber-400"></span>
           <span id="aiStatusLabel">AI: Fallback Mode</span>
@@ -140,11 +173,14 @@
       <button type="button" data-nav="dashboard" class="nav-tab px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition bg-blue-600 text-white">
         📊 Study Dashboard
       </button>
-      <button type="button" data-nav="pdf-ai" class="nav-tab px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition bg-[var(--bg-soft)] text-muted-custom hover:text-[var(--text-main)]">
-        📄 PDF AI Analyzer
+      <button type="button" data-nav="pdf-library" class="nav-tab px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition bg-[var(--bg-soft)] text-muted-custom hover:text-[var(--text-main)]">
+        📚 Saved PDF Library
+      </button>
+      <button type="button" data-nav="quiz-studio" class="nav-tab px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition bg-[var(--bg-soft)] text-muted-custom hover:text-[var(--text-main)]">
+        ⏱ AI PDF Quiz & Analysis
       </button>
       <button type="button" data-nav="tutor" class="nav-tab px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition bg-[var(--bg-soft)] text-muted-custom hover:text-[var(--text-main)]">
-        🤖 AI Tutor & PDF Q&A
+        🤖 Gemini AI Tutor
       </button>
     </div>
   </header>
@@ -157,18 +193,17 @@
 
       <!-- Top Summary KPIs & Target Exam Countdown -->
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        <!-- KPI Cards -->
         <div class="lg:col-span-7 grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div class="surface-card p-4">
             <div class="text-xs text-muted-custom font-semibold">Overall Progress</div>
             <div id="kpiOverallPct" class="text-2xl font-extrabold text-blue-500 mt-1">0%</div>
-            <div id="kpiChaptersDone" class="text-[11px] text-muted-custom mt-0.5">0 / 0 Chapters</div>
+            <div id="kpiChaptersDone" class="text-[11px] text-muted-custom mt-0.5">0 / 0 Completed</div>
           </div>
 
           <div class="surface-card p-4">
             <div class="text-xs text-muted-custom font-semibold">Today Focus</div>
             <div id="kpiTodayMins" class="text-2xl font-extrabold text-emerald-500 mt-1">0m</div>
-            <div class="text-[11px] text-muted-custom mt-0.5">Daily Target: 240m</div>
+            <div class="text-[11px] text-muted-custom mt-0.5">Daily Goal: 240m</div>
           </div>
 
           <div class="surface-card p-4">
@@ -189,7 +224,7 @@
           <div class="flex items-start justify-between gap-2">
             <div>
               <span class="text-[11px] font-bold uppercase tracking-wider text-blue-500">Target Admission Countdown</span>
-              <h2 id="targetExamTitleDisplay" class="text-base sm:text-lg font-extrabold mt-0.5">DU / Engineering / Medical Admission</h2>
+              <h2 id="targetExamTitleDisplay" class="text-base sm:text-lg font-extrabold mt-0.5">HSC & University Admission Target</h2>
             </div>
             <div class="text-right shrink-0">
               <div id="countdownDays" class="text-2xl font-extrabold text-amber-400">--</div>
@@ -198,7 +233,7 @@
           </div>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <input id="examNameInput" type="text" placeholder="Target Exam Name (e.g. DU Ka / BUET)" class="px-3 py-2 rounded-xl text-xs surface-soft focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            <input id="examNameInput" type="text" placeholder="Target Exam (e.g. DU Ka / BUET / DMC)" class="px-3 py-2 rounded-xl text-xs surface-soft focus:outline-none focus:ring-2 focus:ring-blue-500" />
             <input id="examDateInput" type="date" class="px-3 py-2 rounded-xl text-xs surface-soft focus:outline-none focus:ring-2 focus:ring-blue-500" />
           </div>
           <div class="flex justify-end">
@@ -214,7 +249,7 @@
         <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
           <div>
             <h2 class="text-base sm:text-lg font-extrabold">Subject Progress · বিষয়ভিত্তিক প্রস্তুতি</h2>
-            <p class="text-xs text-muted-custom">Click any subject filter below or update chapter completion & topic mastery tags.</p>
+            <p class="text-xs text-muted-custom">Filter chapters below, adjust completion sliders, and set Weak / Moderate / Strong mastery tags.</p>
           </div>
           <div class="flex items-center gap-1.5 flex-wrap" id="subjectFilterBar">
             <button type="button" data-subfilter="All" class="sub-filter-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-600 text-white">All 4</button>
@@ -230,18 +265,15 @@
 
       <!-- Main Grid: Chapter & Topic Tracker + Pomodoro Timer & Checklist -->
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
-
-        <!-- Left 7 Cols: Subject/Chapter Progress & Weak/Strong Topic Tags -->
         <div class="lg:col-span-7 space-y-5">
-          <!-- Add Chapter / Topic Form -->
           <div class="surface-card p-4 sm:p-5">
-            <h3 class="text-sm font-extrabold mb-3">Add Chapter / Topic to Tracker · নতুন অধ্যায় বা টপিক যোগ করো</h3>
+            <h3 class="text-sm font-extrabold mb-3">Add Chapter / Topic · নতুন অধ্যায় বা টপিক যোগ করো</h3>
             <form id="addTopicForm" class="grid grid-cols-1 sm:grid-cols-12 gap-2.5">
               <select id="newTopicSubject" class="sm:col-span-3 px-3 py-2.5 rounded-xl text-xs sm:text-sm surface-soft focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option value="Physics">Physics (পদার্থ)</option>
-                <option value="Chemistry">Chemistry (রসায়ন)</option>
-                <option value="Higher Math">Higher Math (গণিত)</option>
-                <option value="Biology">Biology (জীববিজ্ঞান)</option>
+                <option value="Physics">Physics</option>
+                <option value="Chemistry">Chemistry</option>
+                <option value="Higher Math">Higher Math</option>
+                <option value="Biology">Biology</option>
               </select>
 
               <input id="newTopicChapter" type="text" required placeholder="Chapter & Topic (e.g. তাপগতিবিদ্যা — Carnot Cycle)" class="sm:col-span-5 px-3 py-2.5 rounded-xl text-xs sm:text-sm surface-soft focus:outline-none focus:ring-2 focus:ring-blue-500" />
@@ -258,7 +290,6 @@
             </form>
           </div>
 
-          <!-- Chapter List -->
           <div class="surface-card p-4 sm:p-5">
             <div class="flex items-center justify-between gap-2 mb-3">
               <h3 class="text-sm font-extrabold">Chapters & Topic Mastery Tags</h3>
@@ -270,15 +301,13 @@
           </div>
         </div>
 
-        <!-- Right 5 Cols: Daily Pomodoro Timer + Target Exam Checklist -->
         <div class="lg:col-span-5 space-y-5">
-
           <!-- Pomodoro / Daily Study Timer -->
           <div class="surface-card p-4 sm:p-5">
             <div class="flex items-center justify-between gap-2 mb-3">
               <div>
                 <h3 class="text-sm font-extrabold">Daily Focus & Pomodoro Timer</h3>
-                <p class="text-xs text-muted-custom">Session logs automatically to Today Focus & localStorage.</p>
+                <p class="text-xs text-muted-custom">Logs focus minutes to Today Focus & localStorage.</p>
               </div>
               <div class="flex gap-1">
                 <button type="button" data-preset="25" class="timer-preset px-2.5 py-1 rounded-lg text-xs font-bold bg-blue-600 text-white">25m</button>
@@ -321,133 +350,234 @@
 
             <div id="checklistContainer" class="space-y-2 max-h-[300px] overflow-y-auto custom-scroll pr-1"></div>
           </div>
-
         </div>
       </div>
     </section>
 
-    <!-- ==================== TAB 2: PDF AI ANALYZER ==================== -->
-    <section id="view-pdf-ai" class="hidden space-y-5">
+    <!-- ==================== TAB 2: SAVED PDF LIBRARY (INDEXEDDB + LOCALSTORAGE METADATA) ==================== -->
+    <section id="view-pdf-library" class="hidden space-y-5">
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
 
-        <!-- PDF Upload & Extraction Controls -->
+        <!-- Upload & Save PDF into Library -->
         <div class="lg:col-span-5 surface-card p-4 sm:p-5 space-y-4">
           <div>
-            <h2 class="text-base sm:text-lg font-extrabold">1 · Upload Syllabus / Notes / Question PDF</h2>
+            <h2 class="text-base sm:text-lg font-extrabold">Upload & Save PDF to Library</h2>
             <p class="text-xs text-muted-custom mt-0.5">
-              Extract text with PDF.js and generate structured syllabus breakdown, high-yield topics, sample MCQs, and a study plan via Gemini AI (or smart offline fallback).
+              PDF text & content are stored locally in <strong>IndexedDB</strong> with metadata in <strong>localStorage</strong>. Select any saved PDF for AI Tutor Q&A or Quiz Generation.
             </p>
           </div>
 
-          <label class="block border-2 border-dashed border-[var(--border-subtle)] hover:border-blue-500 rounded-2xl p-6 text-center cursor-pointer transition bg-[var(--bg-soft)]/50">
-            <div class="text-3xl mb-2">📑</div>
-            <div class="text-sm font-bold">Choose PDF File or Tap to Upload</div>
-            <div id="pdfFileMeta" class="text-xs text-muted-custom mt-1">Supports HSC lecture notes, chapters, question banks (.pdf)</div>
-            <input id="pdfUploadInput" type="file" accept="application/pdf,.pdf" class="hidden" />
+          <label class="block border-2 border-dashed border-[var(--border-subtle)] hover:border-blue-500 rounded-2xl p-5 text-center cursor-pointer transition bg-[var(--bg-soft)]/50">
+            <div class="text-3xl mb-1.5">📥</div>
+            <div class="text-sm font-bold">Select PDF File to Extract & Save</div>
+            <div id="pdfUploadStatus" class="text-xs text-muted-custom mt-1">Lecture sheets, chapters, question banks (.pdf)</div>
+            <input id="pdfLibraryFileInput" type="file" accept="application/pdf,.pdf" class="hidden" />
           </label>
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
             <div>
-              <label class="block text-xs font-semibold text-muted-custom mb-1">Focus Subject</label>
-              <select id="pdfSubjectSelect" class="w-full px-3 py-2 rounded-xl text-xs sm:text-sm surface-soft">
-                <option value="All">All HSC Science Subjects</option>
+              <label for="pdfSaveTitleInput" class="block text-xs font-semibold text-muted-custom mb-1">PDF Title</label>
+              <input id="pdfSaveTitleInput" type="text" placeholder="e.g. Organic Chemistry Lecture 04" class="w-full px-3 py-2 rounded-xl text-xs sm:text-sm surface-soft focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+
+            <div>
+              <label for="pdfSaveSubjectSelect" class="block text-xs font-semibold text-muted-custom mb-1">Subject Tag</label>
+              <select id="pdfSaveSubjectSelect" class="w-full px-3 py-2 rounded-xl text-xs sm:text-sm surface-soft">
                 <option value="Physics">Physics (পদার্থবিজ্ঞান)</option>
                 <option value="Chemistry">Chemistry (রসায়ন)</option>
                 <option value="Higher Math">Higher Math (উচ্চতর গণিত)</option>
                 <option value="Biology">Biology (জীববিজ্ঞান)</option>
+                <option value="General">General / Admission</option>
               </select>
             </div>
-            <div>
-              <label class="block text-xs font-semibold text-muted-custom mb-1">Study Horizon</label>
-              <select id="pdfPlanDays" class="w-full px-3 py-2 rounded-xl text-xs sm:text-sm surface-soft">
-                <option value="7">7-Day Sprint Plan</option>
-                <option value="14" selected>14-Day Mastery Plan</option>
-                <option value="30">30-Day Admission Plan</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="flex flex-wrap gap-2">
-            <button id="runPdfBreakdownBtn" type="button" class="flex-1 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold bg-blue-600 hover:bg-blue-700 text-white transition">
-              ✨ Analyze Syllabus, Topics & MCQs
-            </button>
-            <button id="runPdfPlanBtn" type="button" class="py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold surface-soft hover:border-blue-500 transition">
-              🗓 Generate Study Plan
-            </button>
           </div>
 
           <div>
             <div class="flex items-center justify-between mb-1">
-              <label for="pdfExtractedText" class="text-xs font-semibold text-muted-custom">Extracted PDF Text (Editable / Pasteable)</label>
-              <span id="pdfCharCount" class="text-[11px] text-muted-custom">0 chars</span>
+              <label for="pdfDraftText" class="text-xs font-semibold text-muted-custom">Extracted / Editable Text</label>
+              <span id="pdfDraftChars" class="text-[11px] text-muted-custom">0 chars · 0 pages</span>
             </div>
-            <textarea id="pdfExtractedText" rows="8" placeholder="Upload a PDF above, or paste syllabus / lecture / question bank text here..." class="w-full p-3 rounded-xl text-xs surface-soft custom-scroll focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+            <textarea id="pdfDraftText" rows="7" placeholder="Uploaded PDF text appears here automatically, or paste notes/questions to save as a study PDF item..." class="w-full p-3 rounded-xl text-xs surface-soft custom-scroll focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
           </div>
-        </div>
 
-        <!-- AI Breakdown & Study Plan Output -->
-        <div class="lg:col-span-7 surface-card p-4 sm:p-5 flex flex-col">
-          <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-[var(--border-subtle)]">
-            <div>
-              <h2 class="text-base sm:text-lg font-extrabold">2 · AI Syllabus Breakdown, Questions & Study Plan</h2>
-              <p id="pdfAnalysisStatus" class="text-xs text-muted-custom">Ready to analyze uploaded PDF content.</p>
-            </div>
-            <button id="syncBreakdownToTrackerBtn" type="button" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition">
-              + Sync Topics to Tracker
+          <div class="flex flex-wrap gap-2">
+            <button id="savePdfToLibraryBtn" type="button" class="flex-1 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold bg-blue-600 hover:bg-blue-700 text-white transition">
+              💾 Save PDF to Library
+            </button>
+            <button id="aiSummarizeDraftBtn" type="button" class="py-2.5 px-3.5 rounded-xl text-xs sm:text-sm font-bold surface-soft hover:border-blue-500 transition">
+              ✨ AI Key Points
             </button>
           </div>
 
-          <div id="pdfAiResultContainer" class="mt-4 space-y-4 flex-1 overflow-y-auto custom-scroll max-h-[680px] pr-1">
-            <div class="surface-soft p-5 text-center text-xs sm:text-sm text-muted-custom">
-              Upload a PDF on the left and click <strong>"Analyze Syllabus, Topics & MCQs"</strong> or <strong>"Generate Study Plan"</strong> to view structured insights with formulas ($\LaTeX$) and practice questions.
-            </div>
+          <div id="draftAiSummaryBox" class="hidden surface-soft p-3.5 text-xs space-y-1.5">
+            <div class="font-bold text-blue-400">AI Summary & Key Topics</div>
+            <div id="draftAiSummaryText" class="whitespace-pre-line rich-block leading-relaxed"></div>
           </div>
+        </div>
+
+        <!-- Saved PDF Library List & Preview -->
+        <div class="lg:col-span-7 surface-card p-4 sm:p-5 flex flex-col">
+          <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-[var(--border-subtle)]">
+            <div>
+              <h2 class="text-base sm:text-lg font-extrabold">Saved PDF Library (<span id="savedPdfCountBadge">0</span>)</h2>
+              <p id="activePdfBannerText" class="text-xs text-muted-custom">Active PDF for AI Tutor & Quiz: None selected</p>
+            </div>
+            <button type="button" onclick="switchTab('quiz-studio')" class="px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white transition">
+              Generate Quiz from PDF →
+            </button>
+          </div>
+
+          <div id="savedPdfListContainer" class="mt-4 space-y-3 flex-1 overflow-y-auto custom-scroll max-h-[640px] pr-1"></div>
         </div>
 
       </div>
     </section>
 
-    <!-- ==================== TAB 3: GEMINI AI TUTOR & PDF Q&A ==================== -->
-    <section id="view-tutor" class="hidden">
-      <div class="surface-card p-4 sm:p-5 flex flex-col h-[76vh] min-h-[520px]">
-        <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-[var(--border-subtle)]">
+    <!-- ==================== TAB 3: AI PDF QUIZ GENERATOR & TIMED EXAM ARENA ==================== -->
+    <section id="view-quiz-studio" class="hidden space-y-5">
+
+      <!-- Quiz Setup Panel -->
+      <div id="quizSetupCard" class="surface-card p-4 sm:p-5 space-y-4">
+        <div class="flex flex-wrap items-center justify-between gap-2">
           <div>
-            <h2 class="text-base sm:text-lg font-extrabold">Gemini AI Tutor & PDF Q&A Assistant</h2>
+            <h2 class="text-base sm:text-lg font-extrabold">AI PDF Quiz Generator & Timed Exam</h2>
             <p class="text-xs text-muted-custom">
-              Ask any question from your uploaded PDF or HSC Physics, Chemistry, Higher Math & Biology.
+              Select a saved PDF or paste syllabus/notes, configure question count & timer, and get full post-submission analysis (answers & explanations shown strictly after Submit).
             </p>
           </div>
+          <span class="px-3 py-1 rounded-full text-xs font-bold bg-blue-500/15 text-blue-400">
+            Net Marking Enabled
+          </span>
+        </div>
 
-          <div class="flex items-center gap-2">
-            <label class="inline-flex items-center gap-1.5 text-xs font-semibold surface-soft px-3 py-1.5 rounded-xl cursor-pointer">
-              <input id="usePdfContextCheckbox" type="checkbox" checked class="rounded accent-blue-600" />
-              <span>Use PDF Context</span>
-            </label>
-            <button id="clearChatBtn" type="button" class="px-3 py-1.5 rounded-xl text-xs font-bold surface-soft hover:text-rose-500 transition">
-              Clear Chat
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
+          <div class="md:col-span-5">
+            <label for="quizSourcePdfSelect" class="block text-xs font-semibold text-muted-custom mb-1">Source PDF from Library</label>
+            <select id="quizSourcePdfSelect" class="w-full px-3 py-2.5 rounded-xl text-xs sm:text-sm surface-soft">
+              <option value="">-- Use Custom / Pasted Text Below --</option>
+            </select>
+          </div>
+
+          <div class="md:col-span-3">
+            <label for="quizSubjectSelect" class="block text-xs font-semibold text-muted-custom mb-1">Subject Focus</label>
+            <select id="quizSubjectSelect" class="w-full px-3 py-2.5 rounded-xl text-xs sm:text-sm surface-soft">
+              <option value="Physics">Physics</option>
+              <option value="Chemistry">Chemistry</option>
+              <option value="Higher Math">Higher Math</option>
+              <option value="Biology">Biology</option>
+              <option value="Mixed HSC">Mixed HSC Science</option>
+            </select>
+          </div>
+
+          <div class="md:col-span-2">
+            <label for="quizCountInput" class="block text-xs font-semibold text-muted-custom mb-1">Questions (1–30)</label>
+            <input id="quizCountInput" type="number" min="1" max="30" value="8" class="w-full px-3 py-2.5 rounded-xl text-xs sm:text-sm surface-soft" />
+          </div>
+
+          <div class="md:col-span-2">
+            <label for="quizMinutesInput" class="block text-xs font-semibold text-muted-custom mb-1">Timer (Mins)</label>
+            <input id="quizMinutesInput" type="number" min="1" max="120" value="10" class="w-full px-3 py-2.5 rounded-xl text-xs sm:text-sm surface-soft" />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+          <div class="md:col-span-4">
+            <label for="quizDifficultySelect" class="block text-xs font-semibold text-muted-custom mb-1">Difficulty & Exam Level</label>
+            <select id="quizDifficultySelect" class="w-full px-3 py-2.5 rounded-xl text-xs sm:text-sm surface-soft">
+              <option value="HSC Board + Standard">HSC Board + Standard</option>
+              <option value="University Admission (DU/GST)">University Admission (DU/GST)</option>
+              <option value="Engineering & Analytical (BUET/CKRUET)">Engineering & Analytical</option>
+              <option value="Medical Concept & Recall">Medical Concept & Recall</option>
+            </select>
+          </div>
+
+          <div class="md:col-span-4">
+            <label for="quizNegMarkSelect" class="block text-xs font-semibold text-muted-custom mb-1">Negative Marking</label>
+            <select id="quizNegMarkSelect" class="w-full px-3 py-2.5 rounded-xl text-xs sm:text-sm surface-soft">
+              <option value="0.25" selected>-0.25 per wrong answer</option>
+              <option value="0.5">-0.50 per wrong answer</option>
+              <option value="0">0 (No negative mark)</option>
+            </select>
+          </div>
+
+          <div class="md:col-span-4 flex gap-2">
+            <button id="generateTimedQuizBtn" type="button" class="flex-1 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold bg-blue-600 hover:bg-blue-700 text-white transition">
+              🚀 Generate & Start Timed Quiz
             </button>
           </div>
         </div>
 
-        <!-- Quick Starter Prompts -->
+        <div>
+          <label for="quizCustomText" class="block text-xs font-semibold text-muted-custom mb-1">
+            Study Text / Syllabus Notes (Auto-filled when a Saved PDF is chosen; you can edit or paste any text)
+          </label>
+          <textarea id="quizCustomText" rows="4" placeholder="Select a saved PDF above or paste your chapter notes/questions here to generate targeted MCQs..." class="w-full p-3 rounded-xl text-xs surface-soft custom-scroll focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+        </div>
+
+        <div id="quizGeneratorStatus" class="text-xs text-muted-custom">Ready to generate quiz.</div>
+      </div>
+
+      <!-- Active Timed Exam Arena -->
+      <div id="activeQuizArena" class="hidden space-y-4"></div>
+
+      <!-- Post-Submission Full Analysis Report -->
+      <div id="quizAnalysisReport" class="hidden space-y-4"></div>
+    </section>
+
+    <!-- ==================== TAB 4: GEMINI AI TUTOR CHAT ==================== -->
+    <section id="view-tutor" class="hidden">
+      <div class="surface-card p-4 sm:p-5 flex flex-col h-[78vh] min-h-[540px]">
+        <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-[var(--border-subtle)]">
+          <div>
+            <h2 class="text-base sm:text-lg font-extrabold">Gemini AI Tutor · Interactive Study Chat</h2>
+            <p id="tutorContextIndicator" class="text-xs text-muted-custom">
+              Multi-turn chat with formula support ($\LaTeX$), image upload & saved PDF context.
+            </p>
+          </div>
+
+          <div class="flex items-center gap-2 flex-wrap">
+            <label class="inline-flex items-center gap-1.5 text-xs font-semibold surface-soft px-3 py-1.5 rounded-xl cursor-pointer">
+              <input id="tutorUsePdfCheckbox" type="checkbox" checked class="accent-blue-600 rounded" />
+              <span>Attach Active PDF</span>
+            </label>
+            <button id="clearTutorChatBtn" type="button" class="px-3 py-1.5 rounded-xl text-xs font-bold surface-soft hover:text-rose-500 transition">
+              New Chat
+            </button>
+          </div>
+        </div>
+
+        <!-- Quick Prompt Chips -->
         <div class="flex items-center gap-1.5 overflow-x-auto custom-scroll py-2.5">
-          <button type="button" data-prompt="এই PDF-এর সবচেয়ে গুরুত্বপূর্ণ ৫টি টপিক এবং সূত্র ব্যাখ্যা করো।" class="starter-prompt px-3 py-1.5 rounded-full text-xs font-semibold surface-soft hover:border-blue-500 whitespace-nowrap transition">
-            📌 Key PDF Topics & Formulas
+          <button type="button" data-qchip="এই টপিকের সব গুরুত্বপূর্ণ সূত্র ও একক (SI unit) সাজিয়ে দাও।" class="tutor-chip px-3 py-1.5 rounded-full text-xs font-semibold surface-soft hover:border-blue-500 whitespace-nowrap transition">
+            📐 Formula Breakdown
           </button>
-          <button type="button" data-prompt="Create 4 admission-level MCQs from this material with step-by-step solutions." class="starter-prompt px-3 py-1.5 rounded-full text-xs font-semibold surface-soft hover:border-blue-500 whitespace-nowrap transition">
-            🎯 Admission MCQs + Solutions
+          <button type="button" data-qchip="কার্নো ইঞ্জিনের দক্ষতা $\\eta = 1 - \\frac{T_2}{T_1}$ এর ধাপে ধাপে ব্যাখ্যা ও একটি গাণিতিক সমস্যা সমাধান করে দেখাও।" class="tutor-chip px-3 py-1.5 rounded-full text-xs font-semibold surface-soft hover:border-blue-500 whitespace-nowrap transition">
+            🧮 Step-by-Step Derivation
           </button>
-          <button type="button" data-prompt="নিউটনের গতির সূত্র ও কার্নো ইঞ্জিনের দক্ষতা $\\eta = 1 - \\frac{T_2}{T_1}$ সহজভাবে বুঝিয়ে দাও।" class="starter-prompt px-3 py-1.5 rounded-full text-xs font-semibold surface-soft hover:border-blue-500 whitespace-nowrap transition">
-            ∑ MathJax Formula Walkthrough
+          <button type="button" data-qchip="ভর্তি পরীক্ষার মানের ৫টি কঠিন MCQ দাও; শেষে উত্তর ও সংক্ষিপ্ত ব্যাখ্যা দিও।" class="tutor-chip px-3 py-1.5 rounded-full text-xs font-semibold surface-soft hover:border-blue-500 whitespace-nowrap transition">
+            📝 Practice MCQs
+          </button>
+          <button type="button" data-qchip="আমার Weak টপিকগুলো দ্রুত কাভার করার জন্য ৭ দিনের একটি প্র্যাকটিক্যাল স্টাডি প্ল্যান দাও।" class="tutor-chip px-3 py-1.5 rounded-full text-xs font-semibold surface-soft hover:border-blue-500 whitespace-nowrap transition">
+            🗓 Study Plan
           </button>
         </div>
 
-        <!-- Messages Stream -->
-        <div id="chatMessages" class="flex-1 overflow-y-auto custom-scroll space-y-3 my-2 pr-1"></div>
+        <!-- Conversation Thread -->
+        <div id="tutorChatStream" class="flex-1 overflow-y-auto custom-scroll space-y-3 my-2 pr-1"></div>
 
-        <!-- Composer -->
+        <!-- Attached Image Preview -->
+        <div id="tutorImageAttachmentBar" class="hidden items-center justify-between gap-2 px-3 py-1.5 mb-2 rounded-xl bg-blue-500/10 border border-blue-500/30 text-xs">
+          <span id="tutorImageAttachmentName" class="truncate font-semibold text-blue-400"></span>
+          <button id="removeTutorImageBtn" type="button" class="text-rose-400 font-bold">✕ Remove</button>
+        </div>
+
+        <!-- Chat Input Bar -->
         <form id="tutorChatForm" class="pt-2 border-t border-[var(--border-subtle)] flex items-center gap-2">
-          <input id="tutorChatInput" type="text" placeholder="Ask about your PDF or any Physics / Chemistry / Math / Biology concept..." class="flex-1 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm surface-soft focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          <label class="p-2.5 rounded-xl surface-soft hover:border-blue-500 cursor-pointer text-sm shrink-0" title="Attach Question / Notes Image">
+            📷
+            <input id="tutorImageInput" type="file" accept="image/*" class="hidden" />
+          </label>
+          <input id="tutorMessageInput" type="text" placeholder="Ask anything about Physics, Chemistry, Math, Biology or your saved PDF..." class="flex-1 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm surface-soft focus:outline-none focus:ring-2 focus:ring-blue-500" />
           <button type="submit" class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-blue-600 hover:bg-blue-700 text-white transition shrink-0">
             Send ↑
           </button>
@@ -455,34 +585,47 @@
       </div>
     </section>
 
+    <!-- GitHub / Vercel Deployment Footer Note -->
+    <footer class="surface-card p-4 sm:p-5 text-xs text-muted-custom flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div>
+        <div class="font-bold text-[var(--text-main)]">Admission Warrior — AI Study Tracker & PDF Quiz Studio</div>
+        <div class="mt-0.5">
+          <strong>GitHub & Vercel Hosting:</strong> Save this single HTML file as <code class="text-blue-400">index.html</code> in your repository root and deploy directly to Vercel (zero build step required). Users can add their own Gemini API key in the top bar or use built-in offline fallback mode.
+        </div>
+      </div>
+      <div class="shrink-0 font-semibold">
+        IndexedDB PDFs + localStorage Progress
+      </div>
+    </footer>
+
   </main>
 
   <!-- ==================== GEMINI API KEY MODAL ==================== -->
   <div id="apiKeyModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/65 backdrop-blur-xs p-4">
     <div class="surface-card w-full max-w-md p-5 space-y-4">
       <div class="flex items-center justify-between">
-        <h3 class="text-base font-extrabold">Gemini API Key Configuration</h3>
+        <h3 class="text-base font-extrabold">Gemini API Key Settings</h3>
         <button id="closeApiModalBtn" type="button" class="p-1.5 rounded-lg surface-soft text-xs font-bold">✕</button>
       </div>
 
       <p class="text-xs text-muted-custom leading-relaxed">
-        Your API key is stored locally in your browser (<code class="text-blue-400">localStorage</code>). If left empty, the app runs seamlessly in <strong>Smart Offline Fallback Mode</strong> with structured study analysis and practice prompts.
+        Your Gemini API key is saved only in your browser (<code class="text-blue-400">localStorage</code>). Without a key, the app automatically uses a rich built-in HSC/PDF fallback mode so quizzes, study tracking, and AI responses remain usable.
       </p>
 
       <div>
-        <label for="geminiApiKeyInput" class="block text-xs font-semibold mb-1">Gemini API Key</label>
-        <input id="geminiApiKeyInput" type="password" placeholder="AIzaSy..." class="w-full px-3.5 py-2.5 rounded-xl text-sm surface-soft focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        <label for="geminiKeyInput" class="block text-xs font-semibold mb-1">Gemini API Key</label>
+        <input id="geminiKeyInput" type="password" placeholder="AIzaSy..." class="w-full px-3.5 py-2.5 rounded-xl text-sm surface-soft focus:outline-none focus:ring-2 focus:ring-blue-500" />
       </div>
 
       <div class="flex items-center justify-between gap-2 pt-2">
-        <button id="clearApiKeyBtn" type="button" class="px-3.5 py-2 rounded-xl text-xs font-bold text-rose-500 surface-soft hover:border-rose-500 transition">
-          Clear Key (Fallback)
+        <button id="clearGeminiKeyBtn" type="button" class="px-3.5 py-2 rounded-xl text-xs font-bold text-rose-500 surface-soft hover:border-rose-500 transition">
+          Clear Key
         </button>
         <div class="flex gap-2">
           <button id="cancelApiModalBtn" type="button" class="px-3.5 py-2 rounded-xl text-xs font-bold surface-soft transition">
             Cancel
           </button>
-          <button id="saveApiKeyBtn" type="button" class="px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white transition">
+          <button id="saveGeminiKeyBtn" type="button" class="px-4 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white transition">
             Save Key
           </button>
         </div>
@@ -490,45 +633,53 @@
     </div>
   </div>
 
-  <!-- Non-blocking Toast Banner -->
+  <!-- Non-blocking Toast Notification -->
   <div id="toastBanner" class="fixed bottom-5 right-5 z-50 hidden max-w-xs px-4 py-2.5 rounded-xl bg-blue-600 text-white text-xs sm:text-sm font-bold shadow-lg"></div>
 
   <script>
     'use strict';
 
-    // ==================== STORAGE KEYS & DEFAULT STATE ====================
+    // ==================== CONSTANTS & STORAGE HELPERS ====================
     const STORAGE_KEYS = {
-      THEME: 'aw_tracker_theme',
-      API_KEY: 'aw_tracker_gemini_key',
-      TOPICS: 'aw_tracker_topics_v1',
-      CHECKLIST: 'aw_tracker_checklist_v1',
-      TIMER: 'aw_tracker_timer_v1',
-      EXAM_TARGET: 'aw_tracker_exam_target_v1',
-      PDF_TEXT: 'aw_tracker_pdf_text_v1',
-      PDF_META: 'aw_tracker_pdf_meta_v1'
+      THEME: 'aw_v2_theme',
+      API_KEY: 'aw_v2_gemini_key',
+      TOPICS: 'aw_v2_topics',
+      CHECKLIST: 'aw_v2_checklist',
+      TIMER: 'aw_v2_timer',
+      EXAM_TARGET: 'aw_v2_exam_target',
+      PDF_META_LIST: 'aw_v2_pdf_meta_list',
+      ACTIVE_PDF_ID: 'aw_v2_active_pdf_id'
     };
+
+    const IDB_CONFIG = {
+      DB_NAME: 'AdmissionWarriorPDF_DB',
+      VERSION: 1,
+      STORE: 'pdf_documents'
+    };
+
+    const OPTION_LABELS = ['A', 'B', 'C', 'D'];
 
     const DEFAULT_TOPICS = [
       { id: 't1', subject: 'Physics', chapter: 'নিউটনিয়ান বলবিদ্যা (Newtonian Mechanics)', progress: 75, mastery: 'strong' },
-      { id: 't2', subject: 'Physics', chapter: 'তাপগতিবিদ্যা ও কার্নো ইঞ্জিন (Thermodynamics)', progress: 45, mastery: 'weak' },
-      { id: 't3', subject: 'Chemistry', chapter: 'জৈব রসায়ন — অ্যালডিহাইড ও কিটোন', progress: 40, mastery: 'weak' },
-      { id: 't4', subject: 'Chemistry', chapter: 'পরিমাণগত রসায়ন ও টাইট্রেশন', progress: 80, mastery: 'strong' },
+      { id: 't2', subject: 'Physics', chapter: 'তাপগতিবিদ্যা ও কার্নো ইঞ্জিন (Thermodynamics)', progress: 40, mastery: 'weak' },
+      { id: 't3', subject: 'Chemistry', chapter: 'জৈব রসায়ন — অ্যালডিহাইড, কিটোন ও অ্যালডল', progress: 35, mastery: 'weak' },
+      { id: 't4', subject: 'Chemistry', chapter: 'পরিমাণগত রসায়ন ও আয়তনিক বিশ্লেষণ', progress: 80, mastery: 'strong' },
       { id: 't5', subject: 'Higher Math', chapter: 'অন্তরীকরণ ও যোগজীকরণ (Calculus)', progress: 55, mastery: 'moderate' },
-      { id: 't6', subject: 'Higher Math', chapter: 'কনিক ও সরলরেখা (Conics & Straight Line)', progress: 35, mastery: 'weak' },
+      { id: 't6', subject: 'Higher Math', chapter: 'কনিক ও সরলরেখা (Conics & Straight Line)', progress: 30, mastery: 'weak' },
       { id: 't7', subject: 'Biology', chapter: 'কোষ বিভাজন ও জিনতত্ত্ব (Genetics)', progress: 85, mastery: 'strong' },
       { id: 't8', subject: 'Biology', chapter: 'মানব শারীরতত্ত্ব — রক্ত ও সঞ্চালন', progress: 65, mastery: 'moderate' }
     ];
 
     const DEFAULT_CHECKLIST = [
-      { id: 'c1', text: 'HSC বোর্ড ও বিগত ১০ বছরের ঢাবি/বুয়েট/মেডিকেল MCQ সমাধান', done: true },
-      { id: 'c2', text: 'সব Physics ও Higher Math সূত্রের শর্ট-নোট তৈরি', done: false },
-      { id: 'c3', text: 'Weak চিহ্নিত টপিকগুলোতে অন্তত ৫০টি করে MCQ অনুশীলন', done: false },
-      { id: 'c4', text: 'নেগেটিভ মার্কিং (-0.25) ধরে পূর্ণাঙ্গ মডেল টেস্ট', done: false }
+      { id: 'c1', text: 'HSC বোর্ড ও বিগত ১০ বছরের ভর্তি পরীক্ষার MCQ সমাধান', done: true },
+      { id: 'c2', text: 'Physics ও Higher Math-এর সব সূত্র ও ব্যতিক্রম নোট করা', done: false },
+      { id: 'c3', text: 'Weak ট্যাগ দেওয়া টপিকগুলোতে টাইমার ধরে কুইজ দেওয়া', done: false },
+      { id: 'c4', text: 'সাবমিটের পর ভুল উত্তরগুলোর Analysis ও ব্যাখ্যা রিভিউ', done: false }
     ];
 
-    const todayStr = () => new Date().toISOString().slice(0, 10);
+    const todayISO = () => new Date().toISOString().slice(0, 10);
 
-    const loadJSON = (key, fallback) => {
+    const loadLS = (key, fallback) => {
       try {
         const raw = localStorage.getItem(key);
         return raw ? JSON.parse(raw) : fallback;
@@ -537,7 +688,7 @@
       }
     };
 
-    const saveJSON = (key, value) => {
+    const saveLS = (key, value) => {
       try {
         localStorage.setItem(key, JSON.stringify(value));
       } catch {}
@@ -551,8 +702,31 @@
         '"': '&quot;'
       }[ch]));
 
+    function formatRichMarkdown(rawText) {
+      let text = String(rawText ?? '');
+      const codeBlocks = [];
+      text = text.replace(/```([\s\S]*?)```/g, (_, code) => {
+        const idx = codeBlocks.length;
+        codeBlocks.push(`<pre><code>${escapeHTML(code.trim())}</code></pre>`);
+        return `@@CODEBLOCK_${idx}@@`;
+      });
+
+      let html = escapeHTML(text);
+      html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+      html = html.replace(/`([^`\n]+)`/g, '<code>$1</code>');
+      html = html.replace(/^### (.+)$/gm, '<h4>$1</h4>');
+      html = html.replace(/^## (.+)$/gm, '<h3>$1</h3>');
+      html = html.replace(/^\s*[-*]\s+(.+)$/gm, '<div class="pl-3">• $1</div>');
+
+      codeBlocks.forEach((block, idx) => {
+        html = html.replace(`@@CODEBLOCK_${idx}@@`, block);
+      });
+
+      return html;
+    }
+
     let toastTimer = null;
-    function showToast(msg) {
+    function toast(msg) {
       const el = document.getElementById('toastBanner');
       if (!el) return;
       el.textContent = msg;
@@ -561,33 +735,91 @@
       toastTimer = setTimeout(() => el.classList.add('hidden'), 2800);
     }
 
-    function typesetMath(targetEl) {
+    function typesetMath(el) {
       try {
         if (window.MathJax && typeof window.MathJax.typesetPromise === 'function') {
-          window.MathJax.typesetPromise(targetEl ? [targetEl] : undefined).catch(() => {});
+          window.MathJax.typesetPromise(el ? [el] : undefined).catch(() => {});
         }
       } catch {}
     }
 
+    function fileToBase64(file) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || '').split(',')[1] || '');
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+    }
+
+    // ==================== INDEXEDDB FOR SAVED PDFS ====================
+    function openPdfDB() {
+      return new Promise((resolve, reject) => {
+        if (!('indexedDB' in window)) {
+          reject(new Error('IndexedDB not supported'));
+          return;
+        }
+        const req = indexedDB.open(IDB_CONFIG.DB_NAME, IDB_CONFIG.VERSION);
+        req.onupgradeneeded = (e) => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains(IDB_CONFIG.STORE)) {
+            db.createObjectStore(IDB_CONFIG.STORE, { keyPath: 'id' });
+          }
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    async function idbPutPdfRecord(record) {
+      const db = await openPdfDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(IDB_CONFIG.STORE, 'readwrite');
+        tx.objectStore(IDB_CONFIG.STORE).put(record);
+        tx.oncomplete = () => resolve(true);
+        tx.onerror = () => reject(tx.error);
+      });
+    }
+
+    async function idbGetPdfRecord(id) {
+      const db = await openPdfDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(IDB_CONFIG.STORE, 'readonly');
+        const req = tx.objectStore(IDB_CONFIG.STORE).get(id);
+        req.onsuccess = () => resolve(req.result || null);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    async function idbDeletePdfRecord(id) {
+      const db = await openPdfDB();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(IDB_CONFIG.STORE, 'readwrite');
+        tx.objectStore(IDB_CONFIG.STORE).delete(id);
+        tx.oncomplete = () => resolve(true);
+        tx.onerror = () => reject(tx.error);
+      });
+    }
+
     // ==================== APPLICATION STATE ====================
-    let state = {
+    const state = {
       activeNav: 'dashboard',
       subjectFilter: 'All',
-      topics: loadJSON(STORAGE_KEYS.TOPICS, DEFAULT_TOPICS),
-      checklist: loadJSON(STORAGE_KEYS.CHECKLIST, DEFAULT_CHECKLIST),
-      examTarget: loadJSON(STORAGE_KEYS.EXAM_TARGET, {
+      topics: loadLS(STORAGE_KEYS.TOPICS, DEFAULT_TOPICS),
+      checklist: loadLS(STORAGE_KEYS.CHECKLIST, DEFAULT_CHECKLIST),
+      examTarget: loadLS(STORAGE_KEYS.EXAM_TARGET, {
         name: 'HSC & University Admission Target',
         date: (() => {
           const d = new Date();
-          d.setDate(d.getDate() + 90);
+          d.setDate(d.getDate() + 75);
           return d.toISOString().slice(0, 10);
         })()
       }),
       timer: (() => {
-        const saved = loadJSON(STORAGE_KEYS.TIMER, null);
-        if (saved && saved.date === todayStr()) {
+        const saved = loadLS(STORAGE_KEYS.TIMER, null);
+        if (saved && saved.date === todayISO()) {
           return {
-            date: todayStr(),
+            date: todayISO(),
             todayMinutes: Number(saved.todayMinutes) || 0,
             presetMinutes: Number(saved.presetMinutes) || 25,
             secondsLeft: Number(saved.secondsLeft) || 25 * 60,
@@ -595,55 +827,62 @@
           };
         }
         return {
-          date: todayStr(),
+          date: todayISO(),
           todayMinutes: 0,
           presetMinutes: 25,
           secondsLeft: 25 * 60,
           running: false
         };
       })(),
-      pdfText: localStorage.getItem(STORAGE_KEYS.PDF_TEXT) || '',
-      pdfMeta: localStorage.getItem(STORAGE_KEYS.PDF_META) || 'No PDF uploaded yet',
-      lastExtractedTopics: []
+      pdfMetaList: loadLS(STORAGE_KEYS.PDF_META_LIST, []),
+      activePdfId: localStorage.getItem(STORAGE_KEYS.ACTIVE_PDF_ID) || '',
+      activePdfText: '',
+      draftPages: 0,
+      tutorHistory: [], // { role: 'user'|'model', parts: [...] }
+      tutorImageFile: null,
+      quizSession: null, // { title, subject, difficulty, negMark, questions, currentIdx, answers, secondsLeft, intervalId, submitted }
+      lastGeneratedQuiz: []
     };
 
     // ==================== THEME & NAVIGATION ====================
     function applyTheme(theme) {
       document.documentElement.setAttribute('data-theme', theme);
-      saveJSON(STORAGE_KEYS.THEME, theme);
+      saveLS(STORAGE_KEYS.THEME, theme);
       const btn = document.getElementById('themeToggleBtn');
       if (btn) btn.textContent = theme === 'dark' ? '☀️' : '🌙';
     }
 
     function switchTab(tabName) {
       state.activeNav = tabName;
-      const views = {
+      const map = {
         dashboard: 'view-dashboard',
-        'pdf-ai': 'view-pdf-ai',
+        'pdf-library': 'view-pdf-library',
+        'quiz-studio': 'view-quiz-studio',
         tutor: 'view-tutor'
       };
-      Object.entries(views).forEach(([key, id]) => {
-        const section = document.getElementById(id);
-        if (section) section.classList.toggle('hidden', key !== tabName);
+      Object.entries(map).forEach(([key, secId]) => {
+        document.getElementById(secId)?.classList.toggle('hidden', key !== tabName);
       });
 
       document.querySelectorAll('.nav-tab').forEach((btn) => {
-        const isActive = btn.dataset.nav === tabName;
-        btn.classList.toggle('bg-blue-600', isActive);
-        btn.classList.toggle('text-white', isActive);
-        btn.classList.toggle('bg-[var(--bg-soft)]', !isActive);
-        btn.classList.toggle('text-muted-custom', !isActive);
+        const active = btn.dataset.nav === tabName;
+        btn.className = active
+          ? 'nav-tab px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition bg-blue-600 text-white'
+          : 'nav-tab px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition bg-[var(--bg-soft)] text-muted-custom hover:text-[var(--text-main)]';
       });
 
+      if (tabName === 'quiz-studio') {
+        populateQuizPdfSelector();
+      }
       typesetMath(document.body);
     }
 
-    // ==================== GEMINI API & FALLBACK ENGINE ====================
+    // ==================== GEMINI API CALLER ====================
     function getApiKey() {
       return (localStorage.getItem(STORAGE_KEYS.API_KEY) || '').trim();
     }
 
-    function refreshAiBadge() {
+    function refreshAiStatusUI() {
       const hasKey = Boolean(getApiKey());
       const dot = document.getElementById('aiDot');
       const label = document.getElementById('aiStatusLabel');
@@ -657,142 +896,85 @@
       }
     }
 
-    async function callGeminiWithRetry(prompt, systemInstruction = '', maxRetries = 3) {
+    async function callGemini({ contents, systemInstruction = '', jsonMode = false, maxRetries = 3 }) {
       const apiKey = getApiKey();
-      if (!apiKey) {
-        throw new Error('NO_API_KEY');
-      }
+      if (!apiKey) throw new Error('NO_API_KEY');
 
-      const models = ['gemini-3-flash-preview', 'gemini-2.5-flash'];
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${models[0]}:generateContent?key=${encodeURIComponent(apiKey)}`;
-
-      const payload = {
-        contents: [{ role: 'user', parts: [{ text: prompt }] }]
-      };
+      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${encodeURIComponent(apiKey)}`;
+      const payload = { contents };
       if (systemInstruction) {
         payload.systemInstruction = { parts: [{ text: systemInstruction }] };
       }
+      if (jsonMode) {
+        payload.generationConfig = { responseMimeType: 'application/json' };
+      }
 
-      let delayMs = 1000;
+      let delay = 1000;
       for (let attempt = 0; attempt < maxRetries; attempt++) {
         try {
-          const resp = await fetch(url, {
+          const res = await fetch(endpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
           });
-          if (!resp.ok) {
-            const errData = await resp.json().catch(() => ({}));
-            throw new Error(errData?.error?.message || `HTTP ${resp.status}`);
+          if (!res.ok) {
+            const errJson = await res.json().catch(() => ({}));
+            throw new Error(errJson?.error?.message || `HTTP ${res.status}`);
           }
-          const data = await resp.json();
-          const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (!text) throw new Error('Empty response from Gemini');
-          return text.trim();
+          const data = await res.json();
+          const out = data?.candidates?.[0]?.content?.parts?.map((p) => p.text || '').join('\n').trim();
+          if (!out) throw new Error('Empty Gemini response');
+          return out;
         } catch (err) {
           if (attempt === maxRetries - 1) throw err;
-          await new Promise((r) => setTimeout(r, delayMs));
-          delayMs *= 2;
+          await new Promise((r) => setTimeout(r, delay));
+          delay *= 2;
         }
       }
     }
 
-    function buildOfflinePdfBreakdown(text, subjectFocus) {
-      const clean = (text || '').replace(/\s+/g, ' ').trim();
-      const snippet = clean ? clean.slice(0, 320) : 'No PDF text provided yet.';
-      const subLabel = subjectFocus === 'All' ? 'Physics, Chemistry, Higher Math, Biology' : subjectFocus;
-
-      const topics = [
-        { subject: subjectFocus === 'All' ? 'Physics' : subjectFocus, chapter: 'Core Principles & Formula Derivation', mastery: 'moderate' },
-        { subject: subjectFocus === 'All' ? 'Chemistry' : subjectFocus, chapter: 'Quantitative & Reaction Mechanisms', mastery: 'weak' },
-        { subject: subjectFocus === 'All' ? 'Higher Math' : subjectFocus, chapter: 'Problem Solving & Graphical Analysis', mastery: 'moderate' },
-        { subject: subjectFocus === 'All' ? 'Biology' : subjectFocus, chapter: 'High-Yield Diagrams & Terminology', mastery: 'strong' }
-      ];
-
-      return {
-        topics,
-        html: `
-          <div class="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs">
-            <strong>Fallback Mode Active:</strong> Add a Gemini API key in the top bar for live AI syllabus extraction. Below is a structured HSC & Admission breakdown based on your text (${clean.length} chars) for <strong>${escapeHTML(subLabel)}</strong>.
-          </div>
-
-          <div class="surface-soft p-4 space-y-2">
-            <h4 class="font-extrabold text-sm text-blue-400">1 · Syllabus & Content Overview</h4>
-            <p class="text-xs sm:text-sm text-muted-custom">${escapeHTML(snippet)}${clean.length > 320 ? '...' : ''}</p>
-            <p class="text-xs">Key Formula Example: $\\eta = 1 - \\frac{T_2}{T_1}$ and $\\int_a^b f(x)\\,dx = F(b) - F(a)$.</p>
-          </div>
-
-          <div class="surface-soft p-4 space-y-2">
-            <h4 class="font-extrabold text-sm text-emerald-400">2 · High-Yield Topics Identified</h4>
-            <ul class="list-disc pl-5 text-xs sm:text-sm space-y-1">
-              ${topics.map((t) => `<li><strong>${escapeHTML(t.chapter)}</strong> <span class="text-muted-custom">(${escapeHTML(t.subject)} · ${t.mastery})</span></li>`).join('')}
-            </ul>
-          </div>
-
-          <div class="surface-soft p-4 space-y-2">
-            <h4 class="font-extrabold text-sm text-purple-400">3 · Sample Admission MCQs</h4>
-            <div class="text-xs sm:text-sm space-y-2">
-              <p><strong>Q1.</strong> কার্নো ইঞ্জিনের দক্ষতা বৃদ্ধি করতে হলে উৎস ও গ্রাহকের তাপমাত্রার পার্থক্য কী হতে হবে? <br/><span class="text-muted-custom">A) কমাতে হবে &nbsp; B) বাড়াতে হবে &nbsp; C) অপরিবর্তিত রাখতে হবে &nbsp; D) শূন্য করতে হবে</span><br/><span class="text-emerald-400 font-semibold">Ans: B</span> — $\\eta = 1 - \\frac{T_2}{T_1}$ অনুযায়ী $T_2/T_1$ কমলে দক্ষতা বাড়ে।</p>
-              <p><strong>Q2.</strong> $\\frac{d}{dx}(\\ln x)$ এর মান কোনটি? <br/><span class="text-muted-custom">A) $x$ &nbsp; B) $\\frac{1}{x}$ &nbsp; C) $e^x$ &nbsp; D) $-\\frac{1}{x}$</span><br/><span class="text-emerald-400 font-semibold">Ans: B</span> — মৌলিক অন্তরীকরণ সূত্র।</p>
-            </div>
-          </div>
-        `
-      };
-    }
-
-    function buildOfflineStudyPlan(days, subjectFocus, text) {
-      const nDays = Math.min(30, Math.max(3, Number(days) || 14));
-      const hasContent = Boolean((text || '').trim());
-      const rows = [];
-      for (let d = 1; d <= Math.min(nDays, 7); d++) {
-        rows.push(`
-          <div class="p-3 rounded-xl bg-[var(--bg-card)] border border-[var(--border-subtle)] text-xs sm:text-sm">
-            <div class="font-bold text-blue-400">Day ${d}: ${subjectFocus === 'All' ? 'Multi-Subject Rotation' : escapeHTML(subjectFocus)}</div>
-            <p class="text-muted-custom mt-0.5">
-              ${hasContent ? 'Review extracted PDF notes & key formulas (60m), solve 30 MCQs (45m), log weak points (15m).' : 'Read HSC textbook chapter & derivations (60m), practice past admission MCQs (45m), revise weak tag items (15m).'}
-            </p>
-          </div>
-        `);
+    function safeParseJsonObject(raw) {
+      const stripped = String(raw || '').replace(/```json|```/gi, '').trim();
+      try {
+        return JSON.parse(stripped);
+      } catch {
+        const start = stripped.search(/[\[{]/);
+        const end = Math.max(stripped.lastIndexOf('}'), stripped.lastIndexOf(']'));
+        if (start >= 0 && end > start) {
+          return JSON.parse(stripped.slice(start, end + 1));
+        }
+        throw new Error('Invalid JSON returned by AI');
       }
-
-      return `
-        <div class="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs">
-          <strong>Fallback ${nDays}-Day Study Plan:</strong> Showing initial days (add a Gemini API key for a full tailored schedule).
-        </div>
-        <div class="space-y-2">${rows.join('')}</div>
-      `;
     }
 
-    // ==================== DASHBOARD RENDERING ====================
+    // ==================== DASHBOARD & TRACKER ====================
     function renderDashboard() {
       const topics = state.topics;
-      const totalChapters = topics.length;
-      const avgProgress = totalChapters
-        ? Math.round(topics.reduce((acc, item) => acc + (Number(item.progress) || 0), 0) / totalChapters)
+      const total = topics.length;
+      const avg = total
+        ? Math.round(topics.reduce((sum, t) => sum + (Number(t.progress) || 0), 0) / total)
         : 0;
-      const completedCount = topics.filter((t) => Number(t.progress) >= 100).length;
-      const weakCount = topics.filter((t) => t.mastery === 'weak').length;
-      const strongCount = topics.filter((t) => t.mastery === 'strong').length;
+      const done = topics.filter((t) => Number(t.progress) >= 100).length;
+      const weak = topics.filter((t) => t.mastery === 'weak').length;
+      const strong = topics.filter((t) => t.mastery === 'strong').length;
 
-      document.getElementById('kpiOverallPct').textContent = `${avgProgress}%`;
-      document.getElementById('kpiChaptersDone').textContent = `${completedCount} / ${totalChapters} Completed`;
+      document.getElementById('kpiOverallPct').textContent = `${avg}%`;
+      document.getElementById('kpiChaptersDone').textContent = `${done} / ${total} Completed`;
       document.getElementById('kpiTodayMins').textContent = `${state.timer.todayMinutes}m`;
-      document.getElementById('kpiWeakCount').textContent = String(weakCount);
-      document.getElementById('kpiStrongCount').textContent = String(strongCount);
+      document.getElementById('kpiWeakCount').textContent = String(weak);
+      document.getElementById('kpiStrongCount').textContent = String(strong);
 
-      // Exam Countdown
       document.getElementById('targetExamTitleDisplay').textContent = state.examTarget.name || 'Target Exam';
       document.getElementById('examNameInput').value = state.examTarget.name || '';
       document.getElementById('examDateInput').value = state.examTarget.date || '';
 
-      const targetTime = new Date(state.examTarget.date + 'T00:00:00').getTime();
-      const nowTime = new Date(todayStr() + 'T00:00:00').getTime();
-      const diffDays = Number.isNaN(targetTime) ? '--' : Math.max(0, Math.ceil((targetTime - nowTime) / 86400000));
-      document.getElementById('countdownDays').textContent = String(diffDays);
+      const targetMs = new Date((state.examTarget.date || '') + 'T00:00:00').getTime();
+      const todayMs = new Date(todayISO() + 'T00:00:00').getTime();
+      const daysLeft = Number.isNaN(targetMs) ? '--' : Math.max(0, Math.ceil((targetMs - todayMs) / 86400000));
+      document.getElementById('countdownDays').textContent = String(daysLeft);
 
-      // Subject Summary Bars
       const subjects = ['Physics', 'Chemistry', 'Higher Math', 'Biology'];
-      const subColors = {
+      const barColors = {
         Physics: 'bg-blue-500',
         Chemistry: 'bg-emerald-500',
         'Higher Math': 'bg-purple-500',
@@ -800,9 +982,9 @@
       };
 
       document.getElementById('subjectSummaryGrid').innerHTML = subjects.map((sub) => {
-        const list = topics.filter((t) => t.subject === sub);
-        const pct = list.length
-          ? Math.round(list.reduce((s, x) => s + (Number(x.progress) || 0), 0) / list.length)
+        const rows = topics.filter((t) => t.subject === sub);
+        const pct = rows.length
+          ? Math.round(rows.reduce((s, x) => s + (Number(x.progress) || 0), 0) / rows.length)
           : 0;
         return `
           <div class="surface-soft p-3.5">
@@ -811,36 +993,35 @@
               <span>${pct}%</span>
             </div>
             <div class="w-full h-2 rounded-full bg-slate-700/30 overflow-hidden">
-              <div class="h-full ${subColors[sub]} transition-all duration-300" style="width:${pct}%"></div>
+              <div class="h-full ${barColors[sub]} transition-all duration-300" style="width:${pct}%"></div>
             </div>
-            <div class="text-[11px] text-muted-custom mt-1.5">${list.length} topics tracked</div>
+            <div class="text-[11px] text-muted-custom mt-1.5">${rows.length} topics tracked</div>
           </div>
         `;
       }).join('');
 
-      // Filtered Chapter List
-      const filtered = state.subjectFilter === 'All'
+      const list = state.subjectFilter === 'All'
         ? topics
         : topics.filter((t) => t.subject === state.subjectFilter);
 
-      const masteryBadge = (m) => {
+      const badge = (m) => {
         if (m === 'strong') return '<span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/15 text-emerald-400">Strong</span>';
         if (m === 'weak') return '<span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-rose-500/15 text-rose-400">Weak</span>';
         return '<span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/15 text-amber-400">Moderate</span>';
       };
 
-      document.getElementById('chapterTrackerList').innerHTML = filtered.length
-        ? filtered.map((item) => `
+      document.getElementById('chapterTrackerList').innerHTML = list.length
+        ? list.map((item) => `
             <div class="surface-soft p-3.5 space-y-2.5">
               <div class="flex items-start justify-between gap-2">
                 <div class="min-w-0">
                   <div class="flex items-center gap-2 flex-wrap">
                     <span class="text-[11px] font-bold text-blue-400">${escapeHTML(item.subject)}</span>
-                    ${masteryBadge(item.mastery)}
+                    ${badge(item.mastery)}
                   </div>
                   <div class="font-bold text-xs sm:text-sm mt-0.5">${escapeHTML(item.chapter)}</div>
                 </div>
-                <button type="button" onclick="deleteTopic('${item.id}')" class="text-xs text-muted-custom hover:text-rose-500 px-1.5 py-0.5" title="Remove">✕</button>
+                <button type="button" onclick="deleteTopic('${item.id}')" class="text-xs text-muted-custom hover:text-rose-500 px-1.5 py-0.5">✕</button>
               </div>
 
               <div class="flex items-center gap-3">
@@ -848,51 +1029,47 @@
                 <span class="text-xs font-extrabold w-10 text-right">${Number(item.progress) || 0}%</span>
               </div>
 
-              <div class="flex items-center justify-between gap-2 pt-1">
-                <div class="flex items-center gap-1">
-                  <button type="button" onclick="setTopicMastery('${item.id}', 'weak')" class="px-2 py-1 rounded-lg text-[11px] font-bold ${item.mastery === 'weak' ? 'bg-rose-600 text-white' : 'bg-[var(--bg-card)] text-muted-custom'}">Weak</button>
-                  <button type="button" onclick="setTopicMastery('${item.id}', 'moderate')" class="px-2 py-1 rounded-lg text-[11px] font-bold ${item.mastery === 'moderate' ? 'bg-amber-600 text-white' : 'bg-[var(--bg-card)] text-muted-custom'}">Moderate</button>
-                  <button type="button" onclick="setTopicMastery('${item.id}', 'strong')" class="px-2 py-1 rounded-lg text-[11px] font-bold ${item.mastery === 'strong' ? 'bg-emerald-600 text-white' : 'bg-[var(--bg-card)] text-muted-custom'}">Strong</button>
-                </div>
+              <div class="flex items-center gap-1 pt-0.5">
+                <button type="button" onclick="setTopicMastery('${item.id}', 'weak')" class="px-2 py-1 rounded-lg text-[11px] font-bold ${item.mastery === 'weak' ? 'bg-rose-600 text-white' : 'bg-[var(--bg-card)] text-muted-custom'}">Weak</button>
+                <button type="button" onclick="setTopicMastery('${item.id}', 'moderate')" class="px-2 py-1 rounded-lg text-[11px] font-bold ${item.mastery === 'moderate' ? 'bg-amber-600 text-white' : 'bg-[var(--bg-card)] text-muted-custom'}">Moderate</button>
+                <button type="button" onclick="setTopicMastery('${item.id}', 'strong')" class="px-2 py-1 rounded-lg text-[11px] font-bold ${item.mastery === 'strong' ? 'bg-emerald-600 text-white' : 'bg-[var(--bg-card)] text-muted-custom'}">Strong</button>
               </div>
             </div>
           `).join('')
-        : '<div class="text-xs text-muted-custom py-6 text-center">No topics in this subject filter yet.</div>';
+        : '<div class="text-xs text-muted-custom py-6 text-center">No topics under this filter.</div>';
 
       renderChecklist();
     }
 
-    function persistTopics() {
-      saveJSON(STORAGE_KEYS.TOPICS, state.topics);
+    function saveTopics() {
+      saveLS(STORAGE_KEYS.TOPICS, state.topics);
       renderDashboard();
     }
 
     window.updateTopicProgress = (id, val) => {
-      const target = state.topics.find((t) => t.id === id);
-      if (!target) return;
-      target.progress = Math.min(100, Math.max(0, Number(val) || 0));
-      persistTopics();
+      const t = state.topics.find((x) => x.id === id);
+      if (!t) return;
+      t.progress = Math.min(100, Math.max(0, Number(val) || 0));
+      saveTopics();
     };
 
     window.setTopicMastery = (id, mastery) => {
-      const target = state.topics.find((t) => t.id === id);
-      if (!target) return;
-      target.mastery = mastery;
-      persistTopics();
+      const t = state.topics.find((x) => x.id === id);
+      if (!t) return;
+      t.mastery = mastery;
+      saveTopics();
     };
 
     window.deleteTopic = (id) => {
-      state.topics = state.topics.filter((t) => t.id !== id);
-      persistTopics();
-      showToast('Topic removed');
+      state.topics = state.topics.filter((x) => x.id !== id);
+      saveTopics();
+      toast('Topic removed');
     };
 
     function renderChecklist() {
-      const list = state.checklist;
-      const done = list.filter((c) => c.done).length;
-      document.getElementById('checklistProgressText').textContent = `${done}/${list.length}`;
-
-      document.getElementById('checklistContainer').innerHTML = list.map((item) => `
+      const done = state.checklist.filter((c) => c.done).length;
+      document.getElementById('checklistProgressText').textContent = `${done}/${state.checklist.length}`;
+      document.getElementById('checklistContainer').innerHTML = state.checklist.map((item) => `
         <div class="flex items-center justify-between gap-2 p-2.5 rounded-xl surface-soft text-xs sm:text-sm">
           <label class="flex items-center gap-2.5 cursor-pointer flex-1 min-w-0">
             <input type="checkbox" ${item.done ? 'checked' : ''} onchange="toggleChecklist('${item.id}')" class="w-4 h-4 accent-blue-600 rounded" />
@@ -904,280 +1081,901 @@
     }
 
     window.toggleChecklist = (id) => {
-      const item = state.checklist.find((c) => c.id === id);
+      const item = state.checklist.find((x) => x.id === id);
       if (!item) return;
       item.done = !item.done;
-      saveJSON(STORAGE_KEYS.CHECKLIST, state.checklist);
+      saveLS(STORAGE_KEYS.CHECKLIST, state.checklist);
       renderChecklist();
     };
 
     window.deleteChecklist = (id) => {
-      state.checklist = state.checklist.filter((c) => c.id !== id);
-      saveJSON(STORAGE_KEYS.CHECKLIST, state.checklist);
+      state.checklist = state.checklist.filter((x) => x.id !== id);
+      saveLS(STORAGE_KEYS.CHECKLIST, state.checklist);
       renderChecklist();
     };
 
     // ==================== POMODORO / DAILY TIMER ====================
-    let timerInterval = null;
+    let pomodoroInterval = null;
 
-    function formatClock(sec) {
+    function formatMMSS(sec) {
       const s = Math.max(0, Number(sec) || 0);
-      const mins = String(Math.floor(s / 60)).padStart(2, '0');
-      const rem = String(s % 60).padStart(2, '0');
-      return `${mins}:${rem}`;
+      return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
     }
 
-    function syncTimerUI() {
-      const clock = document.getElementById('timerClock');
-      const btn = document.getElementById('timerStartPauseBtn');
-      const todayEl = document.getElementById('kpiTodayMins');
-      if (clock) clock.textContent = formatClock(state.timer.secondsLeft);
-      if (btn) btn.textContent = state.timer.running ? '⏸ Pause Focus' : '▶ Start Focus';
-      if (todayEl) todayEl.textContent = `${state.timer.todayMinutes}m`;
-      saveJSON(STORAGE_KEYS.TIMER, state.timer);
+    function syncPomodoroUI() {
+      document.getElementById('timerClock').textContent = formatMMSS(state.timer.secondsLeft);
+      document.getElementById('timerStartPauseBtn').textContent = state.timer.running ? '⏸ Pause Focus' : '▶ Start Focus';
+      document.getElementById('kpiTodayMins').textContent = `${state.timer.todayMinutes}m`;
+      saveLS(STORAGE_KEYS.TIMER, state.timer);
     }
 
-    function addStudyMinutes(mins) {
-      if (state.timer.date !== todayStr()) {
-        state.timer.date = todayStr();
+    function logStudyMinutes(mins) {
+      if (state.timer.date !== todayISO()) {
+        state.timer.date = todayISO();
         state.timer.todayMinutes = 0;
       }
       state.timer.todayMinutes += Math.max(1, Number(mins) || 1);
-      syncTimerUI();
-      showToast(`+${mins} min logged to Today Focus`);
+      syncPomodoroUI();
+      toast(`+${mins} min logged to Today Focus`);
     }
 
-    function startTimerLoop() {
-      if (timerInterval) clearInterval(timerInterval);
-      timerInterval = setInterval(() => {
+    function runPomodoroTicker() {
+      if (pomodoroInterval) clearInterval(pomodoroInterval);
+      pomodoroInterval = setInterval(() => {
         if (!state.timer.running) return;
         if (state.timer.secondsLeft > 0) {
           state.timer.secondsLeft -= 1;
-          syncTimerUI();
+          syncPomodoroUI();
         } else {
           state.timer.running = false;
-          clearInterval(timerInterval);
+          clearInterval(pomodoroInterval);
           if (state.timer.presetMinutes >= 10) {
-            addStudyMinutes(state.timer.presetMinutes);
+            logStudyMinutes(state.timer.presetMinutes);
           }
           state.timer.secondsLeft = state.timer.presetMinutes * 60;
-          syncTimerUI();
-          showToast('Focus session completed!');
+          syncPomodoroUI();
+          toast('Focus timer finished!');
         }
       }, 1000);
     }
 
-    // ==================== PDF.JS EXTRACTION & GEMINI ANALYSIS ====================
-    async function extractPdfText(file) {
-      if (!window.pdfjsLib) {
-        throw new Error('PDF.js library did not load.');
-      }
+    // ==================== SAVED PDF LIBRARY (PDF.JS + INDEXEDDB) ====================
+    async function extractPdfContent(file) {
+      if (!window.pdfjsLib) throw new Error('PDF.js not available');
       window.pdfjsLib.GlobalWorkerOptions.workerSrc =
         'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-      const arrayBuffer = await file.arrayBuffer();
-      const pdf = await window.pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-      const maxPages = Math.min(pdf.numPages, 30);
-      let fullText = '';
+      const buf = await file.arrayBuffer();
+      const doc = await window.pdfjsLib.getDocument({ data: buf }).promise;
+      const pagesToRead = Math.min(doc.numPages, 35);
+      let extracted = '';
 
-      for (let p = 1; p <= maxPages; p++) {
-        const page = await pdf.getPage(p);
+      for (let p = 1; p <= pagesToRead; p++) {
+        const page = await doc.getPage(p);
         const content = await page.getTextContent();
-        const pageStr = content.items.map((item) => item.str).join(' ');
-        fullText += `\n--- Page ${p} ---\n${pageStr}`;
-      }
-      return { text: fullText.trim(), pages: maxPages, totalPages: pdf.numPages };
-    }
-
-    function updatePdfCharCount() {
-      const txt = document.getElementById('pdfExtractedText')?.value || '';
-      state.pdfText = txt;
-      localStorage.setItem(STORAGE_KEYS.PDF_TEXT, txt);
-      const counter = document.getElementById('pdfCharCount');
-      if (counter) counter.textContent = `${txt.length} chars`;
-    }
-
-    async function handlePdfBreakdown() {
-      const text = document.getElementById('pdfExtractedText').value.trim();
-      const subject = document.getElementById('pdfSubjectSelect').value;
-      const container = document.getElementById('pdfAiResultContainer');
-      const statusEl = document.getElementById('pdfAnalysisStatus');
-
-      if (!text) {
-        showToast('Please upload a PDF or enter study text first');
-        return;
+        const line = content.items.map((it) => it.str).join(' ');
+        extracted += `\n[Page ${p}] ${line}`;
       }
 
-      statusEl.textContent = 'Analyzing syllabus, topics & generating MCQs...';
-      container.innerHTML = '<div class="surface-soft p-5 text-xs sm:text-sm text-muted-custom">Processing content...</div>';
+      return {
+        text: extracted.trim(),
+        pages: pagesToRead,
+        totalPages: doc.numPages
+      };
+    }
 
-      if (!getApiKey()) {
-        const fallback = buildOfflinePdfBreakdown(text, subject);
-        state.lastExtractedTopics = fallback.topics;
-        container.innerHTML = fallback.html;
-        statusEl.textContent = 'Completed in Offline Fallback Mode';
-        typesetMath(container);
+    function updateDraftStats() {
+      const txt = document.getElementById('pdfDraftText')?.value || '';
+      document.getElementById('pdfDraftChars').textContent = `${txt.length} chars · ${state.draftPages || 0} pages`;
+    }
+
+    async function setActivePdf(pdfId) {
+      state.activePdfId = pdfId || '';
+      localStorage.setItem(STORAGE_KEYS.ACTIVE_PDF_ID, state.activePdfId);
+
+      if (!pdfId) {
+        state.activePdfText = '';
+        updateActivePdfBadges();
+        renderSavedPdfLibrary();
         return;
       }
 
       try {
-        const prompt = `You are an HSC Science (Bangladesh) and university admission mentor. Analyze the following PDF/study text for subject focus "${subject}".
-Provide:
-1) Syllabus & Core Concept Breakdown (use LaTeX $...$ or $$...$$ for math/physics/chemistry formulas)
-2) Key High-Yield Topics list (format lines clearly as: TOPIC: <Subject> | <Chapter/Topic> | <weak/moderate/strong>)
-3) 4 Admission-style MCQs with options and step-by-step solutions.
-Respond clearly in Bengali with English academic/subject terms where helpful.
+        const rec = await idbGetPdfRecord(pdfId);
+        state.activePdfText = rec?.text || '';
+        updateActivePdfBadges();
+        renderSavedPdfLibrary();
+        populateQuizPdfSelector();
+        toast(`Active PDF set: ${rec?.title || 'PDF'}`);
+      } catch {
+        toast('Could not load PDF text from IndexedDB');
+      }
+    }
 
-TEXT:
-${text.slice(0, 12000)}`;
+    function updateActivePdfBadges() {
+      const activeMeta = state.pdfMetaList.find((m) => m.id === state.activePdfId);
+      const chip = document.getElementById('activePdfHeaderChip');
+      const banner = document.getElementById('activePdfBannerText');
+      const tutorInd = document.getElementById('tutorContextIndicator');
 
-        const aiResponse = await callGeminiWithRetry(
-          prompt,
-          'You are an expert HSC Physics, Chemistry, Higher Math, and Biology admission tutor.'
-        );
+      if (activeMeta) {
+        if (chip) {
+          chip.classList.remove('hidden');
+          chip.textContent = `📄 ${activeMeta.title}`;
+        }
+        if (banner) {
+          banner.textContent = `Active PDF for AI Tutor & Quiz: "${activeMeta.title}" (${activeMeta.subject} · ${activeMeta.pages}p)`;
+        }
+        if (tutorInd) {
+          tutorInd.textContent = `Active PDF Context: "${activeMeta.title}" (${activeMeta.subject}) · Formula & Image ready.`;
+        }
+      } else {
+        if (chip) chip.classList.add('hidden');
+        if (banner) banner.textContent = 'Active PDF for AI Tutor & Quiz: None selected';
+        if (tutorInd) tutorInd.textContent = 'Multi-turn chat with formula support (LaTeX), image upload & saved PDF context.';
+      }
+    }
 
-        // Parse optional TOPIC lines if present
-        const parsedTopics = [];
-        aiResponse.split('\n').forEach((line) => {
-          const m = line.match(/TOPIC:\s*([^|]+)\|([^|]+)\|(weak|moderate|strong)/i);
-          if (m) {
-            parsedTopics.push({
-              subject: m[1].trim(),
-              chapter: m[2].trim(),
-              mastery: m[3].toLowerCase()
-            });
-          }
+    function renderSavedPdfLibrary() {
+      const list = state.pdfMetaList;
+      document.getElementById('savedPdfCountBadge').textContent = String(list.length);
+      const container = document.getElementById('savedPdfListContainer');
+
+      if (!list.length) {
+        container.innerHTML = `
+          <div class="surface-soft p-6 text-center text-xs sm:text-sm text-muted-custom">
+            No PDFs saved yet. Upload a PDF on the left and click <strong>"Save PDF to Library"</strong> so it stays available across sessions.
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = list.map((item) => {
+        const isActive = item.id === state.activePdfId;
+        return `
+          <div class="surface-soft p-4 space-y-2.5 ${isActive ? 'ring-2 ring-blue-500' : ''}">
+            <div class="flex items-start justify-between gap-2">
+              <div class="min-w-0">
+                <div class="flex items-center gap-2 flex-wrap">
+                  <span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-blue-500/15 text-blue-400">${escapeHTML(item.subject)}</span>
+                  <span class="text-[11px] text-muted-custom">${item.pages} pages · ${item.chars} chars · ${escapeHTML(item.savedDate)}</span>
+                  ${isActive ? '<span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/15 text-emerald-400">Active Context ✓</span>' : ''}
+                </div>
+                <h4 class="font-extrabold text-sm mt-1 truncate">${escapeHTML(item.title)}</h4>
+              </div>
+
+              <div class="flex items-center gap-1.5 shrink-0">
+                <button type="button" onclick="setActivePdf('${item.id}')" class="px-2.5 py-1 rounded-lg text-xs font-bold ${isActive ? 'bg-emerald-600 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'}">
+                  ${isActive ? 'Active' : 'Use PDF'}
+                </button>
+                <button type="button" onclick="openPdfInQuiz('${item.id}')" class="px-2.5 py-1 rounded-lg text-xs font-bold bg-[var(--bg-card)] hover:border-blue-500 border border-[var(--border-subtle)]">
+                  Quiz
+                </button>
+                <button type="button" onclick="deleteSavedPdf('${item.id}')" class="px-2 py-1 rounded-lg text-xs font-bold text-rose-400 hover:bg-rose-500/10">
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            ${item.summary ? `<p class="text-xs text-muted-custom leading-relaxed">${escapeHTML(item.summary)}</p>` : ''}
+          </div>
+        `;
+      }).join('');
+    }
+
+    window.openPdfInQuiz = async (pdfId) => {
+      await setActivePdf(pdfId);
+      switchTab('quiz-studio');
+      const sel = document.getElementById('quizSourcePdfSelect');
+      if (sel) {
+        sel.value = pdfId;
+        await handleQuizPdfSourceChange();
+      }
+    };
+
+    window.deleteSavedPdf = async (pdfId) => {
+      try {
+        await idbDeletePdfRecord(pdfId);
+      } catch {}
+      state.pdfMetaList = state.pdfMetaList.filter((x) => x.id !== pdfId);
+      saveLS(STORAGE_KEYS.PDF_META_LIST, state.pdfMetaList);
+      if (state.activePdfId === pdfId) {
+        state.activePdfId = '';
+        state.activePdfText = '';
+        localStorage.removeItem(STORAGE_KEYS.ACTIVE_PDF_ID);
+        updateActivePdfBadges();
+      }
+      renderSavedPdfLibrary();
+      populateQuizPdfSelector();
+      toast('PDF deleted from library');
+    };
+
+    function populateQuizPdfSelector() {
+      const sel = document.getElementById('quizSourcePdfSelect');
+      if (!sel) return;
+      const currentVal = sel.value || state.activePdfId || '';
+      sel.innerHTML = `<option value="">-- Custom / Pasted Syllabus or Notes --</option>` +
+        state.pdfMetaList.map((m) => `<option value="${m.id}">${escapeHTML(m.title)} (${escapeHTML(m.subject)})</option>`).join('');
+      if (currentVal && state.pdfMetaList.some((m) => m.id === currentVal)) {
+        sel.value = currentVal;
+      }
+    }
+
+    async function handleQuizPdfSourceChange() {
+      const pdfId = document.getElementById('quizSourcePdfSelect').value;
+      if (!pdfId) return;
+      try {
+        const rec = await idbGetPdfRecord(pdfId);
+        if (rec?.text) {
+          document.getElementById('quizCustomText').value = rec.text.slice(0, 14000);
+          state.activePdfId = pdfId;
+          state.activePdfText = rec.text;
+          localStorage.setItem(STORAGE_KEYS.ACTIVE_PDF_ID, pdfId);
+          updateActivePdfBadges();
+          toast(`Loaded "${rec.title}" into Quiz generator`);
+        }
+      } catch {
+        toast('Could not read saved PDF');
+      }
+    }
+
+    // ==================== AI PDF QUIZ GENERATOR & TIMED EXAM ====================
+    function buildFallbackQuizQuestions(count, subject, difficulty, sourceText) {
+      const n = Math.min(30, Math.max(1, Number(count) || 8));
+      const cleanSnippet = (sourceText || '').replace(/\s+/g, ' ').trim().slice(0, 90);
+      const ctxTag = cleanSnippet ? ` [${cleanSnippet}...]` : '';
+
+      const bank = [
+        {
+          subject: 'Physics',
+          topic: 'তাপগতিবিদ্যা (Thermodynamics)',
+          q: `কার্নো ইঞ্জিনের তাপ উৎসের তাপমাত্রা $400\\,K$ এবং তাপ গ্রাহকের তাপমাত্রা $300\\,K$ হলে কর্মদক্ষতা কত?${ctxTag}`,
+          options: ['15%', '25%', '50%', '75%'],
+          correctIndex: 1,
+          explanation: 'সূত্র $\\eta = 1 - \\frac{T_2}{T_1} = 1 - \\frac{300}{400} = 0.25 = 25\\%$।'
+        },
+        {
+          subject: 'Physics',
+          topic: 'চল তড়িৎ (Current Electricity)',
+          q: `$12\\,V$ বিভব পার্থক্যের একটি কোষকে $6\\,\\Omega$ রোধের সাথে যুক্ত করলে প্রবাহমাত্রা কত হবে?`,
+          options: ['0.5 A', '1.5 A', '2.0 A', '72.0 A'],
+          correctIndex: 2,
+          explanation: 'ওহমের সূত্র অনুযায়ী $I = \\frac{V}{R} = \\frac{12}{6} = 2.0\\,A$।'
+        },
+        {
+          subject: 'Chemistry',
+          topic: 'গুণগত ও পরিমাণগত রসায়ন',
+          q: `$0.001\\,M$ $HCl$ দ্রবণের $pH$ মান কত?`,
+          options: ['1', '2', '3', '11'],
+          correctIndex: 2,
+          explanation: '$[H^+] = 10^{-3}\\,M$, তাই $pH = -\\log_{10}(10^{-3}) = 3$।'
+        },
+        {
+          subject: 'Chemistry',
+          topic: 'জৈব রসায়ন (Organic Chemistry)',
+          q: `কোন যৌগটি টলেন বিকারকের (Tollen's reagent) সাথে সিলভার মিরর পরীক্ষা দেয়?`,
+          options: ['প্রোপানোন', 'ইথান্যাল ($CH_3CHO$)', 'ডাই-ইথাইল ইথার', 'মিথেন'],
+          correctIndex: 1,
+          explanation: 'অ্যালডিহাইড ($-CHO$ মূলক) টলেন বিকারককে বিজারিত করে ধাতব $Ag$ অধঃক্ষেপ তৈরি করে।'
+        },
+        {
+          subject: 'Higher Math',
+          topic: 'অন্তরীকরণ ও যোগজীকরণ',
+          q: `$\\int_0^{\\pi/2} \\sin x\\,dx$ এর সঠিক মান কোনটি?`,
+          options: ['-1', '0', '1', '$\\pi/2$'],
+          correctIndex: 2,
+          explanation: '$\\int_0^{\\pi/2} \\sin x\\,dx = [-\\cos x]_0^{\\pi/2} = -\\cos(\\pi/2) + \\cos(0) = 0 + 1 = 1$।'
+        },
+        {
+          subject: 'Higher Math',
+          topic: 'সরলরেখা ও বৃত্ত',
+          q: `$x^2 + y^2 = 36$ বৃত্তের কেন্দ্র ও ব্যাসার্ধ যথাক্রমে কত?`,
+          options: ['(0, 0) ও 36', '(0, 0) ও 6', '(6, 6) ও 6', '(1, 1) ও 6'],
+          correctIndex: 1,
+          explanation: '$x^2 + y^2 = r^2$ আদর্শ সমীকরণের সাথে তুলনা করলে কেন্দ্র $(0,0)$ এবং ব্যাসার্ধ $r = 6$।'
+        },
+        {
+          subject: 'Biology',
+          topic: 'কোষ ও জিনতত্ত্ব',
+          q: `DNA ডাবল হেলিক্সে অ্যাডেনিন (A) সর্বদা কোন ক্ষারকের সাথে হাইড্রোজেন বন্ধনে যুক্ত থাকে?`,
+          options: ['গুয়ানিন (G)', 'সাইটোসিন (C)', 'থাইমিন (T)', 'ইউরাসিল (U)'],
+          correctIndex: 2,
+          explanation: 'চারগাফের নিয়ম অনুযায়ী DNA-তে $A = T$ (২টি H-বন্ধন) এবং $G \\equiv C$ (৩টি H-বন্ধন)।'
+        },
+        {
+          subject: 'Biology',
+          topic: 'উদ্ভিদ শারীরতত্ত্ব',
+          q: `সালোকসংশ্লেষণের ক্যালভিন চক্রে প্রাথমিক $CO_2$ গ্রহীতা কোনটি?`,
+          options: ['RuBP (রাইবুলোজ ১,৫-বিসফসফেট)', 'PGA', 'G3P', 'Pyruvate'],
+          correctIndex: 0,
+          explanation: 'Rubisco এনজাইমের সহায়তায় $CO_2$ প্রথমে $RuBP$ (৫-কার্বন শর্করা)-এর সাথে যুক্ত হয়।'
+        }
+      ];
+
+      const out = [];
+      for (let i = 0; i < n; i++) {
+        const base = bank[i % bank.length];
+        out.push({
+          id: `q_${i + 1}`,
+          subject: subject === 'Mixed HSC' ? base.subject : subject,
+          topic: `${base.topic} (${difficulty})`,
+          question: out.length >= bank.length ? `${base.q} [Set ${Math.floor(i / bank.length) + 1}]` : base.q,
+          options: [...base.options],
+          correctIndex: base.correctIndex,
+          explanation: base.explanation
         });
-        state.lastExtractedTopics = parsedTopics.length
-          ? parsedTopics
-          : buildOfflinePdfBreakdown(text, subject).topics;
-
-        container.innerHTML = `
-          <div class="surface-soft p-4 text-xs sm:text-sm whitespace-pre-line leading-relaxed">
-            ${escapeHTML(aiResponse)}
-          </div>
-        `;
-        statusEl.textContent = 'Gemini AI Analysis Complete ✓';
-        typesetMath(container);
-      } catch (err) {
-        const fallback = buildOfflinePdfBreakdown(text, subject);
-        state.lastExtractedTopics = fallback.topics;
-        container.innerHTML = fallback.html;
-        statusEl.textContent = `Fallback used (${err.message})`;
-        typesetMath(container);
-        showToast('Gemini request fell back to local mode');
       }
+      return out;
     }
 
-    async function handlePdfStudyPlan() {
-      const text = document.getElementById('pdfExtractedText').value.trim();
-      const subject = document.getElementById('pdfSubjectSelect').value;
-      const days = document.getElementById('pdfPlanDays').value;
-      const container = document.getElementById('pdfAiResultContainer');
-      const statusEl = document.getElementById('pdfAnalysisStatus');
+    async function handleGenerateAndStartQuiz() {
+      const count = Math.min(30, Math.max(1, Number(document.getElementById('quizCountInput').value) || 8));
+      const minutes = Math.min(120, Math.max(1, Number(document.getElementById('quizMinutesInput').value) || 10));
+      const subject = document.getElementById('quizSubjectSelect').value;
+      const difficulty = document.getElementById('quizDifficultySelect').value;
+      const negMark = Number(document.getElementById('quizNegMarkSelect').value) || 0;
+      const sourceText = document.getElementById('quizCustomText').value.trim();
+      const selectedPdfId = document.getElementById('quizSourcePdfSelect').value;
+      const pdfObj = state.pdfMetaList.find((m) => m.id === selectedPdfId);
+      const quizTitle = pdfObj ? `${pdfObj.title} — ${difficulty}` : `${subject} — ${difficulty}`;
 
-      statusEl.textContent = `Generating ${days}-day study plan...`;
-      container.innerHTML = '<div class="surface-soft p-5 text-xs sm:text-sm text-muted-custom">Building study plan...</div>';
+      const statusEl = document.getElementById('quizGeneratorStatus');
+      const genBtn = document.getElementById('generateTimedQuizBtn');
+      statusEl.textContent = `Generating ${count} MCQs (${minutes} min timer)...`;
+      genBtn.disabled = true;
+
+      let questions = [];
+
+      if (getApiKey()) {
+        try {
+          const prompt = `Generate exactly ${count} multiple-choice questions (MCQs) in Bengali (with English scientific/math terms and LaTeX $...$ where helpful) for HSC Science & University Admission (${subject}, level: ${difficulty}).
+Base the questions on the study material below if provided:
+${sourceText ? sourceText.slice(0, 11000) : 'Standard HSC Physics, Chemistry, Higher Math, Biology curriculum.'}
+
+Return ONLY valid JSON with this exact schema:
+{
+  "questions": [
+    {
+      "subject": "${subject === 'Mixed HSC' ? 'Physics' : subject}",
+      "topic": "Chapter/Topic name",
+      "question": "Question text with $LaTeX$",
+      "options": ["Option A", "Option B", "Option C", "Option D"],
+      "correctIndex": 0,
+      "explanation": "Clear step-by-step explanation"
+    }
+  ]
+}`;
+
+          const raw = await callGemini({
+            contents: [{ role: 'user', parts: [{ text: prompt }] }],
+            systemInstruction: 'You are an expert Bangladeshi admission exam question creator. Output strict JSON only.',
+            jsonMode: true
+          });
+
+          const parsed = safeParseJsonObject(raw);
+          const valid = (parsed.questions || [])
+            .map((item, idx) => {
+              const opts = Array.isArray(item.options) ? item.options.slice(0, 4).map(String) : [];
+              const cIdx = Number.isInteger(item.correctIndex) && item.correctIndex >= 0 && item.correctIndex < 4
+                ? item.correctIndex
+                : 0;
+              if (!item.question || opts.length < 4) return null;
+              return {
+                id: `ai_q_${idx + 1}`,
+                subject: String(item.subject || subject),
+                topic: String(item.topic || difficulty),
+                question: String(item.question),
+                options: opts,
+                correctIndex: cIdx,
+                explanation: String(item.explanation || 'Explanation provided after review.')
+              };
+            })
+            .filter(Boolean);
+
+          if (valid.length >= 1) {
+            questions = valid.slice(0, count);
+            statusEl.textContent = `Generated ${questions.length} AI MCQs ✓`;
+          }
+        } catch (err) {
+          toast(`Gemini quiz fallback used (${err.message})`);
+        }
+      }
+
+      if (!questions.length) {
+        questions = buildFallbackQuizQuestions(count, subject, difficulty, sourceText);
+        statusEl.textContent = `Prepared ${questions.length} structured MCQs (Fallback Mode)`;
+      }
+
+      genBtn.disabled = false;
+      state.lastGeneratedQuiz = questions;
+
+      // Hide previous report, start fresh timed exam
+      document.getElementById('quizAnalysisReport').classList.add('hidden');
+      startTimedQuizSession({
+        title: quizTitle,
+        subject,
+        difficulty,
+        negMark,
+        minutes,
+        questions
+      });
+    }
+
+    function startTimedQuizSession({ title, subject, difficulty, negMark, minutes, questions }) {
+      if (state.quizSession?.intervalId) {
+        clearInterval(state.quizSession.intervalId);
+      }
+
+      state.quizSession = {
+        title,
+        subject,
+        difficulty,
+        negMark,
+        questions,
+        currentIdx: 0,
+        answers: {}, // qId -> optionIndex
+        secondsLeft: minutes * 60,
+        submitted: false,
+        intervalId: null
+      };
+
+      document.getElementById('activeQuizArena').classList.remove('hidden');
+      renderActiveQuizArena();
+
+      state.quizSession.intervalId = setInterval(() => {
+        const s = state.quizSession;
+        if (!s || s.submitted) return;
+        if (s.secondsLeft > 0) {
+          s.secondsLeft -= 1;
+          const timerBadge = document.getElementById('liveQuizTimerBadge');
+          if (timerBadge) {
+            timerBadge.textContent = `⏱ ${formatMMSS(s.secondsLeft)}`;
+            timerBadge.className = s.secondsLeft <= 60
+              ? 'px-3 py-1 rounded-full text-xs font-extrabold bg-rose-600 text-white animate-pulse'
+              : 'px-3 py-1 rounded-full text-xs font-extrabold bg-blue-500/15 text-blue-400';
+          }
+        } else {
+          submitQuizSession('Time Expired · Auto-Submitted');
+        }
+      }, 1000);
+
+      document.getElementById('activeQuizArena').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function renderActiveQuizArena() {
+      const s = state.quizSession;
+      if (!s || s.submitted) return;
+
+      const q = s.questions[s.currentIdx];
+      const total = s.questions.length;
+      const answeredCount = Object.keys(s.answers).length;
+      const selectedOpt = s.answers[q.id];
+
+      const arena = document.getElementById('activeQuizArena');
+      arena.innerHTML = `
+        <div class="surface-card p-4 sm:p-5 space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-[var(--border-subtle)]">
+            <div>
+              <div class="text-xs font-bold text-blue-400">${escapeHTML(s.title)}</div>
+              <div class="text-sm font-extrabold mt-0.5">Question ${s.currentIdx + 1} of ${total} · <span class="text-muted-custom font-semibold">${escapeHTML(q.topic)}</span></div>
+            </div>
+
+            <div class="flex items-center gap-2">
+              <span id="liveQuizTimerBadge" class="px-3 py-1 rounded-full text-xs font-extrabold ${s.secondsLeft <= 60 ? 'bg-rose-600 text-white' : 'bg-blue-500/15 text-blue-400'}">
+                ⏱ ${formatMMSS(s.secondsLeft)}
+              </span>
+              <button type="button" onclick="submitQuizSession('Submitted')" class="px-3.5 py-1.5 rounded-xl text-xs font-extrabold bg-emerald-600 hover:bg-emerald-700 text-white transition">
+                Submit Quiz
+              </button>
+            </div>
+          </div>
+
+          <!-- Progress Bar -->
+          <div>
+            <div class="flex justify-between text-[11px] text-muted-custom mb-1">
+              <span>Answered: ${answeredCount}/${total}</span>
+              <span>Answers & analysis unlock after Submit</span>
+            </div>
+            <div class="w-full h-2 rounded-full bg-slate-700/30 overflow-hidden">
+              <div class="h-full bg-blue-600 transition-all" style="width:${(answeredCount / total) * 100}%"></div>
+            </div>
+          </div>
+
+          <!-- Question Stem & Options (No answer key leaked before submit) -->
+          <div class="surface-soft p-4 space-y-3">
+            <div class="text-sm sm:text-base font-bold leading-relaxed rich-block">${formatRichMarkdown(q.question)}</div>
+            <div class="space-y-2">
+              ${q.options.map((opt, idx) => {
+                const isPicked = selectedOpt === idx;
+                return `
+                  <button type="button" onclick="selectQuizOption('${q.id}', ${idx})" class="w-full text-left p-3 rounded-xl border transition flex items-start gap-2.5 text-xs sm:text-sm ${
+                    isPicked
+                      ? 'border-blue-500 bg-blue-600/15 font-bold'
+                      : 'border-[var(--border-subtle)] bg-[var(--bg-card)] hover:border-blue-400'
+                  }">
+                    <span class="px-2 py-0.5 rounded-md text-xs font-extrabold ${isPicked ? 'bg-blue-600 text-white' : 'surface-soft'}">${OPTION_LABELS[idx]}</span>
+                    <span class="rich-block flex-1">${formatRichMarkdown(opt)}</span>
+                  </button>
+                `;
+              }).join('')}
+            </div>
+          </div>
+
+          <!-- Navigation Controls -->
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="flex gap-2">
+              <button type="button" ${s.currentIdx === 0 ? 'disabled' : ''} onclick="moveQuizQuestion(${s.currentIdx - 1})" class="px-3.5 py-2 rounded-xl text-xs font-bold surface-soft disabled:opacity-40">
+                ← Prev
+              </button>
+              <button type="button" ${s.currentIdx === total - 1 ? 'disabled' : ''} onclick="moveQuizQuestion(${s.currentIdx + 1})" class="px-3.5 py-2 rounded-xl text-xs font-bold surface-soft disabled:opacity-40">
+                Next →
+              </button>
+            </div>
+
+            <button type="button" onclick="clearQuizAnswer('${q.id}')" class="px-3 py-2 rounded-xl text-xs font-semibold text-muted-custom hover:text-rose-400">
+              Clear Selection
+            </button>
+          </div>
+
+          <!-- Question Palette -->
+          <div class="pt-2 border-t border-[var(--border-subtle)]">
+            <div class="text-xs font-bold text-muted-custom mb-2">Question Palette</div>
+            <div class="grid grid-cols-5 sm:grid-cols-10 gap-1.5">
+              ${s.questions.map((item, idx) => {
+                const isCur = idx === s.currentIdx;
+                const isAns = s.answers[item.id] !== undefined;
+                let cls = 'surface-soft text-muted-custom';
+                if (isCur) cls = 'bg-blue-600 text-white font-extrabold';
+                else if (isAns) cls = 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 font-bold';
+                return `<button type="button" onclick="moveQuizQuestion(${idx})" class="py-1.5 rounded-lg text-xs transition ${cls}">${idx + 1}</button>`;
+              }).join('')}
+            </div>
+          </div>
+        </div>
+      `;
+
+      typesetMath(arena);
+    }
+
+    window.selectQuizOption = (qId, optIdx) => {
+      if (!state.quizSession || state.quizSession.submitted) return;
+      state.quizSession.answers[qId] = optIdx;
+      renderActiveQuizArena();
+    };
+
+    window.clearQuizAnswer = (qId) => {
+      if (!state.quizSession || state.quizSession.submitted) return;
+      delete state.quizSession.answers[qId];
+      renderActiveQuizArena();
+    };
+
+    window.moveQuizQuestion = (idx) => {
+      if (!state.quizSession || state.quizSession.submitted) return;
+      const max = state.quizSession.questions.length - 1;
+      state.quizSession.currentIdx = Math.min(max, Math.max(0, idx));
+      renderActiveQuizArena();
+    };
+
+    window.submitQuizSession = (reasonLabel = 'Submitted') => {
+      const s = state.quizSession;
+      if (!s || s.submitted) return;
+      s.submitted = true;
+      if (s.intervalId) clearInterval(s.intervalId);
+
+      const total = s.questions.length;
+      let correct = 0;
+      let wrong = 0;
+      let skipped = 0;
+      const topicStats = {};
+
+      s.questions.forEach((q) => {
+        const picked = s.answers[q.id];
+        const tKey = q.topic || q.subject || 'General';
+        if (!topicStats[tKey]) topicStats[tKey] = { total: 0, correct: 0, wrong: 0 };
+        topicStats[tKey].total += 1;
+
+        if (picked === undefined) {
+          skipped += 1;
+        } else if (picked === q.correctIndex) {
+          correct += 1;
+          topicStats[tKey].correct += 1;
+        } else {
+          wrong += 1;
+          topicStats[tKey].wrong += 1;
+        }
+      });
+
+      const penalty = wrong * s.negMark;
+      const netScore = Math.max(0, Number((correct - penalty).toFixed(2)));
+      const accuracyPct = total ? Math.round((correct / total) * 100) : 0;
+
+      // Auto-tag weak topics in tracker if accuracy on a topic was poor
+      Object.entries(topicStats).forEach(([tName, st]) => {
+        if (st.wrong > st.correct) {
+          const existing = state.topics.find((t) => t.chapter.toLowerCase().includes(tName.toLowerCase().slice(0, 12)));
+          if (existing && existing.mastery !== 'weak') {
+            existing.mastery = 'weak';
+          }
+        }
+      });
+      saveLS(STORAGE_KEYS.TOPICS, state.topics);
+      renderDashboard();
+
+      document.getElementById('activeQuizArena').classList.add('hidden');
+      const reportEl = document.getElementById('quizAnalysisReport');
+      reportEl.classList.remove('hidden');
+
+      reportEl.innerHTML = `
+        <div class="surface-card p-4 sm:p-5 space-y-4">
+          <div class="flex flex-wrap items-start justify-between gap-3 pb-3 border-b border-[var(--border-subtle)]">
+            <div>
+              <span class="text-xs font-bold text-emerald-400">${escapeHTML(reasonLabel)} · Full Performance Analysis</span>
+              <h3 class="text-lg sm:text-xl font-extrabold mt-0.5">${escapeHTML(s.title)}</h3>
+            </div>
+            <button type="button" onclick="resetQuizStudio()" class="px-3.5 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white transition">
+              + Create Another Quiz
+            </button>
+          </div>
+
+          <!-- Score Summary Grid -->
+          <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
+            <div class="surface-soft p-3">
+              <div class="text-[11px] text-muted-custom">Net Score</div>
+              <div class="text-xl sm:text-2xl font-extrabold text-blue-500">${netScore} / ${total}</div>
+            </div>
+            <div class="surface-soft p-3">
+              <div class="text-[11px] text-muted-custom">Accuracy</div>
+              <div class="text-xl sm:text-2xl font-extrabold text-cyan-400">${accuracyPct}%</div>
+            </div>
+            <div class="surface-soft p-3">
+              <div class="text-[11px] text-muted-custom">Correct</div>
+              <div class="text-xl sm:text-2xl font-extrabold text-emerald-400">${correct}</div>
+            </div>
+            <div class="surface-soft p-3">
+              <div class="text-[11px] text-muted-custom">Wrong (Penalty -${penalty.toFixed(2)})</div>
+              <div class="text-xl sm:text-2xl font-extrabold text-rose-400">${wrong}</div>
+            </div>
+            <div class="surface-soft p-3 col-span-2 sm:col-span-1">
+              <div class="text-[11px] text-muted-custom">Skipped</div>
+              <div class="text-xl sm:text-2xl font-extrabold text-amber-400">${skipped}</div>
+            </div>
+          </div>
+
+          <!-- Topic-wise Breakdown -->
+          <div class="surface-soft p-4 space-y-2.5">
+            <h4 class="text-sm font-extrabold">Topic-wise Accuracy Breakdown</h4>
+            ${Object.entries(topicStats).map(([tName, st]) => {
+              const tPct = st.total ? Math.round((st.correct / st.total) * 100) : 0;
+              return `
+                <div class="space-y-1">
+                  <div class="flex justify-between text-xs font-semibold">
+                    <span>${escapeHTML(tName)}</span>
+                    <span>${st.correct}/${st.total} correct (${tPct}%)</span>
+                  </div>
+                  <div class="w-full h-2 rounded-full bg-slate-700/30 overflow-hidden">
+                    <div class="h-full ${tPct >= 60 ? 'bg-emerald-500' : 'bg-rose-500'}" style="width:${tPct}%"></div>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+
+          <!-- Question-by-Question Answer Key & Deep Analysis -->
+          <div class="space-y-3">
+            <h4 class="text-sm font-extrabold">Question-by-Question Review & Explanations</h4>
+            ${s.questions.map((q, idx) => {
+              const picked = s.answers[q.id];
+              const isRight = picked === q.correctIndex;
+              const statusTag = picked === undefined
+                ? '<span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/15 text-amber-400">Skipped</span>'
+                : isRight
+                  ? '<span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-500/15 text-emerald-400">Correct</span>'
+                  : '<span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-rose-500/15 text-rose-400">Wrong</span>';
+
+              return `
+                <div class="surface-soft p-4 space-y-2.5">
+                  <div class="flex items-center justify-between gap-2 flex-wrap">
+                    <span class="text-xs font-bold text-muted-custom">Q${idx + 1} · ${escapeHTML(q.topic)}</span>
+                    <div class="flex items-center gap-2">
+                      ${statusTag}
+                      <button type="button" onclick="askAiExplainQuestion(${idx})" class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white transition">
+                        ✨ AI Deep-Dive
+                      </button>
+                    </div>
+                  </div>
+
+                  <div class="text-sm font-bold rich-block">${formatRichMarkdown(q.question)}</div>
+
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                    ${q.options.map((opt, oIdx) => {
+                      const isCorrectOpt = oIdx === q.correctIndex;
+                      const isUserPicked = oIdx === picked;
+                      let optStyle = 'border-[var(--border-subtle)] bg-[var(--bg-card)]';
+                      if (isCorrectOpt) optStyle = 'border-emerald-500 bg-emerald-500/15 font-bold';
+                      else if (isUserPicked) optStyle = 'border-rose-500 bg-rose-500/15';
+
+                      return `
+                        <div class="p-2.5 rounded-xl border text-xs flex items-center justify-between gap-2 ${optStyle}">
+                          <span><strong>${OPTION_LABELS[oIdx]}.</strong> <span class="rich-block">${formatRichMarkdown(opt)}</span></span>
+                          <span class="text-[11px] font-extrabold shrink-0">
+                            ${isCorrectOpt ? '✓ Correct' : isUserPicked ? '✗ Your Pick' : ''}
+                          </span>
+                        </div>
+                      `;
+                    }).join('')}
+                  </div>
+
+                  <div class="p-3 rounded-xl bg-[var(--bg-card)] border border-[var(--border-subtle)] text-xs leading-relaxed">
+                    <strong class="text-emerald-400">Answer (${OPTION_LABELS[q.correctIndex]}):</strong>
+                    <div class="rich-block mt-1">${formatRichMarkdown(q.explanation)}</div>
+                  </div>
+
+                  <div id="aiDeepDive_${idx}" class="hidden p-3 rounded-xl bg-blue-500/10 border border-blue-500/30 text-xs rich-block"></div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `;
+
+      typesetMath(reportEl);
+      reportEl.scrollIntoView({ behavior: 'smooth' });
+    };
+
+    window.resetQuizStudio = () => {
+      document.getElementById('quizAnalysisReport').classList.add('hidden');
+      document.getElementById('activeQuizArena').classList.add('hidden');
+      document.getElementById('quizSetupCard').scrollIntoView({ behavior: 'smooth' });
+    };
+
+    window.askAiExplainQuestion = async (idx) => {
+      const q = state.quizSession?.questions?.[idx];
+      const box = document.getElementById(`aiDeepDive_${idx}`);
+      if (!q || !box) return;
+
+      box.classList.remove('hidden');
+      box.textContent = 'Generating deeper analysis...';
 
       if (!getApiKey()) {
-        container.innerHTML = buildOfflineStudyPlan(days, subject, text);
-        statusEl.textContent = `${days}-Day Fallback Plan Ready`;
-        typesetMath(container);
+        box.innerHTML = `<strong>AI Deep-Dive (Fallback):</strong> সঠিক উত্তর <strong>${OPTION_LABELS[q.correctIndex]}</strong>। এই ধরনের ভর্তি প্রশ্নে একক (unit), চিহ্ন ($+/-$) ও শর্তগুলো ভালোভাবে যাচাই করো। মূল ধারণা: ${escapeHTML(q.explanation)}`;
+        typesetMath(box);
         return;
       }
 
       try {
-        const prompt = `Create a structured ${days}-day study plan in Bengali for an HSC Science & University Admission student (${subject}). Include daily revision blocks, MCQ practice targets, and formula review.
-Reference material (if any):
-${text.slice(0, 8000) || 'General HSC Physics, Chemistry, Higher Math, Biology syllabus.'}`;
+        const detail = await callGemini({
+          contents: [{
+            role: 'user',
+            parts: [{
+              text: `Explain this MCQ in detail for an HSC & Admission student in Bengali (with LaTeX math):
+Question: ${q.question}
+Options: ${q.options.map((o, i) => `${OPTION_LABELS[i]}) ${o}`).join(' | ')}
+Correct Answer: ${OPTION_LABELS[q.correctIndex]}
+Base Explanation: ${q.explanation}
 
-        const planText = await callGeminiWithRetry(
-          prompt,
-          'You are a structured study planner for Bangladeshi admission aspirants.'
-        );
-        container.innerHTML = `
-          <div class="surface-soft p-4 text-xs sm:text-sm whitespace-pre-line leading-relaxed">
-            ${escapeHTML(planText)}
-          </div>
-        `;
-        statusEl.textContent = `${days}-Day Gemini Study Plan Ready ✓`;
-        typesetMath(container);
+Provide: 1) Step-by-step concept & calculation, 2) Why common distractors are wrong, 3) Quick admission exam tip.`
+            }]
+          }],
+          systemInstruction: 'You are a patient, crystal-clear HSC & admission mentor.'
+        });
+        box.innerHTML = formatRichMarkdown(detail);
+        typesetMath(box);
       } catch (err) {
-        container.innerHTML = buildOfflineStudyPlan(days, subject, text);
-        statusEl.textContent = `Fallback plan used (${err.message})`;
-        typesetMath(container);
+        box.textContent = `Could not fetch deep-dive (${err.message}).`;
       }
-    }
+    };
 
-    // ==================== GEMINI AI TUTOR & PDF Q&A ====================
-    function appendChatBubble(role, text) {
-      const box = document.getElementById('chatMessages');
-      if (!box) return null;
+    // ==================== GEMINI AI TUTOR CHAT ====================
+    function appendTutorBubble(role, text, imagePreviewDataUrl = '') {
+      const stream = document.getElementById('tutorChatStream');
+      if (!stream) return null;
+
       const isUser = role === 'user';
-      const bubble = document.createElement('div');
-      bubble.className = isUser
-        ? 'ml-auto max-w-[85%] rounded-2xl px-4 py-2.5 text-xs sm:text-sm bg-blue-600 text-white whitespace-pre-line'
-        : 'mr-auto max-w-[90%] rounded-2xl px-4 py-2.5 text-xs sm:text-sm surface-soft whitespace-pre-line leading-relaxed';
-      bubble.textContent = text;
-      box.appendChild(bubble);
-      box.scrollTop = box.scrollHeight;
-      typesetMath(bubble);
-      return bubble;
+      const wrap = document.createElement('div');
+      wrap.className = isUser
+        ? 'ml-auto max-w-[85%] rounded-2xl px-4 py-3 text-xs sm:text-sm bg-blue-600 text-white space-y-2'
+        : 'mr-auto max-w-[92%] rounded-2xl px-4 py-3 text-xs sm:text-sm surface-soft space-y-2';
+
+      if (imagePreviewDataUrl) {
+        const img = document.createElement('img');
+        img.src = imagePreviewDataUrl;
+        img.alt = 'Attached study image';
+        img.className = 'max-h-48 rounded-xl border border-white/20 object-contain';
+        wrap.appendChild(img);
+      }
+
+      const contentDiv = document.createElement('div');
+      contentDiv.className = 'rich-block leading-relaxed';
+      contentDiv.innerHTML = isUser ? escapeHTML(text) : formatRichMarkdown(text);
+      wrap.appendChild(contentDiv);
+
+      stream.appendChild(wrap);
+      stream.scrollTop = stream.scrollHeight;
+      typesetMath(wrap);
+      return contentDiv;
     }
 
-    async function handleTutorSubmit(customPrompt) {
-      const inputEl = document.getElementById('tutorChatInput');
-      const question = (customPrompt ?? inputEl.value ?? '').trim();
-      if (!question) return;
+    async function sendTutorMessage(overridePrompt) {
+      const input = document.getElementById('tutorMessageInput');
+      const userText = (overridePrompt ?? input.value ?? '').trim();
+      const imgFile = state.tutorImageFile;
 
-      if (!customPrompt && inputEl) inputEl.value = '';
-      appendChatBubble('user', question);
-      const typingBubble = appendChatBubble('assistant', 'Thinking...');
+      if (!userText && !imgFile) return;
+      if (!overridePrompt && input) input.value = '';
 
-      const includePdf = document.getElementById('usePdfContextCheckbox')?.checked;
-      const pdfContext = includePdf && state.pdfText
-        ? `\n\n[Uploaded PDF Context (${state.pdfMeta})]:\n${state.pdfText.slice(0, 7000)}`
+      let previewUrl = '';
+      let base64Img = '';
+      if (imgFile) {
+        base64Img = await fileToBase64(imgFile);
+        previewUrl = `data:${imgFile.type || 'image/jpeg'};base64,${base64Img}`;
+      }
+
+      const displayPrompt = userText || 'এই ছবির প্রশ্ন বা টপিকটি সহজভাবে বুঝিয়ে দাও।';
+      appendTutorBubble('user', displayPrompt, previewUrl);
+      const replyEl = appendTutorBubble('model', 'Thinking...');
+
+      // Clear attachment bar after queuing
+      state.tutorImageFile = null;
+      document.getElementById('tutorImageAttachmentBar').classList.add('hidden');
+
+      const attachPdf = document.getElementById('tutorUsePdfCheckbox')?.checked;
+      const activeMeta = state.pdfMetaList.find((m) => m.id === state.activePdfId);
+      const pdfContextBlock = attachPdf && state.activePdfText
+        ? `\n\n[Active Saved PDF Context — "${activeMeta?.title || 'PDF'}" (${activeMeta?.subject || 'General'})]:\n${state.activePdfText.slice(0, 9000)}`
         : '';
 
       if (!getApiKey()) {
-        const reply =
-          `Fallback AI Tutor Response:\n` +
-          `তুমি জানতে চেয়েছ: "${question}"\n` +
-          (includePdf && state.pdfText
-            ? `PDF Context সক্রিয় আছে (${state.pdfMeta})। মূল কনসেপ্ট ও সূত্র $\\Delta Q = \\Delta U + W$ অনুযায়ী ধাপে ধাপে অনুশীলন করো।`
-            : `HSC Physics, Chemistry, Higher Math ও Biology-র যেকোনো সূত্র বা টপিক লিখে সার্চ করো। পূর্ণ AI উত্তরের জন্য উপরে "AI: Fallback Mode"-এ ক্লিক করে Gemini API Key যুক্ত করো।`);
-        if (typingBubble) {
-          typingBubble.textContent = reply;
-          typesetMath(typingBubble);
+        const fallbackText =
+          `### AI Tutor (Fallback Mode)\n` +
+          `তোমার প্রশ্ন: **${escapeHTML(displayPrompt)}**\n\n` +
+          (attachPdf && state.activePdfText
+            ? `Active PDF (**${escapeHTML(activeMeta?.title || 'Saved PDF')}**) থেকে প্রাসঙ্গিক অংশ বিবেচনা করে মূল সূত্র ও ধারণা অনুশীলন করো। উদাহরণস্বরূপ: $\\eta = 1 - \\frac{T_2}{T_1}$ এবং $v = u + at$।\n`
+            : `HSC Physics, Chemistry, Higher Math বা Biology-র যেকোনো সূত্র বা টপিক লেখো। লাইভ Gemini উত্তরের জন্য উপরে **AI: Fallback Mode**-এ ক্লিক করে Gemini API Key সেভ করো।`);
+        if (replyEl) {
+          replyEl.innerHTML = formatRichMarkdown(fallbackText);
+          typesetMath(replyEl);
         }
         return;
       }
 
+      const parts = [{ text: `${displayPrompt}${pdfContextBlock}` }];
+      if (base64Img && imgFile) {
+        parts.push({
+          inlineData: {
+            mimeType: imgFile.type || 'image/jpeg',
+            data: base64Img
+          }
+        });
+      }
+
+      state.tutorHistory.push({ role: 'user', parts });
+      const trimmedHistory = state.tutorHistory.slice(-10);
+
       try {
-        const answer = await callGeminiWithRetry(
-          `${question}${pdfContext}`,
-          'You are Admission Warrior AI Tutor for HSC Science (Physics, Chemistry, Higher Math, Biology) and university admission tests. Answer clearly in Bengali with LaTeX math ($...$ or $$...$$) when helpful.'
-        );
-        if (typingBubble) {
-          typingBubble.textContent = answer;
-          typesetMath(typingBubble);
+        const reply = await callGemini({
+          contents: trimmedHistory,
+          systemInstruction:
+            'You are Admission Warrior AI Tutor for HSC Science (Physics, Chemistry, Higher Math, Biology) and university admission exams in Bangladesh. Reply clearly in Bengali (with English academic terms where helpful). Use LaTeX ($...$ or $$...$$) for formulas and equations, and format structured steps cleanly.'
+        });
+        state.tutorHistory.push({ role: 'model', parts: [{ text: reply }] });
+        if (replyEl) {
+          replyEl.innerHTML = formatRichMarkdown(reply);
+          typesetMath(replyEl);
         }
       } catch (err) {
-        if (typingBubble) {
-          typingBubble.textContent = `Could not reach Gemini (${err.message}). Check your API key or try again.`;
+        if (replyEl) {
+          replyEl.textContent = `Gemini error: ${err.message}. Check your API key or network connection.`;
         }
       }
     }
 
-    // ==================== EVENT BINDINGS & INITIALIZATION ====================
-    function bindEvents() {
-      // Theme toggle
+    // ==================== EVENT LISTENERS ====================
+    function bindAllEvents() {
       document.getElementById('themeToggleBtn')?.addEventListener('click', () => {
         const cur = document.documentElement.getAttribute('data-theme') || 'dark';
         applyTheme(cur === 'dark' ? 'light' : 'dark');
       });
 
-      // Navigation tabs
       document.querySelectorAll('.nav-tab').forEach((btn) => {
         btn.addEventListener('click', () => switchTab(btn.dataset.nav));
       });
@@ -1187,8 +1985,8 @@ ${text.slice(0, 8000) || 'General HSC Physics, Chemistry, Higher Math, Biology s
         btn.addEventListener('click', () => {
           state.subjectFilter = btn.dataset.subfilter;
           document.querySelectorAll('.sub-filter-btn').forEach((b) => {
-            const active = b.dataset.subfilter === state.subjectFilter;
-            b.className = active
+            const on = b.dataset.subfilter === state.subjectFilter;
+            b.className = on
               ? 'sub-filter-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-blue-600 text-white'
               : 'sub-filter-btn px-3 py-1.5 rounded-xl text-xs font-bold surface-soft text-muted-custom';
           });
@@ -1196,43 +1994,43 @@ ${text.slice(0, 8000) || 'General HSC Physics, Chemistry, Higher Math, Biology s
         });
       });
 
-      // Add Chapter / Topic form
+      // Add topic
       document.getElementById('addTopicForm')?.addEventListener('submit', (e) => {
         e.preventDefault();
-        const sub = document.getElementById('newTopicSubject').value;
-        const chap = document.getElementById('newTopicChapter').value.trim();
+        const subject = document.getElementById('newTopicSubject').value;
+        const chapter = document.getElementById('newTopicChapter').value.trim();
         const mastery = document.getElementById('newTopicTag').value;
-        if (!chap) return;
+        if (!chapter) return;
         state.topics.unshift({
           id: 't_' + Date.now(),
-          subject: sub,
-          chapter: chap,
+          subject,
+          chapter,
           progress: mastery === 'strong' ? 85 : mastery === 'weak' ? 30 : 50,
           mastery
         });
         document.getElementById('newTopicChapter').value = '';
-        persistTopics();
-        showToast('Chapter / topic added');
+        saveTopics();
+        toast('Added to tracker');
       });
 
       document.getElementById('resetSampleTrackerBtn')?.addEventListener('click', () => {
         state.topics = [...DEFAULT_TOPICS];
-        persistTopics();
-        showToast('Default HSC syllabus restored');
+        saveTopics();
+        toast('Default HSC syllabus restored');
       });
 
-      // Target Exam countdown save
+      // Target exam countdown
       document.getElementById('saveExamTargetBtn')?.addEventListener('click', () => {
         const name = document.getElementById('examNameInput').value.trim() || 'Target Admission Exam';
         const date = document.getElementById('examDateInput').value;
-        if (!date) return showToast('Please select a target exam date');
+        if (!date) return toast('Please choose an exam date');
         state.examTarget = { name, date };
-        saveJSON(STORAGE_KEYS.EXAM_TARGET, state.examTarget);
+        saveLS(STORAGE_KEYS.EXAM_TARGET, state.examTarget);
         renderDashboard();
-        showToast('Target exam updated');
+        toast('Target exam updated');
       });
 
-      // Checklist form
+      // Checklist
       document.getElementById('addChecklistForm')?.addEventListener('submit', (e) => {
         e.preventDefault();
         const inp = document.getElementById('checklistInput');
@@ -1240,11 +2038,11 @@ ${text.slice(0, 8000) || 'General HSC Physics, Chemistry, Higher Math, Biology s
         if (!text) return;
         state.checklist.unshift({ id: 'c_' + Date.now(), text, done: false });
         inp.value = '';
-        saveJSON(STORAGE_KEYS.CHECKLIST, state.checklist);
+        saveLS(STORAGE_KEYS.CHECKLIST, state.checklist);
         renderChecklist();
       });
 
-      // Timer controls
+      // Pomodoro controls
       document.querySelectorAll('.timer-preset').forEach((btn) => {
         btn.addEventListener('click', () => {
           const mins = Number(btn.dataset.preset) || 25;
@@ -1252,95 +2050,161 @@ ${text.slice(0, 8000) || 'General HSC Physics, Chemistry, Higher Math, Biology s
           state.timer.presetMinutes = mins;
           state.timer.secondsLeft = mins * 60;
           document.querySelectorAll('.timer-preset').forEach((b) => {
-            const active = b.dataset.preset === btn.dataset.preset;
-            b.className = active
+            const on = b.dataset.preset === btn.dataset.preset;
+            b.className = on
               ? 'timer-preset px-2.5 py-1 rounded-lg text-xs font-bold bg-blue-600 text-white'
               : 'timer-preset px-2.5 py-1 rounded-lg text-xs font-bold surface-soft text-muted-custom';
           });
-          syncTimerUI();
+          syncPomodoroUI();
         });
       });
 
       document.getElementById('timerStartPauseBtn')?.addEventListener('click', () => {
         state.timer.running = !state.timer.running;
-        syncTimerUI();
-        if (state.timer.running) startTimerLoop();
+        syncPomodoroUI();
+        if (state.timer.running) runPomodoroTicker();
       });
 
       document.getElementById('timerResetBtn')?.addEventListener('click', () => {
         state.timer.running = false;
         state.timer.secondsLeft = state.timer.presetMinutes * 60;
-        syncTimerUI();
+        syncPomodoroUI();
       });
 
       document.getElementById('logManualSessionBtn')?.addEventListener('click', () => {
-        addStudyMinutes(state.timer.presetMinutes);
+        logStudyMinutes(state.timer.presetMinutes);
       });
 
-      // PDF upload & actions
-      document.getElementById('pdfUploadInput')?.addEventListener('change', async (e) => {
+      // PDF Library upload & save
+      document.getElementById('pdfLibraryFileInput')?.addEventListener('change', async (e) => {
         const file = e.target.files?.[0];
         if (!file) return;
-        const metaEl = document.getElementById('pdfFileMeta');
-        if (metaEl) metaEl.textContent = `Extracting text from ${file.name}...`;
+        const status = document.getElementById('pdfUploadStatus');
+        status.textContent = `Extracting text from ${file.name}...`;
         try {
-          const res = await extractPdfText(file);
-          document.getElementById('pdfExtractedText').value = res.text;
-          state.pdfMeta = `${file.name} (${res.pages}/${res.totalPages} pages)`;
-          localStorage.setItem(STORAGE_KEYS.PDF_META, state.pdfMeta);
-          if (metaEl) metaEl.textContent = `✓ ${state.pdfMeta}`;
-          updatePdfCharCount();
-          showToast('PDF text extracted');
+          const res = await extractPdfContent(file);
+          state.draftPages = res.pages;
+          document.getElementById('pdfDraftText').value = res.text;
+          if (!document.getElementById('pdfSaveTitleInput').value.trim()) {
+            document.getElementById('pdfSaveTitleInput').value = file.name.replace(/\.pdf$/i, '');
+          }
+          status.textContent = `✓ Extracted ${res.pages}/${res.totalPages} pages from ${file.name}`;
+          updateDraftStats();
+          toast('PDF extracted — click "Save PDF to Library"');
         } catch (err) {
-          if (metaEl) metaEl.textContent = `Could not parse PDF (${err.message}). Paste text manually.`;
-          showToast('PDF extraction fallback: paste text');
+          status.textContent = `PDF parse issue (${err.message}). You can paste text manually.`;
+          toast('Could not extract PDF automatically');
         }
         e.target.value = '';
       });
 
-      document.getElementById('pdfExtractedText')?.addEventListener('input', updatePdfCharCount);
-      document.getElementById('runPdfBreakdownBtn')?.addEventListener('click', handlePdfBreakdown);
-      document.getElementById('runPdfPlanBtn')?.addEventListener('click', handlePdfStudyPlan);
+      document.getElementById('pdfDraftText')?.addEventListener('input', updateDraftStats);
 
-      document.getElementById('syncBreakdownToTrackerBtn')?.addEventListener('click', () => {
-        const list = state.lastExtractedTopics.length
-          ? state.lastExtractedTopics
-          : buildOfflinePdfBreakdown(state.pdfText, document.getElementById('pdfSubjectSelect').value).topics;
+      document.getElementById('aiSummarizeDraftBtn')?.addEventListener('click', async () => {
+        const txt = document.getElementById('pdfDraftText').value.trim();
+        if (!txt) return toast('Add or extract PDF text first');
+        const box = document.getElementById('draftAiSummaryBox');
+        const out = document.getElementById('draftAiSummaryText');
+        box.classList.remove('hidden');
+        out.textContent = 'Summarizing key points...';
 
-        list.forEach((item) => {
-          state.topics.unshift({
-            id: 't_pdf_' + Date.now() + '_' + Math.random().toString(36).slice(2, 5),
-            subject: ['Physics', 'Chemistry', 'Higher Math', 'Biology'].includes(item.subject) ? item.subject : 'Physics',
-            chapter: item.chapter,
-            progress: item.mastery === 'strong' ? 80 : item.mastery === 'weak' ? 30 : 50,
-            mastery: item.mastery || 'moderate'
+        if (!getApiKey()) {
+          out.innerHTML = formatRichMarkdown(`• **Content Length:** ${txt.length} characters\n• **Tip:** Add a Gemini API key in the top bar for detailed AI topic & formula extraction.`);
+          typesetMath(out);
+          return;
+        }
+
+        try {
+          const sum = await callGemini({
+            contents: [{ role: 'user', parts: [{ text: `Summarize key study topics, important formulas ($...$), and exam focus points from this text in Bengali:\n\n${txt.slice(0, 9000)}` }] }]
           });
-        });
-        persistTopics();
-        switchTab('dashboard');
-        showToast(`${list.length} topics synced to Study Dashboard`);
+          out.innerHTML = formatRichMarkdown(sum);
+          typesetMath(out);
+        } catch (err) {
+          out.textContent = `Summary failed: ${err.message}`;
+        }
       });
 
-      // Tutor chat
+      document.getElementById('savePdfToLibraryBtn')?.addEventListener('click', async () => {
+        const text = document.getElementById('pdfDraftText').value.trim();
+        if (!text) return toast('PDF text is empty — upload a PDF or paste text');
+        const title = document.getElementById('pdfSaveTitleInput').value.trim() || `Study PDF ${state.pdfMetaList.length + 1}`;
+        const subject = document.getElementById('pdfSaveSubjectSelect').value;
+        const id = 'pdf_' + Date.now();
+        const summary = text.replace(/\s+/g, ' ').slice(0, 160) + (text.length > 160 ? '...' : '');
+
+        try {
+          await idbPutPdfRecord({ id, title, subject, text, savedDate: todayISO() });
+        } catch {
+          return toast('IndexedDB write failed');
+        }
+
+        const meta = {
+          id,
+          title,
+          subject,
+          pages: state.draftPages || 1,
+          chars: text.length,
+          summary,
+          savedDate: todayISO()
+        };
+
+        state.pdfMetaList.unshift(meta);
+        saveLS(STORAGE_KEYS.PDF_META_LIST, state.pdfMetaList);
+        state.activePdfId = id;
+        state.activePdfText = text;
+        localStorage.setItem(STORAGE_KEYS.ACTIVE_PDF_ID, id);
+
+        document.getElementById('pdfSaveTitleInput').value = '';
+        document.getElementById('pdfDraftText').value = '';
+        state.draftPages = 0;
+        updateDraftStats();
+        updateActivePdfBadges();
+        renderSavedPdfLibrary();
+        populateQuizPdfSelector();
+        toast(`Saved "${title}" to PDF Library ✓`);
+      });
+
+      // Quiz studio events
+      document.getElementById('quizSourcePdfSelect')?.addEventListener('change', handleQuizPdfSourceChange);
+      document.getElementById('generateTimedQuizBtn')?.addEventListener('click', handleGenerateAndStartQuiz);
+
+      // Tutor chat events
       document.getElementById('tutorChatForm')?.addEventListener('submit', (e) => {
         e.preventDefault();
-        handleTutorSubmit();
+        sendTutorMessage();
       });
 
-      document.querySelectorAll('.starter-prompt').forEach((btn) => {
-        btn.addEventListener('click', () => handleTutorSubmit(btn.dataset.prompt));
+      document.querySelectorAll('.tutor-chip').forEach((btn) => {
+        btn.addEventListener('click', () => sendTutorMessage(btn.dataset.qchip));
       });
 
-      document.getElementById('clearChatBtn')?.addEventListener('click', () => {
-        document.getElementById('chatMessages').innerHTML = '';
-        appendChatBubble('assistant', 'Chat cleared. Ask me anything from your PDF or HSC Science syllabus!');
+      document.getElementById('tutorImageInput')?.addEventListener('change', (e) => {
+        const f = e.target.files?.[0];
+        if (!f) return;
+        state.tutorImageFile = f;
+        document.getElementById('tutorImageAttachmentName').textContent = `📷 ${f.name}`;
+        document.getElementById('tutorImageAttachmentBar').classList.remove('hidden');
+        document.getElementById('tutorImageAttachmentBar').classList.add('flex');
+        e.target.value = '';
+      });
+
+      document.getElementById('removeTutorImageBtn')?.addEventListener('click', () => {
+        state.tutorImageFile = null;
+        document.getElementById('tutorImageAttachmentBar').classList.add('hidden');
+      });
+
+      document.getElementById('clearTutorChatBtn')?.addEventListener('click', () => {
+        state.tutorHistory = [];
+        document.getElementById('tutorChatStream').innerHTML = '';
+        appendTutorBubble('model', 'নতুন চ্যাট শুরু হয়েছে! তোমার সেভ করা PDF, যেকোনো সূত্র বা ভর্তি পরীক্ষার প্রশ্ন করতে পারো।');
       });
 
       // API Key Modal
       const modal = document.getElementById('apiKeyModal');
-      const keyInput = document.getElementById('geminiApiKeyInput');
+      const keyInp = document.getElementById('geminiKeyInput');
       const openModal = () => {
-        keyInput.value = getApiKey();
+        keyInp.value = getApiKey();
         modal.classList.remove('hidden');
         modal.classList.add('flex');
       };
@@ -1352,37 +2216,53 @@ ${text.slice(0, 8000) || 'General HSC Physics, Chemistry, Higher Math, Biology s
       document.getElementById('openApiModalBtn')?.addEventListener('click', openModal);
       document.getElementById('closeApiModalBtn')?.addEventListener('click', closeModal);
       document.getElementById('cancelApiModalBtn')?.addEventListener('click', closeModal);
-      document.getElementById('saveApiKeyBtn')?.addEventListener('click', () => {
-        const val = keyInput.value.trim();
-        localStorage.setItem(STORAGE_KEYS.API_KEY, val);
-        refreshAiBadge();
+      document.getElementById('saveGeminiKeyBtn')?.addEventListener('click', () => {
+        const val = keyInp.value.trim();
+        if (val) localStorage.setItem(STORAGE_KEYS.API_KEY, val);
+        else localStorage.removeItem(STORAGE_KEYS.API_KEY);
+        refreshAiStatusUI();
         closeModal();
-        showToast(val ? 'Gemini API key saved' : 'Switched to Fallback Mode');
+        toast(val ? 'Gemini API key saved' : 'Fallback Mode active');
       });
-      document.getElementById('clearApiKeyBtn')?.addEventListener('click', () => {
+      document.getElementById('clearGeminiKeyBtn')?.addEventListener('click', () => {
         localStorage.removeItem(STORAGE_KEYS.API_KEY);
-        keyInput.value = '';
-        refreshAiBadge();
+        keyInp.value = '';
+        refreshAiStatusUI();
         closeModal();
-        showToast('API key removed · Fallback Mode active');
+        toast('API key cleared · Fallback Mode active');
       });
     }
 
-    // Boot
-    applyTheme(loadJSON(STORAGE_KEYS.THEME, 'dark'));
-    refreshAiBadge();
-    if (state.pdfText) {
-      document.getElementById('pdfExtractedText').value = state.pdfText;
-      document.getElementById('pdfFileMeta').textContent = `✓ ${state.pdfMeta}`;
-      updatePdfCharCount();
+    // ==================== BOOT ====================
+    async function boot() {
+      applyTheme(loadLS(STORAGE_KEYS.THEME, 'dark'));
+      refreshAiStatusUI();
+      bindAllEvents();
+      renderDashboard();
+      syncPomodoroUI();
+      renderSavedPdfLibrary();
+      populateQuizPdfSelector();
+
+      if (state.activePdfId) {
+        try {
+          const rec = await idbGetPdfRecord(state.activePdfId);
+          if (rec?.text) {
+            state.activePdfText = rec.text;
+            const qBox = document.getElementById('quizCustomText');
+            if (qBox && !qBox.value) qBox.value = rec.text.slice(0, 14000);
+          }
+        } catch {}
+      }
+
+      updateActivePdfBadges();
+      appendTutorBubble(
+        'model',
+        'স্বাগতম **Admission Warrior AI Tutor**-এ! তুমি এখানে **Saved PDF Library**-এর PDF কনটেক্সট, ছবি এবং সূত্র ($\\Delta Q = \\Delta U + W$) দিয়ে প্রশ্ন করতে পারো, অথবা **AI PDF Quiz & Analysis** ট্যাবে টাইমার দিয়ে কুইজ পরীক্ষা দিতে পারো।'
+      );
+      typesetMath(document.body);
     }
-    bindEvents();
-    renderDashboard();
-    syncTimerUI();
-    appendChatBubble(
-      'assistant',
-      'স্বাগতম! Admission Warrior AI Study Tracker-এ তোমাকে স্বাগতম। Upload a PDF in "PDF AI Analyzer" or ask questions directly here (e.g., $\\eta = 1 - \\frac{T_2}{T_1}$).'
-    );
+
+    boot();
   </script>
 </body>
 </html>
