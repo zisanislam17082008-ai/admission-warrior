@@ -1,46 +1,212 @@
-▲Admission Warrior
-GuestAI: offAdmin🌙
-Question BankExamAI ChatUsers
-1 · Upload question bank
-Upload fileLoad sampleClear
-txt · md · csv · json · pdf
+<!DOCTYPE html>
+<html lang="bn" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admission Warrior — HSC & University Prep</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Top Navbar -->
+  <header class="topbar">
+    <div class="brand">
+      <span class="logo-triangle">▲</span>
+      <span class="brand-title">Admission Warrior</span>
+    </div>
+    <div class="top-actions">
+      <span id="currentUserBadge" class="badge">Guest</span>
+      <button id="apiKeyModalBtn" class="badge badge-ai" title="Configure Gemini API Key">AI: <span id="aiStatusText">off</span></button>
+      <button id="adminToggleBtn" class="btn-sm btn-outline">Admin</button>
+      <button id="themeToggleBtn" class="btn-icon" title="Toggle Dark/Light Theme">🌙</button>
+    </div>
+  </header>
 
-প্রশ্ন paste করো (1. প্রশ্ন / A) B) C) D)) অথবা JSON...
+  <!-- Main Navigation Tabs -->
+  <nav class="tabs">
+    <button class="tab-btn active" data-tab="bankTab">Question Bank</button>
+    <button class="tab-btn" data-tab="examTab">Exam</button>
+    <button class="tab-btn" data-tab="aiTab">AI Chat</button>
+    <button class="tab-btn" data-tab="usersTab">Users</button>
+  </nav>
 
-2 · Analyze & generate (max 60 MCQ)
-Subject
-All 4 subjects
-Questions (1–60)
-20
-Analyze bankExtract from bankGenerate predictable MCQs
-Question set0
-Export JSONDelete setGo to exam
-Bank paste/upload করো → "Analyze bank" → "Generate predictable MCQs". Built-in 20 টি প্রশ্ন সব সময় exam-এ থাকে।
-Exam setup
-PhysicsChemistryHigher MathBiology
-Questions (max 60)
-20
-Minutes
-20
-Negative mark
-−0.25
-Start exam
-Gemini AI tutorHSC Physics · Chemistry · Math · Biology
-FormulasPractice MCQStudy plan
-📷
-যেকোনো প্রশ্ন করো...
-Send
-Open sign-up · instant access
-Name
-Tanvir Ahmed
-Sign up & use now
-Approval লাগে না। শুধু Admin (PIN login) suspend/ban করতে পারে।
+  <main class="container">
+    <!-- TAB 1: QUESTION BANK -->
+    <section id="bankTab" class="tab-panel active">
+      <div class="card">
+        <h2>1 · Upload question bank</h2>
+        <div class="btn-row">
+          <label class="btn btn-primary file-label">
+            Upload file
+            <input type="file" id="bankFileInput" accept=".txt,.md,.csv,.json,.pdf" hidden />
+          </label>
+          <button id="loadSampleBtn" class="btn btn-secondary">Load sample</button>
+          <button id="clearBankBtn" class="btn btn-danger">Clear</button>
+        </div>
+        <p class="hint">Supported: txt · md · csv · json · pdf</p>
+        <textarea id="bankTextarea" rows="6" placeholder="এখানে প্রশ্ন পেস্ট করো (যেমন: 1. প্রশ্ন... A) ... B) ... C) ... D) ... Ans: A) অথবা JSON পেস্ট করো..."></textarea>
+      </div>
 
-Members 0
-Reason (optional)
-Gemini API key
-AIza...
-Browser-এ সেভ থাকে। npm start দিয়ে চালালে .env-এর key ব্যবহার হয়, এখানে দিতে হয় না।
+      <div class="card">
+        <h2>2 · Analyze & generate (max 60 MCQ)</h2>
+        <div class="grid-2">
+          <div class="form-group">
+            <label for="genSubject">Subject</label>
+            <select id="genSubject">
+              <option value="All">All 4 subjects</option>
+              <option value="Physics">Physics</option>
+              <option value="Chemistry">Chemistry</option>
+              <option value="Higher Math">Higher Math</option>
+              <option value="Biology">Biology</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="genCount">Questions (1–60)</label>
+            <input type="number" id="genCount" min="1" max="60" value="20" />
+          </div>
+        </div>
 
-Remove
-CancelSave
+        <div class="btn-row">
+          <button id="analyzeBankBtn" class="btn btn-secondary">Analyze bank</button>
+          <button id="extractBankBtn" class="btn btn-secondary">Extract from bank</button>
+          <button id="generateMcqBtn" class="btn btn-primary">Generate predictable MCQs</button>
+        </div>
+
+        <div id="analysisOutput" class="info-box hidden"></div>
+
+        <div class="set-header">
+          <h3>Question set: <span id="setCount">0</span></h3>
+          <div class="btn-row">
+            <button id="exportJsonBtn" class="btn-sm btn-outline">Export JSON</button>
+            <button id="deleteSetBtn" class="btn-sm btn-danger">Delete set</button>
+            <button id="goToExamBtn" class="btn-sm btn-primary">Go to exam →</button>
+          </div>
+        </div>
+        <p class="hint">Bank paste/upload করো → "Analyze bank" → "Generate predictable MCQs". Built-in 20 টি প্রশ্ন সব সময় exam-এ থাকে।</p>
+        <div id="questionPreviewList" class="preview-list"></div>
+      </div>
+    </section>
+
+    <!-- TAB 2: EXAM -->
+    <section id="examTab" class="tab-panel">
+      <div id="examSetupCard" class="card">
+        <h2>Exam setup</h2>
+        <div class="checkbox-group">
+          <label><input type="checkbox" name="examSub" value="Physics" checked /> Physics</label>
+          <label><input type="checkbox" name="examSub" value="Chemistry" checked /> Chemistry</label>
+          <label><input type="checkbox" name="examSub" value="Higher Math" checked /> Higher Math</label>
+          <label><input type="checkbox" name="examSub" value="Biology" checked /> Biology</label>
+        </div>
+
+        <div class="grid-3">
+          <div class="form-group">
+            <label for="examQuestionsCount">Questions (max 60)</label>
+            <input type="number" id="examQuestionsCount" min="1" max="60" value="20" />
+          </div>
+          <div class="form-group">
+            <label for="examMinutes">Minutes</label>
+            <input type="number" id="examMinutes" min="1" max="180" value="20" />
+          </div>
+          <div class="form-group">
+            <label for="negativeMark">Negative mark</label>
+            <select id="negativeMark">
+              <option value="0.25">−0.25</option>
+              <option value="0.50">−0.50</option>
+              <option value="0">None</option>
+            </select>
+          </div>
+        </div>
+
+        <button id="startExamBtn" class="btn btn-primary btn-full">Start exam</button>
+      </div>
+
+      <!-- Active Exam Arena -->
+      <div id="examArena" class="card hidden">
+        <div class="exam-sticky-bar">
+          <div>প্রশ্ন: <strong id="answeredProgress">0/0</strong></div>
+          <div class="timer-pill">⏱ <span id="timerDisplay">20:00</span></div>
+          <button id="submitExamBtn" class="btn btn-danger btn-sm">Submit Exam</button>
+        </div>
+        <div id="examQuestionsContainer" class="exam-list"></div>
+      </div>
+
+      <!-- Exam Result & Solutions (Unlocked ONLY after Submit) -->
+      <div id="examResultCard" class="card hidden">
+        <h2>Exam Result & Solutions</h2>
+        <div id="scoreSummary" class="score-grid"></div>
+        <div id="solutionsContainer" class="exam-list"></div>
+        <button id="retakeExamBtn" class="btn btn-primary btn-full">New Exam Setup</button>
+      </div>
+    </section>
+
+    <!-- TAB 3: AI CHAT -->
+    <section id="aiTab" class="tab-panel">
+      <div class="card">
+        <h2>Gemini AI tutor</h2>
+        <p class="hint">HSC Physics · Chemistry · Math · Biology</p>
+        <div class="btn-row quick-prompts">
+          <button class="btn-sm btn-outline prompt-chip" data-prompt="HSC Physics ও Chemistry-র সবচেয়ে গুরুত্বপূর্ণ ১০টি সূত্র ব্যাখ্যাসহ দাও।">Formulas</button>
+          <button class="btn-sm btn-outline prompt-chip" data-prompt="DU ও BUET ভর্তি পরীক্ষার উপযোগী ৫টি কঠিন MCQ প্রশ্ন দাও এবং শেষে উত্তর ও ব্যাখ্যা দাও।">Practice MCQ</button>
+          <button class="btn-sm btn-outline prompt-chip" data-prompt="শেষ মুহূর্তের HSC Science ভর্তি প্রস্তুতির জন্য একটি ৩০ দিনের রুটিন তৈরি করো।">Study plan</button>
+        </div>
+
+        <div id="chatMessages" class="chat-box">
+          <div class="msg msg-ai">আসসালামু আলাইকুম! আমি তোমার Admission Warrior AI Tutor। Physics, Chemistry, Math বা Biology-র যেকোনো প্রশ্ন করো অথবা ছবির আইকনে (📷) চাপ দিয়ে প্রশ্ন আপলোড করো।</div>
+        </div>
+
+        <div id="imagePreviewBar" class="image-preview hidden">
+          <span id="imageFileName"></span>
+          <button id="removeImgBtn" class="btn-sm btn-danger">✕</button>
+        </div>
+
+        <div class="chat-input-row">
+          <label class="btn-icon upload-img-btn" title="Upload Question Image">
+            📷
+            <input type="file" id="chatImageInput" accept="image/*" hidden />
+          </label>
+          <input type="text" id="chatInput" placeholder="যেকোনো প্রশ্ন করো..." />
+          <button id="sendChatBtn" class="btn btn-primary">Send</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 4: USERS & ADMIN -->
+    <section id="usersTab" class="tab-panel">
+      <div class="card">
+        <h2>Open sign-up · instant access</h2>
+        <div class="chat-input-row">
+          <input type="text" id="signupNameInput" placeholder="তোমার নাম লেখো (যেমন: Tanvir Ahmed)" />
+          <button id="signupBtn" class="btn btn-primary">Sign up & use now</button>
+        </div>
+        <p class="hint">Approval লাগে না। শুধু Admin (PIN login: 1234) suspend/ban করতে পারে।</p>
+      </div>
+
+      <div class="card">
+        <div class="set-header">
+          <h3>Members <span id="membersCount" class="badge">0</span></h3>
+          <span id="adminStatusBadge" class="hint">Admin Mode: Locked</span>
+        </div>
+        <div id="membersList" class="members-list"></div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Gemini API Key Modal -->
+  <div id="apiKeyModal" class="modal hidden">
+    <div class="modal-content card">
+      <h3>Gemini API key</h3>
+      <p class="hint">Browser-এ সেভ থাকে। Google AI Studio (aistudio.google.com) থেকে ফ্রি API Key এনে এখানে দাও।</p>
+      <input type="password" id="apiKeyInput" placeholder="AIzaSy..." />
+      <div class="btn-row" style="margin-top: 12px; justify-content: flex-end;">
+        <button id="removeApiKeyBtn" class="btn btn-danger btn-sm">Remove</button>
+        <button id="cancelApiKeyBtn" class="btn btn-secondary btn-sm">Cancel</button>
+        <button id="saveApiKeyBtn" class="btn btn-primary btn-sm">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+  <script src="main.js"></script>
+</body>
+</html>
