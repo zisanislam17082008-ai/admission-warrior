@@ -688,7 +688,19 @@ async function publishContent(event) {
 
       filePath = `${user.id}/${Date.now()}-${safeName}`;
 
-      await uploadWithRetry(filePath, file);
+      // Android-e Drive/Downloads theke file nile direct upload fail kore,
+      // tai age memory-te porhe nei
+      let body;
+      try {
+        const buffer = await file.arrayBuffer();
+        body = new Blob([buffer], { type: getContentType(file) });
+      } catch {
+        throw new Error(
+          'File porha jachche na. File-ta phone-er Downloads e copy kore abar select koro.'
+        );
+      }
+
+      await uploadWithRetry(filePath, body);
     }
 
     step = 'Database Insert';
