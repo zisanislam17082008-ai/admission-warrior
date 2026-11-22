@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admission Warrior — HSC & University Prep</title>
+  <title>Admission Warrior — Quick Chat & Exam Prep</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
@@ -17,36 +17,252 @@
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 </head>
 <body>
-  <header>
-    <div class="wrap">
-      <div class="top">
-        <div class="logo">
-          <i>▲</i>
-          <span>Admission Warrior</span>
+  <!-- Top App Bar -->
+  <header class="app-header">
+    <div class="container header-row">
+      <div class="header-left">
+        <button id="menuDrawerBtn" class="icon-btn" type="button" title="Quick Switch">☰</button>
+        <button id="goHomeBtn" class="icon-btn" type="button" title="Home / Prep Hub">⌂</button>
+        <span id="headerTitle" class="header-title">দ্রুত প্রশ্ন</span>
+      </div>
+
+      <div class="header-right">
+        <span id="who" class="pill-chip">Student</span>
+        <button id="aib" class="pill-chip ai-chip" type="button">AI: off</button>
+        <button id="admb" class="pill-chip" type="button">Admin</button>
+        <button id="themeb" class="icon-btn" type="button" title="Theme">☀️</button>
+      </div>
+    </div>
+
+    <div id="ban" class="banner"></div>
+
+    <!-- Clean View Switcher -->
+    <nav id="nav" class="container view-tabs">
+      <button class="vtab on" type="button" data-tab="chat">দ্রুত প্রশ্ন (AI Chat)</button>
+      <button class="vtab" type="button" data-tab="hub">প্রস্তুতি ও পরীক্ষা</button>
+      <button class="vtab" type="button" data-tab="bank">Question Bank</button>
+      <button class="vtab" type="button" data-tab="users">Users</button>
+    </nav>
+  </header>
+
+  <main class="container main-wrap">
+    <!-- VIEW 1: QUICK CHAT (Screenshot 1 & 7 style) -->
+    <section id="tab-chat" class="tab on chat-view">
+      <div id="chatEmptyState" class="chat-hero">
+        <h2>কী জানতে চাও?</h2>
+        <p class="mut">যেকোনো প্রশ্ন লেখো বা প্রশ্নের ছবি দাও।</p>
+
+        <div class="notice-card">
+          <span class="notice-icon">🕒</span>
+          <p>এই চ্যাটের ছবি — আপনার আপলোড করা ও AI-এর তৈরি — আর আপলোড করা ডকুমেন্ট ৩ দিন সিস্টেমে থাকবে, তারপর স্বয়ংক্রিয়ভাবে মুছে যাবে। দরকারি কিছু থাকলে ডাউনলোড করে রাখুন।</p>
         </div>
-        <div class="row">
-          <span id="who" class="tag">General Student</span>
-          <button id="aib" class="btn" type="button">AI: off</button>
-          <button id="admb" class="btn" type="button">Admin</button>
-          <button id="themeb" class="btn" type="button" title="Toggle Theme">☀️</button>
+
+        <div class="quick-chips">
+          <button class="chip-btn" type="button" data-q="HSC Physics ও Chemistry-র গুরুত্বপূর্ণ সূত্রগুলো উদাহরণসহ বুঝিয়ে দাও।">⚛️ সূত্র ও কনসেপ্ট</button>
+          <button class="chip-btn" type="button" data-q="ভর্তি পরীক্ষার উপযোগী ৫টি কঠিন MCQ দাও এবং শেষে উত্তর ও ব্যাখ্যা দাও।">📝 প্র্যাকটিস MCQ</button>
+          <button class="chip-btn" type="button" data-q="HSC ও ভার্সিটি প্রস্তুতির জন্য একটি কার্যকর রিভিশন প্ল্যান দাও।">📅 স্টাডি প্ল্যান</button>
         </div>
       </div>
 
-      <div id="ban" class="banner"></div>
+      <div id="chatbox" class="chat-stream"></div>
 
-      <nav id="nav">
-        <button class="btn on" type="button" data-tab="bank">Question Bank</button>
-        <button class="btn" type="button" data-tab="exam">Exam</button>
-        <button class="btn" type="button" data-tab="chat">AI Chat</button>
-        <button class="btn" type="button" data-tab="users">Users</button>
-      </nav>
-    </div>
-  </header>
+      <div class="chat-composer-wrap">
+        <div id="cimgname" class="attach-bar"></div>
 
-  <main class="wrap">
-    <!-- TAB 1: QUESTION BANK -->
-    <section id="tab-bank" class="tab on g2">
-      <div class="card">
+        <div class="mode-pills">
+          <select id="chatProgram" class="mini-select" aria-label="Program">
+            <option value="ভার্সিটি · স্থিতিবিদ্যা">🏛️ ভার্সিটি · স্থিতিবিদ্যা</option>
+            <option value="HSC বিজ্ঞান">🎓 HSC বিজ্ঞান</option>
+            <option value="ইঞ্জিনিয়ারিং">⚙️ ইঞ্জিনিয়ারিং</option>
+            <option value="মেডিকেল">🩺 মেডিকেল</option>
+          </select>
+
+          <button id="proModeBtn" class="mini-pill" type="button" data-mode="standard">
+            <span>⊞</span> প্রো মোড
+          </button>
+        </div>
+
+        <div class="composer-box">
+          <label class="composer-plus" title="ছবি আপলোড করো">
+            +
+            <input id="cimg" type="file" accept="image/*" hidden />
+          </label>
+          <input id="cin" type="text" placeholder="প্রশ্ন লিখুন..." autocomplete="off" />
+          <button id="micBtn" class="composer-mic" type="button" title="Voice Input">🎤</button>
+          <button id="csend" class="composer-send" type="button" title="পাঠান">↑</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 2: PREP & EXAM HUB (Screenshots 2, 3, 4, 5 style) -->
+    <section id="tab-hub" class="tab">
+      <div class="greeting-row">
+        <div>
+          <h2 class="greet-title">শুভ রাত্রি, <span id="greetName">Student</span> 🔥</h2>
+          <p class="mut">ডেটা-বিশ্লেষিত প্রশ্ন, মডেল টেস্ট ও প্রশ্নব্যাংক থেকে নিজেকে যাচাই করো।</p>
+        </div>
+        <div class="stat-pills">
+          <span class="stat-pill">⚡ <b id="poolStat">20</b> প্রশ্ন</span>
+          <span class="stat-pill">🏆 <b id="bestScoreStat">0%</b> সেরা</span>
+        </div>
+      </div>
+
+      <!-- Data-Analyzed Exam Card -->
+      <div class="hero-panel">
+        <div class="panel-head">
+          <div class="panel-badge teal">◎</div>
+          <div>
+            <h3>ডেটা-বিশ্লেষিত প্রশ্নে নিজেকে যাচাই করো</h3>
+            <p class="mut">বিগত বোর্ড ও ভর্তি পরীক্ষার প্রশ্নের Data Analysis থেকে বাছাই করা প্রশ্নে পূর্ণাঙ্গ পরীক্ষা।</p>
+          </div>
+        </div>
+
+        <div id="trackPills" class="track-pills">
+          <button class="track-pill" type="button" data-track="HSC">🎓 HSC</button>
+          <button class="track-pill" type="button" data-track="SSC">📕 SSC</button>
+          <button class="track-pill active" type="button" data-track="Varsity">🏛️ ভার্সিটি</button>
+          <button class="track-pill" type="button" data-track="Engineering">⚙️ ইঞ্জিনিয়ারিং</button>
+          <button class="track-pill" type="button" data-track="Medical">✚ মেডিকেল</button>
+        </div>
+
+        <button id="quickModelTestBtn" class="action-banner primary-grad" type="button">
+          <span>☑ <b>স্ট্যান্ডার্ড মডেল টেস্ট</b><small>ভর্তি মানের পূর্ণ পরীক্ষা — বিষয়ভিত্তিক প্রশ্ন</small></span>
+          <span>→</span>
+        </button>
+
+        <button id="quickCombinedBtn" class="action-banner dark-sub" type="button">
+          <span>🧩 <b>কম্বাইন্ড অধ্যায় পরীক্ষা</b><small>এক বা একাধিক বিষয় মিলিয়ে দ্রুত টেস্ট</small></span>
+          <span>→</span>
+        </button>
+      </div>
+
+      <!-- Past Admission Exams Card -->
+      <div class="hero-panel">
+        <div class="panel-head">
+          <div class="panel-badge blue">🏛️</div>
+          <div>
+            <h3>বিগত ভর্তি পরীক্ষা</h3>
+            <p class="mut">বুয়েট, মেডিকেল, ঢাবি, গুচ্ছসহ প্রতিষ্ঠানভিত্তিক প্রশ্ন — পড়ো, সমাধান দেখো, সময় ধরে পরীক্ষা দাও।</p>
+          </div>
+        </div>
+
+        <button class="action-banner blue-grad" type="button" onclick="showTab('bank')">
+          <span>☑ <b>প্রশ্নব্যাংক ও সমাধান</b><small>বিষয় ও অধ্যায় ধরে প্রশ্ন তৈরি ও যাচাই</small></span>
+          <span>→</span>
+        </button>
+
+        <button class="action-banner dark-sub" type="button" onclick="showTab('exam')">
+          <span>📈 <b>নতুন ভর্তি পরীক্ষা</b><small>ডেটা-বিশ্লেষিত প্রশ্নে নির্ধারিত সময়ে পরীক্ষা</small></span>
+          <span>→</span>
+        </button>
+      </div>
+
+      <!-- Program Grid -->
+      <div class="section-block">
+        <h3 class="sec-label">প্রোগ্রাম বেছে নিন</h3>
+        <div class="prog-grid">
+          <button class="prog-card" type="button" onclick="selectProgramPreset('HSC')">
+            <span class="prog-ico red">📕</span>
+            <div><b>HSC প্রস্তুতি</b><small>বোর্ড মানের প্রশ্ন · সূত্র ও ব্যাখ্যা</small></div>
+          </button>
+          <button class="prog-card" type="button" onclick="selectProgramPreset('HSC')">
+            <span class="prog-ico purple">🎓</span>
+            <div><b>বিজ্ঞান বিভাগ</b><small>পদার্থ · রসায়ন · গণিত · জীববিজ্ঞান</small></div>
+          </button>
+          <button class="prog-card" type="button" onclick="selectProgramPreset('Varsity')">
+            <span class="prog-ico blue">🏛️</span>
+            <div><b>ভার্সিটি প্রস্তুতি</b><small>DU · JU · RU · CU · গুচ্ছ</small></div>
+          </button>
+          <button class="prog-card" type="button" onclick="selectProgramPreset('Engineering')">
+            <span class="prog-ico slate">⚙️</span>
+            <div><b>ইঞ্জিনিয়ারিং প্রস্তুতি</b><small>BUET · RUET · CUET · KUET</small></div>
+          </button>
+          <button class="prog-card full-span" type="button" onclick="selectProgramPreset('Medical')">
+            <span class="prog-ico rose">✚</span>
+            <div><b>মেডিকেল প্রস্তুতি</b><small>MBBS · BDS ভর্তি প্রশ্ন অনুশীলন</small></div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick Utility Tiles -->
+      <div class="tile-4">
+        <button class="mini-tile" type="button" onclick="showTab('exam')">
+          <span class="tile-ico cyan">🌐</span>
+          <b>গ্লোবাল পরীক্ষা</b>
+        </button>
+        <button class="mini-tile" type="button" onclick="showTab('users')">
+          <span class="tile-ico amber">🏆</span>
+          <b>লিডারবোর্ড</b>
+        </button>
+        <button class="mini-tile" type="button" onclick="showTab('exam')">
+          <span class="tile-ico violet">📊</span>
+          <b>ইতিহাস</b>
+        </button>
+        <button class="mini-tile" type="button" onclick="showTab('bank')">
+          <span class="tile-ico emerald">📝</span>
+          <b>নোট</b>
+        </button>
+      </div>
+
+      <!-- Exam Configurator & Live Exam Arena -->
+      <div id="ecfg" class="hero-panel">
+        <div class="panel-head">
+          <div class="panel-badge blue">⏱</div>
+          <div>
+            <h3>Exam setup</h3>
+            <p id="epool" class="mut">Pool: 20 questions</p>
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:10px">
+          <label class="chk"><input class="esub" type="checkbox" value="Physics" checked /> Physics</label>
+          <label class="chk"><input class="esub" type="checkbox" value="Chemistry" checked /> Chemistry</label>
+          <label class="chk"><input class="esub" type="checkbox" value="Math" checked /> Higher Math</label>
+          <label class="chk"><input class="esub" type="checkbox" value="Biology" checked /> Biology</label>
+        </div>
+
+        <div class="row" style="margin-top:8px">
+          <div class="f">
+            <label for="ecount">Questions (max 60)</label>
+            <input id="ecount" type="number" min="1" max="60" value="20" />
+          </div>
+          <div class="f">
+            <label for="emin">Minutes</label>
+            <input id="emin" type="number" min="1" max="180" value="20" />
+          </div>
+          <div class="f">
+            <label for="eneg">Negative mark</label>
+            <select id="eneg">
+              <option value="0.25">−0.25</option>
+              <option value="0.5">−0.50</option>
+              <option value="0">None</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:14px">
+          <button id="estart" class="btn p" type="button">Start exam</button>
+        </div>
+      </div>
+
+      <div id="earea"></div>
+
+      <!-- Footer Info (Screenshot 6 style) -->
+      <footer class="site-footer">
+        <div class="footer-brand">
+          <h3>Admission Warrior</h3>
+          <p class="mut">HSC & Admission AI Study Workspace</p>
+        </div>
+        <div class="footer-meta mut">
+          <div>HSC Science · Varsity · Engineering · Medical Prep</div>
+          <div>Built for GitHub & Vercel Deployment</div>
+        </div>
+      </footer>
+    </section>
+
+    <!-- VIEW 3: QUESTION BANK -->
+    <section id="tab-bank" class="tab g2">
+      <div class="hero-panel">
         <h3>1 · Upload question bank</h3>
         <div class="row">
           <label class="btn p" style="margin:0">
@@ -89,92 +305,22 @@
         <div id="analysis" class="q pre mut" style="font-size:12.5px">Bank paste/upload করো → "Analyze bank" → "Generate predictable MCQs". Built-in 20 টি প্রশ্ন সব সময় exam-এ থাকে।</div>
       </div>
 
-      <div class="card">
+      <div class="hero-panel">
         <div class="row sp">
           <h3>Question set <span id="qcount" class="tag">0</span></h3>
           <div class="row">
             <button id="bexp" class="btn" type="button">Export JSON</button>
             <button id="bdel" class="btn d" type="button">Delete set</button>
-            <button class="btn p" type="button" onclick="showTab('exam')">Go to exam →</button>
+            <button class="btn p" type="button" onclick="showTab('hub');$('#ecfg')?.scrollIntoView({behavior:'smooth'})">Go to exam →</button>
           </div>
         </div>
         <div id="qlist"></div>
       </div>
     </section>
 
-    <!-- TAB 2: EXAM -->
-    <section id="tab-exam" class="tab">
-      <div id="ecfg" class="card">
-        <div class="row sp">
-          <h3>Exam setup</h3>
-          <span id="epool" class="tag">Pool: 20 questions</span>
-        </div>
-
-        <div class="row" style="margin-top:8px">
-          <label class="chk"><input class="esub" type="checkbox" value="Physics" checked /> Physics</label>
-          <label class="chk"><input class="esub" type="checkbox" value="Chemistry" checked /> Chemistry</label>
-          <label class="chk"><input class="esub" type="checkbox" value="Math" checked /> Higher Math</label>
-          <label class="chk"><input class="esub" type="checkbox" value="Biology" checked /> Biology</label>
-        </div>
-
-        <div class="row" style="margin-top:8px">
-          <div class="f">
-            <label for="ecount">Questions (max 60)</label>
-            <input id="ecount" type="number" min="1" max="60" value="20" />
-          </div>
-          <div class="f">
-            <label for="emin">Minutes</label>
-            <input id="emin" type="number" min="1" max="180" value="20" />
-          </div>
-          <div class="f">
-            <label for="eneg">Negative mark</label>
-            <select id="eneg">
-              <option value="0.25">−0.25</option>
-              <option value="0.5">−0.50</option>
-              <option value="0">None</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="row" style="margin-top:14px">
-          <button id="estart" class="btn p" type="button">Start exam</button>
-        </div>
-      </div>
-
-      <div id="earea"></div>
-    </section>
-
-    <!-- TAB 3: AI CHAT -->
-    <section id="tab-chat" class="tab">
-      <div class="card">
-        <div class="row sp">
-          <h3>Gemini AI tutor</h3>
-          <span class="mut" style="font-size:12px">HSC Physics · Chemistry · Math · Biology</span>
-        </div>
-
-        <div class="row" style="margin-bottom:10px">
-          <button class="btn" type="button" data-q="HSC Physics ও Chemistry-র সবচেয়ে গুরুত্বপূর্ণ ১০টি সূত্র ও ধারণা সংক্ষেপে দাও।">Formulas</button>
-          <button class="btn" type="button" data-q="HSC ও বিশ্ববিদ্যালয় ভর্তি পরীক্ষার উপযোগী ৫টি মানসম্মত MCQ দাও এবং শেষে উত্তর ও ব্যাখ্যা দাও।">Practice MCQ</button>
-          <button class="btn" type="button" data-q="HSC Science ও ভর্তি প্রস্তুতির জন্য একটি কার্যকর Study plan তৈরি করে দাও।">Study plan</button>
-        </div>
-
-        <div id="chatbox"></div>
-
-        <div id="cimgname" class="mut" style="font-size:12px;margin-top:6px"></div>
-        <div class="row" style="margin-top:8px">
-          <label class="btn" style="margin:0" title="Upload Question Image">
-            📷
-            <input id="cimg" type="file" accept="image/*" hidden />
-          </label>
-          <input id="cin" class="f" type="text" placeholder="যেকোনো প্রশ্ন করো..." />
-          <button id="csend" class="btn p" type="button">Send</button>
-        </div>
-      </div>
-    </section>
-
-    <!-- TAB 4: USERS -->
+    <!-- VIEW 4: USERS & MODERATION -->
     <section id="tab-users" class="tab">
-      <div class="card">
+      <div class="hero-panel">
         <h3>Open sign-up · instant access</h3>
         <div class="row">
           <input id="sname" class="f" type="text" placeholder="তোমার নাম লেখো" />
@@ -184,7 +330,7 @@
         <input id="reason" class="hide" type="text" placeholder="Suspend / Ban করার কারণ (Admin note)..." style="margin-top:10px" />
       </div>
 
-      <div class="card">
+      <div class="hero-panel">
         <h3>Members <span id="ucount" class="tag">0</span></h3>
         <div id="ulist"></div>
       </div>
@@ -193,7 +339,7 @@
 
   <!-- Gemini API Key Modal -->
   <div id="keym" class="modal" role="dialog" aria-modal="true">
-    <div class="card" style="width:min(440px,100%)">
+    <div class="hero-panel" style="width:min(440px,100%)">
       <div class="row sp">
         <h3 style="margin:0">Gemini API key</h3>
         <button id="keyclose" class="btn" type="button">✕</button>
