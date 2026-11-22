@@ -1,11 +1,21 @@
-
 import { createClient } from '@supabase/supabase-js';
 import './style.css';
 
 // ---------------- CONFIGURATION ----------------
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+// URL clean kore nei: shesh er "/" ar "/rest/v1" fele dei
+function cleanUrl(url = '') {
+  return String(url)
+    .trim()
+    .replace(/\/rest\/v1\/?$/i, '')
+    .replace(/\/+$/, '');
+}
+
+const SUPABASE_URL = cleanUrl(import.meta.env.VITE_SUPABASE_URL);
+const SUPABASE_KEY = (import.meta.env.VITE_SUPABASE_ANON_KEY || '').trim();
+
+const BUCKET = 'study-content';
+const MAX_FILE_MB = 50;
 
 const app = document.querySelector('#app');
 
@@ -17,7 +27,6 @@ let currentPage = 'dashboard';
 let uploadBusy = false;
 
 const subjects = ['Physics', 'Chemistry', 'Higher Math', 'Biology'];
-
 const icons = ['⚡', '🧪', '📐', '🧬'];
 
 function escapeHTML(value = '') {
@@ -43,6 +52,10 @@ function isApproved() {
   return profile?.status === 'approved' || isAdmin();
 }
 
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 // ---------------- INITIALIZATION ----------------
 
 function startApp() {
@@ -56,7 +69,7 @@ function startApp() {
     app.innerHTML = `
       <div class="status-card">
         <h2>Configuration Error</h2>
-        <p>Supabase URL অথবা Publishable Key পাওয়া যায়নি।</p>
+        <p>Supabase URL অথবা Publishable Key পাওয়া যায়নি।</p>
         <p>Vercel Environment Variables পরীক্ষা করো।</p>
       </div>
     `;
@@ -92,7 +105,7 @@ function authView() {
       <section class="hero-panel">
         <div class="brand-mark">AW</div>
         <p class="eyebrow">ADMISSION WARRIOR</p>
-        <h1>স্বপ্নের বিশ্ববিদ্যালয়ের পথে
+        <h1>স্বপ্নের বিশ্ববিদ্যালয়ের পথে
           <span>তুমিই Warrior</span>
         </h1>
         <p>Learn • Practice • Win</p>
@@ -109,8 +122,8 @@ function authView() {
         <h2 id="authTitle">Login</h2>
 
         <div class="auth-tabs">
-          <button class="tab active" id="loginTab">Login</button>
-          <button class="tab" id="signupTab">Sign Up</button>
+          <button class="tab active" id="loginTab" type="button">Login</button>
+          <button class="tab" id="signupTab" type="button">Sign Up</button>
         </div>
 
         <form id="authForm">
@@ -301,8 +314,8 @@ function dashboardPage() {
       <div>
         <h2>স্বাগতম, Warrior!</h2>
         <p>${isApproved()
-          ? 'তোমার পড়াশোনা শুরু করো।'
-          : 'তোমার Account অনুমোদনের অপেক্ষায় আছে।'}
+          ? 'তোমার পড়াশোনা শুরু করো।'
+          : 'তোমার Account অনুমোদনের অপেক্ষায় আছে।'}
         </p>
       </div>
     </section>
@@ -374,7 +387,7 @@ function renderContentCards(items) {
       <div class="empty-state">
         <span>📚</span>
         <h3>No Content Yet</h3>
-        <p>এখনো কোনো Study Content প্রকাশ করা হয়নি।</p>
+        <p>এখনো কোনো Study Content প্রকাশ করা হয়নি।</p>
       </div>
     `;
   }
@@ -491,10 +504,12 @@ function uploadPage() {
           </label>
         </div>
 
-        <label>Upload File
+        <label>Upload File (max ${MAX_FILE_MB} MB)
           <input id="file" type="file"
-            accept=".pdf,image/*,video/*">
+            accept=".pdf,application/pdf,image/*,video/*">
         </label>
+
+        <p class="notice" id="fileInfo"></p>
 
         <label>Video URL (optional)
           <input id="videoUrl" type="url"
@@ -514,6 +529,101 @@ function uploadPage() {
       </form>
     </section>
   `;
+}
+
+// ---------------- UPLOAD HELPERS ----------------
+
+// Supabase server-e pouchhano jay kina check kore
+async function checkConnection() {
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 10000);
+
+    const res = await fetch(`${SUPABASE_URL}/auth/v1/health`, {
+      headers: { apikey: SUPABASE_KEY },
+      signal: controller.signal
+    });
+
+    clearTimeout(timer);
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+function getContentType(file) {
+  if (file.type) return file.type;
+
+  const name = file.name.toLowerCase();
+  if (name.endsWith('.pdf')) return 'application/pdf';
+  if (name.endsWith('.png')) return 'image/png';
+  if (name.endsWith('.jpg') || name.endsWith('.jpeg')) return 'image/jpeg';
+  if (name.endsWith('.mp4')) return 'video/mp4';
+
+  return 'application/octet-stream';
+}
+
+function isNetworkError(error) {
+  const msg = String(error?.message || '').toLowerCase();
+  return msg.includes('failed to fetch') ||
+    msg.includes('networkerror') ||
+    msg.includes('load failed') ||
+    msg.includes('network request failed');
+}
+
+// Network error hole 2 bar retry kore
+async function uploadWithRetry(path, file, attempts = 3) {
+  let lastError = null;
+
+  for (let i = 1; i <= attempts; i++) {
+    const { error } = await supabase.storage
+      .from(BUCKET)
+      .upload(path, file, {
+        cacheControl: '3600',
+        upsert: false,
+        contentType: getContentType(file)
+      });
+
+    if (!error) return;
+
+    lastError = error;
+
+    if (!isNetworkError(error)) break;
+
+    await sleep(1200 * i);
+  }
+
+  throw lastError;
+}
+
+function explainError(step, error) {
+  const msg = error?.message || 'Unknown error';
+  const lower = msg.toLowerCase();
+
+  if (isNetworkError(error)) {
+    return 'Server-e connect hocche na. Internet/VPN/ad-blocker check koro, ' +
+      'ar Vercel-er VITE_SUPABASE_URL thik ache kina dekho. ' +
+      'Supabase project paused thakle Restore koro.';
+  }
+
+  if (lower.includes('row-level security')) {
+    return 'Permission nai (RLS policy). setup.sql file-ta Supabase SQL Editor-e run koro.';
+  }
+
+  if (lower.includes('bucket not found')) {
+    return `"${BUCKET}" bucket paoa jayni. Supabase Storage-e bucket banao.`;
+  }
+
+  if (lower.includes('exceeded') || lower.includes('too large') ||
+      lower.includes('payload')) {
+    return 'File onek boro. Choto file diye try koro, ba bucket-er size limit barao.';
+  }
+
+  if (lower.includes('mime')) {
+    return 'Ei file type bucket-e allowed na. Bucket settings-e allowed MIME types check koro.';
+  }
+
+  return msg;
 }
 
 // ---------------- PUBLISH CONTENT ----------------
@@ -540,20 +650,35 @@ async function publishContent(event) {
     return;
   }
 
-  if (file && file.size > 50 * 1024 * 1024) {
-    notify('File size must be below 50 MB.');
+  if (file && file.size > MAX_FILE_MB * 1024 * 1024) {
+    notify(`File size must be below ${MAX_FILE_MB} MB.`);
     return;
   }
 
   uploadBusy = true;
   button.disabled = true;
   button.textContent = 'Uploading...';
+  notice.textContent = '';
+  notice.className = 'notice';
 
   let filePath = null;
   let step = 'Starting';
 
   try {
+    // Session valid kina check
+    step = 'Session Check';
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (!sessionData.session) {
+      throw new Error('Session expire hoye geche. Abar login koro.');
+    }
+
     if (file) {
+      step = 'Connection Check';
+      const online = await checkConnection();
+      if (!online) {
+        throw new Error('Failed to fetch');
+      }
+
       step = 'Storage Upload';
 
       const safeName = file.name.replace(
@@ -561,17 +686,9 @@ async function publishContent(event) {
         '_'
       );
 
-      filePath =
-        `${user.id}/${Date.now()}-${safeName}`;
+      filePath = `${user.id}/${Date.now()}-${safeName}`;
 
-      const { error: uploadError } = await supabase.storage
-        .from('study-content')
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: false
-        });
-
-      if (uploadError) throw uploadError;
+      await uploadWithRetry(filePath, file);
     }
 
     step = 'Database Insert';
@@ -604,24 +721,22 @@ async function publishContent(event) {
   } catch (error) {
     console.error('Upload error:', step, error);
 
-    if (filePath && step !== 'Storage Upload') {
-      await supabase.storage
-        .from('study-content')
-        .remove([filePath])
-        .catch(() => {});
+    // Database insert fail hole upload kora file muche fele
+    if (filePath && step !== 'Storage Upload' &&
+        step !== 'Connection Check') {
+      try {
+        await supabase.storage.from(BUCKET).remove([filePath]);
+      } catch {
+        /* ignore */
+      }
     }
 
-    const message =
-      error?.message || 'Unknown error';
+    const message = explainError(step, error);
 
-    notice.textContent =
-      `Failed at: ${step}. Error: ${message}`;
-
+    notice.textContent = `Failed at: ${step}. ${message}`;
     notice.className = 'notice error';
 
-    notify(
-      `Failed at: ${step}\n${message}`
-    );
+    notify(`Failed at: ${step}\n${message}`);
 
   } finally {
     uploadBusy = false;
@@ -652,7 +767,7 @@ async function openContent(id) {
 
   try {
     const { data, error } = await supabase.storage
-      .from('study-content')
+      .from(BUCKET)
       .createSignedUrl(item.file_path, 300);
 
     if (error) throw error;
@@ -709,6 +824,28 @@ async function openPage(page) {
     'submit',
     publishContent
   );
+
+  // File select korle size dekhao
+  const fileInput = document.querySelector('#file');
+  const fileInfo = document.querySelector('#fileInfo');
+
+  fileInput?.addEventListener('change', () => {
+    const f = fileInput.files[0];
+    if (!f) {
+      fileInfo.textContent = '';
+      return;
+    }
+
+    const mb = (f.size / 1024 / 1024).toFixed(2);
+
+    if (f.size > MAX_FILE_MB * 1024 * 1024) {
+      fileInfo.textContent = `${f.name} (${mb} MB) - onek boro!`;
+      fileInfo.className = 'notice error';
+    } else {
+      fileInfo.textContent = `${f.name} (${mb} MB)`;
+      fileInfo.className = 'notice success';
+    }
+  });
 }
 
 // ---------------- LOGOUT ----------------
@@ -751,7 +888,7 @@ async function init() {
         <div class="status-card">
           <div class="brand-mark">AW</div>
           <h2>Profile Not Found</h2>
-          <p>তোমার Profile Database-এ পাওয়া যায়নি।</p>
+          <p>তোমার Profile Database-এ পাওয়া যায়নি।</p>
           <button class="primary-btn" id="logout">
             Logout
           </button>
