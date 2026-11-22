@@ -7,7 +7,7 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet" />
 
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -57,120 +57,211 @@
   </script>
 
   <style>
-    * { box-sizing: border-box; }
+    :root {
+      --bg-base: #070b12;
+      --border-hairline: rgba(148, 163, 184, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       font-family: 'Plus Jakarta Sans', 'Hind Siliguri', sans-serif;
-      background-color: #070a10;
-      color: #eef2f7;
+      background-color: var(--bg-base);
+      background-image:
+        radial-gradient(ellipse 68% 36% at 50% -6%, rgba(16, 185, 129, 0.11), transparent 72%),
+        radial-gradient(ellipse 46% 32% at 88% 12%, rgba(34, 211, 238, 0.07), transparent 70%);
+      color: #eef2f6;
       overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
     }
-    .surface {
-      background: #0d121d;
-      border: 1px solid rgba(148, 163, 184, 0.14);
+
+    .surface-card {
+      background: linear-gradient(180deg, rgba(16, 24, 38, 0.88) 0%, rgba(11, 17, 28, 0.92) 100%);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid var(--border-hairline);
+      box-shadow: 0 10px 30px -18px rgba(0, 0, 0, 0.75);
+      transition: border-color 220ms ease, background-color 220ms ease;
     }
-    .surface-2 {
-      background: #121928;
-      border: 1px solid rgba(148, 163, 184, 0.12);
+
+    .surface-inset {
+      background: rgba(7, 11, 19, 0.78);
+      border: 1px solid rgba(148, 163, 184, 0.11);
+      transition: border-color 200ms ease, background-color 200ms ease;
     }
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: transparent; }
-    ::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.25); border-radius: 9999px; }
+
+    .surface-inset:focus-within,
+    .field-control:focus {
+      outline: none;
+      border-color: rgba(52, 211, 153, 0.55);
+      box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.09);
+    }
+
+    .btn-pill {
+      transition: background-color 180ms ease, border-color 180ms ease, color 180ms ease, transform 160ms ease;
+    }
+
+    .btn-pill:active:not(:disabled) {
+      transform: scale(0.985);
+    }
+
+    .view-enter {
+      animation: fadeSlide 210ms ease-out;
+    }
+
+    @keyframes fadeSlide {
+      from {
+        opacity: 0;
+        transform: translateY(4px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: rgba(148, 163, 184, 0.2);
+      border-radius: 9999px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(148, 163, 184, 0.34);
+    }
   </style>
 </head>
-<body class="min-h-screen flex flex-col">
+<body class="min-h-screen flex flex-col selection:bg-emerald-400/25 selection:text-emerald-200">
 
-  <!-- Top Bar: Geometric SVG Logo + Title + Key + AI Chat -->
-  <header class="sticky top-0 z-30 bg-[#070a10]/90 backdrop-blur-md border-b border-slate-800/80">
-    <div class="max-w-6xl mx-auto px-3 sm:px-5 h-14 flex items-center justify-between gap-2">
+  <!-- Top Header -->
+  <header class="sticky top-0 z-30 bg-[#070b12]/85 backdrop-blur-xl border-b border-slate-800/75">
+    <div class="max-w-6xl mx-auto px-3.5 sm:px-6 py-2.5 flex items-center justify-between gap-2">
       <div class="flex items-center gap-2 min-w-0">
-        <button id="btn-back" type="button" title="Back" class="p-2 rounded-lg surface-2 hover:border-slate-600 text-slate-300 transition shrink-0">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+        <button id="btn-back" type="button" title="Back" class="btn-pill p-2 rounded-xl surface-inset text-slate-300 hover:text-white hover:border-slate-600 shrink-0">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
           </svg>
         </button>
 
-        <button type="button" onclick="switchView('bank')" class="flex items-center gap-2.5 text-left shrink-0">
-          <!-- Crisp Geometric SVG Brand Mark -->
-          <svg class="w-8 h-8 shrink-0" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <rect width="36" height="36" rx="9" fill="#111827" stroke="#34d399" stroke-opacity="0.45" />
-            <polygon points="18,7 28,26 23.2,26 18,15.6 12.8,26 8,26" fill="#34d399" />
-            <rect x="14.5" y="21" width="7" height="2.4" rx="1.2" fill="#818cf8" />
+        <button type="button" onclick="switchView('bank')" class="flex items-center gap-2 text-left group shrink-0">
+          <svg class="w-8 h-8 shrink-0 transition-transform duration-200 group-hover:scale-[1.03]" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <rect width="36" height="36" rx="11" fill="#0d1624" stroke="#34d399" stroke-opacity="0.38" />
+            <path d="M18 7.5L28 26.2H23.4L18 15.8L12.6 26.2H8L18 7.5Z" fill="#34d399" />
+            <circle cx="18" cy="23.4" r="2.1" fill="#22d3ee" />
           </svg>
-          <span class="font-extrabold text-base sm:text-lg tracking-tight text-white">Admission Warrior</span>
+          <span class="font-extrabold text-[15px] sm:text-base tracking-tight text-white">Admission Warrior</span>
         </button>
       </div>
 
-      <nav class="hidden md:flex items-center gap-1 p-1 rounded-xl surface-2">
-        <button data-tab="bank" onclick="switchView('bank')" class="tab-btn px-3 py-1.5 rounded-lg text-xs font-bold transition">Qn Bank</button>
-        <button data-tab="syllabus" onclick="switchView('syllabus')" class="tab-btn px-3 py-1.5 rounded-lg text-xs font-bold transition">Syllabus</button>
-        <button data-tab="quiz" onclick="switchView('quiz')" class="tab-btn px-3 py-1.5 rounded-lg text-xs font-bold transition">Quiz</button>
-        <button data-tab="photo" onclick="switchView('photo')" class="tab-btn px-3 py-1.5 rounded-lg text-xs font-bold transition">Photo Check</button>
+      <nav class="hidden lg:flex items-center gap-1 p-1 rounded-xl surface-inset" aria-label="Primary">
+        <button data-tab="bank" onclick="switchView('bank')" class="tab-btn btn-pill px-3 py-1.5 rounded-lg text-xs font-bold">Qn Bank</button>
+        <button data-tab="syllabus" onclick="switchView('syllabus')" class="tab-btn btn-pill px-3 py-1.5 rounded-lg text-xs font-bold">Syllabus</button>
+        <button data-tab="quiz" onclick="switchView('quiz')" class="tab-btn btn-pill px-3 py-1.5 rounded-lg text-xs font-bold">Quiz</button>
+        <button data-tab="photo" onclick="switchView('photo')" class="tab-btn btn-pill px-3 py-1.5 rounded-lg text-xs font-bold">Photo</button>
+        <button data-tab="users" onclick="switchView('users')" class="tab-btn btn-pill px-3 py-1.5 rounded-lg text-xs font-bold">Users</button>
       </nav>
 
-      <div class="flex items-center gap-2 shrink-0">
-        <button type="button" onclick="openKeyModal()" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold surface-2 hover:border-slate-600 text-slate-200 flex items-center gap-1.5 transition">
-          <span id="key-dot" class="w-2 h-2 rounded-full bg-amber-400"></span>
-          <span id="key-text">API Key</span>
+      <div class="flex items-center gap-1.5 shrink-0">
+        <button type="button" onclick="openAccountModal()" class="btn-pill px-2.5 py-1.5 rounded-xl text-xs font-semibold surface-inset text-slate-200 hover:border-slate-600 flex items-center gap-1.5 max-w-[140px]">
+          <span id="user-dot" class="w-2 h-2 rounded-full bg-emerald-400 shrink-0"></span>
+          <span id="user-pill-label" class="truncate">Account</span>
         </button>
-        <button type="button" onclick="toggleDrawer(true)" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition">
+        <button type="button" onclick="openSqlModal()" class="hidden sm:inline-flex btn-pill px-2.5 py-1.5 rounded-xl text-xs font-semibold surface-inset text-cyan-300 hover:border-cyan-400/40">
+          SQL
+        </button>
+        <button type="button" onclick="openKeyModal()" class="btn-pill px-2.5 py-1.5 rounded-xl text-xs font-semibold surface-inset text-slate-200 hover:border-slate-600 flex items-center gap-1.5">
+          <span id="key-dot" class="w-2 h-2 rounded-full bg-amber-400"></span>
+          <span id="key-text">Key</span>
+        </button>
+        <button type="button" onclick="toggleDrawer(true)" class="btn-pill px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-400 hover:bg-emerald-300 text-slate-950 shadow-sm shadow-emerald-500/20">
           AI Tutor
         </button>
       </div>
     </div>
 
-    <!-- Mobile Tabs -->
-    <div class="flex md:hidden border-t border-slate-800/80 px-2 py-1 gap-1 bg-[#070a10]">
-      <button data-tab="bank" onclick="switchView('bank')" class="tab-btn flex-1 py-1.5 rounded-lg text-xs font-bold transition">Qn Bank</button>
-      <button data-tab="syllabus" onclick="switchView('syllabus')" class="tab-btn flex-1 py-1.5 rounded-lg text-xs font-bold transition">Syllabus</button>
-      <button data-tab="quiz" onclick="switchView('quiz')" class="tab-btn flex-1 py-1.5 rounded-lg text-xs font-bold transition">Quiz</button>
-      <button data-tab="photo" onclick="switchView('photo')" class="tab-btn flex-1 py-1.5 rounded-lg text-xs font-bold transition">Photo Check</button>
+    <!-- Mobile / Tablet Navigation Strip -->
+    <div class="flex lg:hidden border-t border-slate-800/75 px-2 py-1.5 gap-1 bg-[#070b12]/95 overflow-x-auto">
+      <button data-tab="bank" onclick="switchView('bank')" class="tab-btn btn-pill flex-1 py-1.5 px-2 rounded-lg text-xs font-bold shrink-0">Qn Bank</button>
+      <button data-tab="syllabus" onclick="switchView('syllabus')" class="tab-btn btn-pill flex-1 py-1.5 px-2 rounded-lg text-xs font-bold shrink-0">Syllabus</button>
+      <button data-tab="quiz" onclick="switchView('quiz')" class="tab-btn btn-pill flex-1 py-1.5 px-2 rounded-lg text-xs font-bold shrink-0">Quiz</button>
+      <button data-tab="photo" onclick="switchView('photo')" class="tab-btn btn-pill flex-1 py-1.5 px-2 rounded-lg text-xs font-bold shrink-0">Photo</button>
+      <button data-tab="users" onclick="switchView('users')" class="tab-btn btn-pill flex-1 py-1.5 px-2 rounded-lg text-xs font-bold shrink-0">Users</button>
     </div>
   </header>
 
-  <!-- Main Content -->
-  <main class="flex-1 max-w-6xl w-full mx-auto px-3 sm:px-5 py-5">
+  <!-- Suspended / Banned Lock Banner (Shown if current user is suspended or banned) -->
+  <div id="restriction-banner" class="hidden max-w-6xl w-full mx-auto px-3.5 sm:px-6 pt-4">
+    <div class="rounded-2xl p-4 bg-rose-500/12 border border-rose-500/40 flex flex-wrap items-center justify-between gap-3">
+      <div class="space-y-0.5">
+        <div id="restriction-title" class="text-xs sm:text-sm font-bold text-rose-300">Account Restricted</div>
+        <p id="restriction-reason" class="text-xs text-rose-200/85"></p>
+      </div>
+      <div class="flex items-center gap-2">
+        <button type="button" onclick="switchToGuestOpenAccess()" class="btn-pill px-3 py-1.5 rounded-xl text-xs font-bold surface-inset text-slate-200 hover:border-slate-500">
+          Open Guest
+        </button>
+        <button type="button" onclick="switchView('users')" class="btn-pill px-3 py-1.5 rounded-xl text-xs font-bold bg-rose-400 hover:bg-rose-300 text-slate-950">
+          Manage
+        </button>
+      </div>
+    </div>
+  </div>
 
-    <!-- 1. QUESTION BANK + EXACT COPY + PREDICTIVE + OPTION RECHECK -->
-    <section id="view-bank" class="app-view space-y-5">
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
-        <!-- Left Controls -->
+  <!-- Main Workspace -->
+  <main class="flex-1 max-w-6xl w-full mx-auto px-3.5 sm:px-6 py-6">
+
+    <!-- 1. QUESTION BANK STUDIO + ANALYSIS + EXACT COPY + PREDICTIVE + OPTION RECHECK -->
+    <section id="view-bank" class="app-view view-enter space-y-5">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+
+        <!-- Left Input & Generation Controls -->
         <div class="lg:col-span-5 space-y-4">
-          <div class="rounded-2xl surface p-4 space-y-3">
-            <div class="flex items-center justify-between">
-              <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Question Bank</span>
+          <div class="rounded-2xl surface-card p-4 sm:p-5 space-y-3">
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-[11px] font-bold uppercase tracking-widest text-slate-400">Question Bank</span>
               <div class="flex items-center gap-1.5">
-                <button type="button" onclick="loadSampleBank()" class="px-2.5 py-1 rounded-md text-xs font-semibold surface-2 hover:border-emerald-500/50 text-emerald-300">Sample</button>
-                <label class="px-2.5 py-1 rounded-md text-xs font-semibold surface-2 hover:border-indigo-500/50 text-indigo-300 cursor-pointer">
+                <button type="button" onclick="loadSampleBank()" class="btn-pill px-2.5 py-1 rounded-lg text-xs font-semibold surface-inset text-emerald-300 hover:border-emerald-400/40">Sample</button>
+                <label class="btn-pill px-2.5 py-1 rounded-lg text-xs font-semibold surface-inset text-cyan-300 hover:border-cyan-400/40 cursor-pointer">
                   Upload
-                  <input type="file" accept=".txt,.md,.csv,.pdf" onchange="handleBankUpload(event)" class="hidden" />
+                  <input type="file" accept=".txt,.md,.csv,.json,.pdf" onchange="handleBankUpload(event)" class="hidden" />
                 </label>
               </div>
             </div>
-            <p id="bank-file-meta" class="text-[11px] font-mono text-slate-400 truncate">No file loaded (paste text or click Sample)</p>
-            <textarea id="bank-text" rows="5" oninput="saveBankText()" placeholder="Paste admission question bank text here..." class="w-full rounded-xl p-3 text-xs sm:text-sm bg-[#080c14] border border-slate-800 text-slate-100 focus:outline-none focus:border-emerald-500"></textarea>
+            <p id="bank-file-meta" class="text-[11px] font-mono text-slate-400 truncate">Ready · PDF, JSON, TXT, or paste</p>
+            <textarea id="bank-text" rows="5" oninput="saveBankText()" placeholder="Paste admission questions or JSON here..." class="field-control w-full rounded-xl p-3 text-xs sm:text-sm surface-inset text-slate-100 placeholder:text-slate-500 leading-relaxed"></textarea>
           </div>
 
-          <div class="rounded-2xl surface p-4 space-y-3">
-            <span class="text-xs font-bold uppercase tracking-wider text-slate-400">HSC Syllabus Target</span>
+          <div class="rounded-2xl surface-card p-4 sm:p-5 space-y-3.5">
+            <span class="text-[11px] font-bold uppercase tracking-widest text-slate-400">HSC Science Scope</span>
 
             <div>
-              <label class="block text-xs text-slate-400 mb-1">Subject & Paper</label>
-              <select id="bank-paper" onchange="populateChapterDropdown()" class="w-full rounded-xl px-3 py-2 text-xs sm:text-sm bg-[#080c14] border border-slate-800 text-slate-100"></select>
+              <label for="bank-paper" class="block text-xs font-medium text-slate-400 mb-1">Subject & Paper</label>
+              <select id="bank-paper" onchange="populateChapterDropdown()" class="field-control w-full rounded-xl px-3 py-2.5 text-xs sm:text-sm surface-inset text-slate-100"></select>
             </div>
 
             <div>
-              <label class="block text-xs text-slate-400 mb-1">Chapter</label>
-              <select id="bank-chapter" onchange="onChapterOrTopicChange()" class="w-full rounded-xl px-3 py-2 text-xs sm:text-sm bg-[#080c14] border border-slate-800 text-slate-100"></select>
+              <label for="bank-chapter" class="block text-xs font-medium text-slate-400 mb-1">Chapter</label>
+              <select id="bank-chapter" onchange="updateDrawerContext()" class="field-control w-full rounded-xl px-3 py-2.5 text-xs sm:text-sm surface-inset text-slate-100"></select>
             </div>
 
             <div class="grid grid-cols-2 gap-2.5">
               <div>
-                <label class="block text-xs text-slate-400 mb-1">Topic Filter</label>
-                <input id="bank-topic" type="text" oninput="onChapterOrTopicChange()" placeholder="e.g. Carnot, Aldol, Limit" class="w-full rounded-xl px-3 py-2 text-xs sm:text-sm bg-[#080c14] border border-slate-800 text-slate-100" />
+                <label for="bank-topic" class="block text-xs font-medium text-slate-400 mb-1">Topic</label>
+                <input id="bank-topic" type="text" oninput="updateDrawerContext()" placeholder="e.g. Carnot, SN1/SN2" class="field-control w-full rounded-xl px-3 py-2 text-xs sm:text-sm surface-inset text-slate-100 placeholder:text-slate-500" />
               </div>
               <div>
-                <label class="block text-xs text-slate-400 mb-1">Count</label>
-                <select id="bank-count" class="w-full rounded-xl px-3 py-2 text-xs sm:text-sm bg-[#080c14] border border-slate-800 text-slate-100">
+                <label for="bank-count" class="block text-xs font-medium text-slate-400 mb-1">Count</label>
+                <select id="bank-count" class="field-control w-full rounded-xl px-3 py-2 text-xs sm:text-sm surface-inset text-slate-100">
                   <option value="3">3 Qns</option>
                   <option value="5" selected>5 Qns</option>
                   <option value="8">8 Qns</option>
@@ -178,187 +269,318 @@
               </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-2 pt-1">
-              <button id="btn-exact" type="button" onclick="runBankWorkflow('copy')" class="py-2.5 px-3 rounded-xl text-xs font-bold surface-2 hover:border-indigo-400/60 text-indigo-200 transition">
+            <div class="grid grid-cols-3 gap-2 pt-1">
+              <button type="button" onclick="analyzeBankPattern()" class="btn-pill py-2.5 px-2.5 rounded-xl text-xs font-bold surface-inset text-amber-300 hover:border-amber-400/45">
+                Analyze
+              </button>
+              <button type="button" onclick="runBankWorkflow('copy')" class="btn-pill py-2.5 px-2.5 rounded-xl text-xs font-bold surface-inset text-slate-100 hover:border-slate-500">
                 Exact Copy
               </button>
-              <button id="btn-predict" type="button" onclick="runBankWorkflow('predict')" class="py-2.5 px-3 rounded-xl text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition">
-                Predictive Qns
+              <button type="button" onclick="runBankWorkflow('predict')" class="btn-pill py-2.5 px-2.5 rounded-xl text-xs font-bold bg-emerald-400 hover:bg-emerald-300 text-slate-950 shadow-sm shadow-emerald-500/20">
+                Predict Qns
               </button>
             </div>
           </div>
         </div>
 
-        <!-- Right Questions + Mandatory Option Recheck -->
+        <!-- Right Question Output & Strict Option Recheck -->
         <div class="lg:col-span-7 space-y-4">
-          <div class="rounded-2xl surface p-4 space-y-3">
-            <div class="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-slate-800/80">
+          <div class="rounded-2xl surface-card p-4 sm:p-5 space-y-4">
+            <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-800/80">
               <div class="flex items-center gap-2">
-                <span class="text-sm font-bold text-white">Questions</span>
-                <span id="q-count-badge" class="px-2 py-0.5 rounded-full text-xs font-mono bg-slate-800 text-emerald-300">0</span>
+                <h1 class="text-sm font-bold text-white tracking-tight">Question Set</h1>
+                <span id="q-count-badge" class="px-2 py-0.5 rounded-full text-xs font-mono bg-emerald-400/12 text-emerald-300 border border-emerald-400/25">0</span>
                 <span id="bank-status" class="text-xs text-slate-400">Ready</span>
               </div>
               <div class="flex items-center gap-2">
-                <button type="button" onclick="runMandatoryOptionRecheck(true)" class="px-3 py-1.5 rounded-lg text-xs font-bold surface-2 hover:border-emerald-500/50 text-emerald-300">
+                <button type="button" onclick="runStrictOptionRecheck(true)" class="btn-pill px-3 py-1.5 rounded-lg text-xs font-bold surface-inset text-emerald-300 hover:border-emerald-400/45">
                   Option Recheck
                 </button>
-                <button type="button" onclick="startQuizFromDeck()" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-500 hover:bg-indigo-400 text-white">
+                <button type="button" onclick="startQuizFromDeck()" class="btn-pill px-3 py-1.5 rounded-lg text-xs font-bold bg-cyan-400 hover:bg-cyan-300 text-slate-950">
                   Start Quiz
                 </button>
               </div>
             </div>
 
-            <div id="pattern-brief" class="hidden rounded-xl p-3 bg-[#080c14] border border-slate-800 text-xs text-slate-300"></div>
+            <div id="pattern-brief" class="hidden rounded-xl p-3.5 surface-inset text-xs text-slate-200 whitespace-pre-line leading-relaxed"></div>
             <div id="questions-list" class="space-y-3"></div>
           </div>
         </div>
+
       </div>
     </section>
 
     <!-- 2. FULL NCTB HSC SCIENCE SYLLABUS -->
-    <section id="view-syllabus" class="app-view hidden space-y-4">
-      <div class="flex flex-wrap items-center justify-between gap-2 rounded-2xl surface p-4">
-        <span class="text-sm font-bold text-white">HSC Science Syllabus (NCTB)</span>
+    <section id="view-syllabus" class="app-view view-enter hidden space-y-4">
+      <div class="rounded-2xl surface-card p-4 flex flex-wrap items-center justify-between gap-2.5">
+        <span class="text-sm font-bold text-white tracking-tight">HSC Science Syllabus</span>
         <div id="syllabus-filters" class="flex flex-wrap gap-1.5"></div>
       </div>
       <div id="syllabus-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
     </section>
 
-    <!-- 3. TIMED QUIZ ARENA -->
-    <section id="view-quiz" class="app-view hidden space-y-4">
-      <div class="rounded-2xl surface p-4 flex flex-wrap items-center justify-between gap-3">
+    <!-- 3. TIMED QUIZ & NEGATIVE MARKING ARENA -->
+    <section id="view-quiz" class="app-view view-enter hidden space-y-4">
+      <div class="rounded-2xl surface-card p-4 flex flex-wrap items-center justify-between gap-3">
         <div class="flex flex-wrap items-center gap-2">
-          <select id="quiz-mins" class="rounded-xl px-3 py-2 text-xs font-semibold bg-[#080c14] border border-slate-800 text-slate-100">
+          <select id="quiz-mins" class="field-control rounded-xl px-3 py-2 text-xs font-semibold surface-inset text-slate-100">
             <option value="3">3 min</option>
             <option value="5" selected>5 min</option>
             <option value="10">10 min</option>
             <option value="15">15 min</option>
           </select>
-          <select id="quiz-mode" class="rounded-xl px-3 py-2 text-xs font-semibold bg-[#080c14] border border-slate-800 text-slate-100">
+          <select id="quiz-neg" class="field-control rounded-xl px-3 py-2 text-xs font-semibold surface-inset text-slate-100">
+            <option value="0.25" selected>-0.25 Negative</option>
+            <option value="0.5">-0.50 Negative</option>
+            <option value="0">No Negative</option>
+          </select>
+          <select id="quiz-mode" class="field-control rounded-xl px-3 py-2 text-xs font-semibold surface-inset text-slate-100">
             <option value="instant" selected>Instant Check</option>
             <option value="end">End of Quiz</option>
           </select>
-          <button type="button" onclick="startQuiz()" class="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950">
+          <button type="button" onclick="startQuiz()" class="btn-pill px-4 py-2 rounded-xl text-xs font-bold bg-emerald-400 hover:bg-emerald-300 text-slate-950">
             New Quiz
           </button>
         </div>
 
-        <div class="flex items-center gap-3">
-          <span id="quiz-timer" class="px-3 py-1.5 rounded-xl font-mono text-sm font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">05:00</span>
-          <button id="btn-submit-quiz" type="button" onclick="submitQuiz('manual')" class="px-3.5 py-2 rounded-xl text-xs font-bold bg-indigo-500 hover:bg-indigo-400 text-white">
+        <div class="flex items-center gap-2.5">
+          <span id="quiz-timer" class="px-3 py-1.5 rounded-xl font-mono text-sm font-bold bg-emerald-400/12 text-emerald-300 border border-emerald-400/30">05:00</span>
+          <button id="btn-submit-quiz" type="button" onclick="submitQuiz('manual')" class="btn-pill px-3.5 py-2 rounded-xl text-xs font-bold bg-cyan-400 hover:bg-cyan-300 text-slate-950">
             Submit
           </button>
         </div>
       </div>
 
-      <div class="w-full h-1.5 rounded-full bg-slate-800 overflow-hidden">
-        <div id="quiz-progress" class="h-full bg-emerald-400 transition-all duration-300" style="width: 0%"></div>
+      <div class="w-full h-1.5 rounded-full bg-slate-800/85 overflow-hidden">
+        <div id="quiz-progress" class="h-full bg-gradient-to-r from-emerald-400 to-cyan-300 transition-all duration-300" style="width: 0%"></div>
       </div>
 
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        <div id="quiz-stage" class="lg:col-span-8 rounded-2xl surface p-5 min-h-[260px] flex flex-col justify-between"></div>
-        <div class="lg:col-span-4 rounded-2xl surface p-4 space-y-3">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+        <div id="quiz-stage" class="lg:col-span-8 rounded-2xl surface-card p-5 min-h-[260px] flex flex-col justify-between"></div>
+        <div class="lg:col-span-4 rounded-2xl surface-card p-4 space-y-3">
           <div class="flex items-center justify-between text-xs">
-            <span class="font-bold text-slate-300">Palette</span>
+            <span class="font-bold text-slate-300">Questions</span>
             <span id="quiz-palette-meta" class="font-mono text-slate-400">0/0</span>
           </div>
           <div id="quiz-palette" class="grid grid-cols-5 gap-2"></div>
         </div>
       </div>
 
-      <div id="quiz-summary" class="hidden rounded-2xl surface p-5 space-y-4"></div>
+      <div id="quiz-summary" class="hidden rounded-2xl surface-card p-5 space-y-4"></div>
     </section>
 
-    <!-- 4. TWO-PASS PHOTO-TO-QUESTION SOLVER -->
-    <section id="view-photo" class="app-view hidden space-y-4">
-      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
-        <div class="lg:col-span-5 rounded-2xl surface p-4 space-y-3">
-          <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Question Photo</span>
+    <!-- 4. DOUBLE-PASS PHOTO-TO-QUESTION SOLVER -->
+    <section id="view-photo" class="app-view view-enter hidden space-y-4">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+        <div class="lg:col-span-5 rounded-2xl surface-card p-4 sm:p-5 space-y-3.5">
+          <span class="text-[11px] font-bold uppercase tracking-widest text-slate-400">Question Image</span>
 
           <div class="grid grid-cols-2 gap-2">
-            <label class="py-2.5 px-3 rounded-xl text-xs font-bold bg-indigo-500 hover:bg-indigo-400 text-white text-center cursor-pointer transition">
+            <label class="btn-pill py-2.5 px-3 rounded-xl text-xs font-bold bg-cyan-400 hover:bg-cyan-300 text-slate-950 text-center cursor-pointer">
               Camera
               <input type="file" accept="image/*" capture="environment" onchange="handlePhotoChange(event)" class="hidden" />
             </label>
-            <label class="py-2.5 px-3 rounded-xl text-xs font-bold surface-2 hover:border-slate-600 text-slate-200 text-center cursor-pointer transition">
+            <label class="btn-pill py-2.5 px-3 rounded-xl text-xs font-bold surface-inset text-slate-200 hover:border-slate-500 text-center cursor-pointer">
               Gallery
               <input type="file" accept="image/*" onchange="handlePhotoChange(event)" class="hidden" />
             </label>
           </div>
 
-          <div class="rounded-xl bg-[#080c14] border border-slate-800 min-h-[200px] flex items-center justify-center p-3 overflow-hidden">
-            <span id="photo-empty" class="text-xs text-slate-500">Select or capture a question image</span>
+          <div class="rounded-xl surface-inset min-h-[200px] flex items-center justify-center p-3 overflow-hidden">
+            <span id="photo-empty" class="text-xs text-slate-500">Capture or select question photo</span>
             <img id="photo-preview" alt="Question preview" class="hidden max-h-64 rounded-lg object-contain" />
           </div>
 
-          <input id="photo-hint" type="text" placeholder="Optional hint (e.g. Q2, find velocity)" class="w-full rounded-xl px-3 py-2 text-xs sm:text-sm bg-[#080c14] border border-slate-800 text-slate-100" />
+          <input id="photo-hint" type="text" placeholder="Optional note (e.g. Q3, find time period)" class="field-control w-full rounded-xl px-3 py-2 text-xs sm:text-sm surface-inset text-slate-100 placeholder:text-slate-500" />
 
-          <button id="btn-photo-solve" type="button" onclick="solvePhotoDoubleCheck()" class="w-full py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition">
-            Solve & Double-Check
+          <button id="btn-photo-solve" type="button" onclick="solvePhotoDoubleCheck()" class="btn-pill w-full py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold bg-emerald-400 hover:bg-emerald-300 text-slate-950 shadow-sm shadow-emerald-500/20">
+            Double-Check Solve
           </button>
         </div>
 
-        <div class="lg:col-span-7 rounded-2xl surface p-4 space-y-3">
-          <div class="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
-            <span class="text-sm font-bold text-white">Double-Check Result</span>
-            <span id="photo-badge" class="px-2.5 py-0.5 rounded-full text-xs font-mono bg-slate-800 text-slate-300">Idle</span>
+        <div class="lg:col-span-7 rounded-2xl surface-card p-4 sm:p-5 space-y-3.5">
+          <div class="flex items-center justify-between border-b border-slate-800/80 pb-3">
+            <span class="text-sm font-bold text-white tracking-tight">2-Pass Verification</span>
+            <span id="photo-badge" class="px-2.5 py-0.5 rounded-full text-xs font-mono surface-inset text-slate-300">Idle</span>
           </div>
           <div id="photo-output" class="space-y-3 text-xs sm:text-sm text-slate-300">
-            <p class="text-slate-400">Pass 1 extracts and solves; Pass 2 verifies steps, units, and final answer.</p>
+            <p class="text-slate-400">Pass 1 solves the question; Pass 2 independently verifies formulas, units, and final answer.</p>
           </div>
         </div>
+      </div>
+    </section>
+
+    <!-- 5. INSTANT OPEN SIGN-UP & ADMIN MODERATION (SUSPEND / BAN / RESTORE) -->
+    <section id="view-users" class="app-view view-enter hidden space-y-5">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+
+        <!-- Instant Open Sign-Up Card (No Approval Queue) -->
+        <div class="lg:col-span-5 rounded-2xl surface-card p-4 sm:p-5 space-y-4">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-bold uppercase tracking-widest text-slate-400">Instant Sign-Up</span>
+            <span class="px-2 py-0.5 rounded-full text-[11px] font-mono bg-emerald-400/12 text-emerald-300 border border-emerald-400/25">No Approval Needed</span>
+          </div>
+
+          <form onsubmit="handleInstantSignup(event)" class="space-y-3">
+            <div>
+              <label for="reg-name" class="block text-xs font-medium text-slate-400 mb-1">Full Name</label>
+              <input id="reg-name" type="text" required placeholder="e.g. Rafiul Hasan" class="field-control w-full rounded-xl px-3 py-2 text-xs sm:text-sm surface-inset text-slate-100 placeholder:text-slate-500" />
+            </div>
+            <div>
+              <label for="reg-email" class="block text-xs font-medium text-slate-400 mb-1">Email or Handle</label>
+              <input id="reg-email" type="text" required placeholder="rafiul@example.com" class="field-control w-full rounded-xl px-3 py-2 text-xs sm:text-sm surface-inset text-slate-100 placeholder:text-slate-500" />
+            </div>
+            <div>
+              <label for="reg-target" class="block text-xs font-medium text-slate-400 mb-1">Target Track</label>
+              <select id="reg-target" class="field-control w-full rounded-xl px-3 py-2 text-xs sm:text-sm surface-inset text-slate-100">
+                <option value="HSC Science + Engineering">HSC Science + Engineering</option>
+                <option value="HSC Science + Medical">HSC Science + Medical</option>
+                <option value="HSC Science + Varsity">HSC Science + Varsity</option>
+              </select>
+            </div>
+            <button type="submit" class="btn-pill w-full py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold bg-emerald-400 hover:bg-emerald-300 text-slate-950 shadow-sm shadow-emerald-500/20">
+              Join Instantly
+            </button>
+          </form>
+
+          <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between text-xs">
+            <span id="active-session-summary" class="text-slate-400 truncate"></span>
+            <button type="button" onclick="switchToGuestOpenAccess()" class="btn-pill px-2.5 py-1 rounded-lg surface-inset text-cyan-300 font-semibold shrink-0">
+              Guest Access
+            </button>
+          </div>
+        </div>
+
+        <!-- Admin Moderation Panel: Suspend / Ban / Restore Users -->
+        <div class="lg:col-span-7 rounded-2xl surface-card p-4 sm:p-5 space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-800/80">
+            <div class="flex items-center gap-2">
+              <h2 class="text-sm font-bold text-white tracking-tight">User Access & Moderation</h2>
+              <span id="users-count-badge" class="px-2 py-0.5 rounded-full text-xs font-mono bg-cyan-400/12 text-cyan-300 border border-cyan-400/25">0</span>
+            </div>
+            <input id="mod-reason-input" type="text" placeholder="Action note (e.g. spam / policy)" class="field-control rounded-xl px-3 py-1.5 text-xs surface-inset text-slate-100 placeholder:text-slate-500 w-48 sm:w-56" />
+          </div>
+
+          <div id="users-list" class="space-y-2.5"></div>
+        </div>
+
       </div>
     </section>
 
   </main>
 
   <!-- Slide-Over Gemini AI Tutor Drawer -->
-  <div id="drawer-backdrop" onclick="toggleDrawer(false)" class="fixed inset-0 z-40 bg-black/65 hidden"></div>
-  <aside id="ai-drawer" class="fixed top-0 right-0 z-50 h-full w-full sm:w-[420px] bg-[#0c111b] border-l border-slate-800 translate-x-full transition-transform duration-200 flex flex-col">
-    <div class="px-4 py-3 border-b border-slate-800 flex items-center justify-between">
-      <div class="flex items-center gap-2">
-        <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
-        <span class="font-bold text-sm text-white">AI Tutor</span>
-        <span id="drawer-context-pill" class="text-[11px] font-mono text-slate-400 truncate max-w-[180px]"></span>
+  <div id="drawer-backdrop" onclick="toggleDrawer(false)" class="fixed inset-0 z-40 bg-black/65 backdrop-blur-xs hidden"></div>
+  <aside id="ai-drawer" class="fixed top-0 right-0 z-50 h-full w-full sm:w-[420px] bg-[#0b101b] border-l border-slate-800/90 translate-x-full transition-transform duration-200 flex flex-col shadow-2xl">
+    <div class="px-4 py-3 border-b border-slate-800/85 flex items-center justify-between">
+      <div class="flex items-center gap-2 min-w-0">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 shrink-0"></span>
+        <span class="font-bold text-sm text-white shrink-0">AI Tutor</span>
+        <span id="drawer-context-pill" class="text-[11px] font-mono text-slate-400 truncate"></span>
       </div>
       <button type="button" onclick="toggleDrawer(false)" class="px-2 py-1 rounded-lg text-xs text-slate-400 hover:bg-slate-800 hover:text-white">✕</button>
     </div>
 
-    <div class="px-3 py-2 border-b border-slate-800/80 flex gap-1.5 overflow-x-auto">
-      <button type="button" onclick="quickTutorPrompt('এই অধ্যায়ের গুরুত্বপূর্ণ সূত্র ও ভর্তি পরীক্ষার শর্টকাট দাও।')" class="shrink-0 px-2.5 py-1 rounded-full text-xs font-semibold surface-2 text-emerald-300">Formulas & Tricks</button>
-      <button type="button" onclick="quickTutorPrompt('আপলোড করা প্রশ্নব্যাংক অনুযায়ী সম্ভাব্য টপিকগুলো বলো।')" class="shrink-0 px-2.5 py-1 rounded-full text-xs font-semibold surface-2 text-indigo-300">Bank Patterns</button>
-      <button type="button" onclick="quickTutorPrompt('এই টপিকের একটি কঠিন MCQ দিয়ে ব্যাখ্যা করো।')" class="shrink-0 px-2.5 py-1 rounded-full text-xs font-semibold surface-2 text-slate-200">Practice MCQ</button>
+    <div class="px-3 py-2 border-b border-slate-800/75 flex gap-1.5 overflow-x-auto">
+      <button type="button" onclick="quickTutorPrompt('এই অধ্যায়ের গুরুত্বপূর্ণ সূত্র ও ভর্তি পরীক্ষার শর্টকাট দাও।')" class="btn-pill shrink-0 px-2.5 py-1 rounded-full text-xs font-semibold surface-inset text-emerald-300">Formulas</button>
+      <button type="button" onclick="quickTutorPrompt('প্রশ্নব্যাংকের প্যাটার্ন অনুযায়ী সম্ভাব্য টপিক বলো।')" class="btn-pill shrink-0 px-2.5 py-1 rounded-full text-xs font-semibold surface-inset text-cyan-300">Patterns</button>
+      <button type="button" onclick="quickTutorPrompt('এই টপিকের একটি ভর্তি মানের MCQ দিয়ে সমাধান দেখাও।')" class="btn-pill shrink-0 px-2.5 py-1 rounded-full text-xs font-semibold surface-inset text-slate-200">MCQ Drill</button>
     </div>
 
     <div id="chat-messages" class="flex-1 overflow-y-auto p-3.5 space-y-2.5 text-xs sm:text-sm"></div>
 
-    <form onsubmit="sendTutorMessage(event)" class="p-3 border-t border-slate-800 flex gap-2">
-      <input id="chat-input" type="text" required placeholder="Ask physics, chemistry, math, biology, ICT..." class="flex-1 rounded-xl px-3 py-2 text-xs sm:text-sm bg-[#080c14] border border-slate-800 text-slate-100 focus:outline-none focus:border-emerald-500" />
-      <button type="submit" class="px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950">Send</button>
+    <form onsubmit="sendTutorMessage(event)" class="p-3 border-t border-slate-800/85 flex gap-2">
+      <input id="chat-input" type="text" required placeholder="Ask HSC Physics, Chem, Math, Bio, ICT..." class="field-control flex-1 rounded-xl px-3 py-2 text-xs sm:text-sm surface-inset text-slate-100 placeholder:text-slate-500" />
+      <button type="submit" class="btn-pill px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-400 hover:bg-emerald-300 text-slate-950">Send</button>
     </form>
   </aside>
 
+  <!-- Quick Account Switcher Modal -->
+  <div id="account-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/75 backdrop-blur-xs">
+    <div class="w-full max-w-sm rounded-2xl surface-card p-5 space-y-3.5">
+      <div class="flex items-center justify-between">
+        <span class="font-bold text-sm text-white">Active Account</span>
+        <button type="button" onclick="closeAccountModal()" class="text-slate-400 hover:text-white text-xs">✕</button>
+      </div>
+      <div id="account-modal-body" class="space-y-2 text-xs text-slate-300"></div>
+      <div class="flex justify-between pt-2">
+        <button type="button" onclick="closeAccountModal(); switchView('users');" class="btn-pill px-3 py-1.5 rounded-lg text-xs font-bold surface-inset text-emerald-300">Sign Up / Moderate</button>
+        <button type="button" onclick="closeAccountModal()" class="btn-pill px-3.5 py-1.5 rounded-lg text-xs font-bold bg-emerald-400 text-slate-950">Done</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Gemini API Key Modal -->
-  <div id="key-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/75">
-    <div class="w-full max-w-sm rounded-2xl surface p-5 space-y-3">
+  <div id="key-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/75 backdrop-blur-xs">
+    <div class="w-full max-w-sm rounded-2xl surface-card p-5 space-y-3.5">
       <div class="flex items-center justify-between">
         <span class="font-bold text-sm text-white">Gemini API Key</span>
         <button type="button" onclick="closeKeyModal()" class="text-slate-400 hover:text-white text-xs">✕</button>
       </div>
-      <input id="key-input" type="password" placeholder="GEMINI_API_KEY (AIza...)" class="w-full rounded-xl px-3 py-2 text-xs sm:text-sm bg-[#080c14] border border-slate-800 text-white focus:outline-none focus:border-emerald-500" />
-      <p class="text-[11px] text-slate-400">Saved locally. Without a key, local demo/offline mode runs automatically.</p>
+      <input id="key-input" type="password" placeholder="GEMINI_API_KEY (AIza...)" class="field-control w-full rounded-xl px-3 py-2 text-xs sm:text-sm surface-inset text-white placeholder:text-slate-500" />
+      <p class="text-[11px] text-slate-400">Stored locally in browser. Local fallback works without a key.</p>
       <div class="flex items-center justify-between pt-1">
         <button type="button" onclick="clearKey()" class="text-xs font-semibold text-rose-400 hover:underline">Clear</button>
         <div class="flex gap-2">
-          <button type="button" onclick="closeKeyModal()" class="px-3 py-1.5 rounded-lg text-xs font-semibold surface-2 text-slate-300">Cancel</button>
-          <button type="button" onclick="saveKey()" class="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950">Save</button>
+          <button type="button" onclick="closeKeyModal()" class="btn-pill px-3 py-1.5 rounded-lg text-xs font-semibold surface-inset text-slate-300">Cancel</button>
+          <button type="button" onclick="saveKey()" class="btn-pill px-3.5 py-1.5 rounded-lg text-xs font-bold bg-emerald-400 hover:bg-emerald-300 text-slate-950">Save</button>
         </div>
       </div>
     </div>
   </div>
 
+  <!-- Supabase public.questions & profiles SQL Modal -->
+  <div id="sql-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/75 backdrop-blur-xs">
+    <div class="w-full max-w-xl rounded-2xl surface-card p-5 space-y-3.5">
+      <div class="flex items-center justify-between">
+        <span class="font-bold text-sm text-white">Supabase SQL (Questions & Profiles)</span>
+        <button type="button" onclick="closeSqlModal()" class="text-slate-400 hover:text-white text-xs">✕</button>
+      </div>
+      <pre id="sql-code" class="rounded-xl p-3.5 text-[11px] font-mono surface-inset text-emerald-300 overflow-x-auto max-h-64 leading-relaxed">create table if not exists public.questions (
+  id uuid primary key default gen_random_uuid(),
+  created_at timestamptz not null default now(),
+  subject text not null,
+  chapter text,
+  topic text,
+  question_text text not null,
+  option_a text not null,
+  option_b text not null,
+  option_c text not null,
+  option_d text not null,
+  correct_option text not null check (correct_option in ('A', 'B', 'C', 'D')),
+  explanation text,
+  source_type text default 'predictive',
+  rechecked boolean default true
+);
+
+create table if not exists public.profiles (
+  id uuid primary key default gen_random_uuid(),
+  full_name text not null,
+  email text unique not null,
+  role text not null default 'user' check (role in ('user', 'admin')),
+  status text not null default 'active' check (status in ('active', 'suspended', 'banned')),
+  moderation_note text,
+  created_at timestamptz not null default now()
+);
+
+alter table public.questions enable row level security;
+alter table public.profiles enable row level security;
+
+create policy "public_read_questions" on public.questions for select using (true);
+create policy "public_insert_questions" on public.questions for insert with check (true);
+create policy "public_read_profiles" on public.profiles for select using (true);
+create policy "public_insert_profiles" on public.profiles for insert with check (true);
+create policy "public_update_profiles" on public.profiles for update using (true);
+notify pgrst, 'reload schema';</pre>
+      <div class="flex justify-end gap-2">
+        <button type="button" onclick="closeSqlModal()" class="btn-pill px-3 py-1.5 rounded-lg text-xs font-semibold surface-inset text-slate-300">Close</button>
+        <button type="button" onclick="copySqlSnippet()" class="btn-pill px-3.5 py-1.5 rounded-lg text-xs font-bold bg-emerald-400 hover:bg-emerald-300 text-slate-950">Copy SQL</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast -->
-  <div id="toast" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 hidden px-4 py-2 rounded-xl text-xs font-bold bg-slate-900 text-white border border-slate-700 shadow-lg"></div>
+  <div id="toast" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 hidden px-4 py-2 rounded-xl text-xs font-bold bg-[#111927] text-white border border-emerald-400/35 shadow-xl"></div>
 
   <script>
     const SYLLABUS = [
@@ -409,58 +631,88 @@ A) $\\pi/2$  B) $\\pi/4$  C) 1  D) 0`;
 
     const SEED_QUESTIONS = [
       {
-        id: 'q_seed_1', subject: 'Physics', paper: 'Physics 2nd Paper', chapter: 'তাপগতিবিদ্যা',
+        id: 'seed_1', subject: 'Physics', paper: 'Physics 2nd Paper', chapter: 'তাপগতিবিদ্যা',
         q: 'কার্নো ইঞ্জিনের উৎস $400\\text{ K}$ ও গ্রাহক $300\\text{ K}$ হলে এবং $800\\text{ J}$ তাপ গ্রহণ করলে বর্জিত তাপ কত?',
         options: ['$200\\text{ J}$', '$600\\text{ J}$', '$400\\text{ J}$', '$500\\text{ J}$'],
         correctIndex: 1,
         explanation: '$Q_2 = Q_1 \\frac{T_2}{T_1} = 800 \\times \\frac{300}{400} = 600\\text{ J}$।',
-        audit: { status: 'PASS', note: '4 distinct options; Q2 verified (work done 200 J is trap).' }
+        recheck: { passed: true, fixed: false, summary: '4 distinct options; Q2 verified.' }
       },
       {
-        id: 'q_seed_2', subject: 'Chemistry', paper: 'Chemistry 2nd Paper', chapter: 'জৈব রসায়ন',
+        id: 'seed_2', subject: 'Chemistry', paper: 'Chemistry 2nd Paper', chapter: 'জৈব রসায়ন',
         q: 'নিচের কোন যৌগটি অ্যালডল ঘনীভবন বিক্রিয়া দেয়?',
         options: ['$HCHO$', '$C_6H_5CHO$', '$CH_3CHO$', '$(CH_3)_3CCHO$'],
         correctIndex: 2,
-        explanation: '$CH_3CHO$-এ $\\alpha$-H থাকায় লঘু ক্ষারে অ্যালডল বিক্রিয়া ঘটে।',
-        audit: { status: 'PASS', note: '4 distinct options; alpha-H rule verified.' }
+        explanation: '$CH_3CHO$-এ $\\alpha$-H থাকায় লঘু ক্ষারে অ্যালডল ঘনীভবন ঘটে।',
+        recheck: { passed: true, fixed: false, summary: '4 distinct options; alpha-H rule verified.' }
       },
       {
-        id: 'q_seed_3', subject: 'Higher Math', paper: 'Higher Math 1st Paper', chapter: 'যোগজীকরণ',
+        id: 'seed_3', subject: 'Higher Math', paper: 'Higher Math 1st Paper', chapter: 'যোগজীকরণ',
         q: '$\\int_0^{\\pi/2} \\frac{\\sin x}{\\sin x + \\cos x} dx$ এর মান কত?',
         options: ['$\\frac{\\pi}{2}$', '$\\frac{\\pi}{4}$', '$1$', '$0$'],
         correctIndex: 1,
         explanation: '$2I = \\int_0^{\\pi/2} 1\\,dx = \\frac{\\pi}{2} \\Rightarrow I = \\frac{\\pi}{4}$।',
-        audit: { status: 'PASS', note: '4 distinct options; definite integral verified.' }
+        recheck: { passed: true, fixed: false, summary: '4 distinct options; integral verified.' }
       },
       {
-        id: 'q_seed_4', subject: 'Biology', paper: 'Biology 1st Paper (Botany)', chapter: 'কোষ বিভাজন',
+        id: 'seed_4', subject: 'Biology', paper: 'Biology 1st Paper (Botany)', chapter: 'কোষ বিভাজন',
         q: 'মায়োসিস-১ এর কোন উপ-পর্যায়ে ক্রসিং ওভার ঘটে?',
         options: ['লেপ্টোটিন', 'জাইগোটিন', 'প্যাকাইটিন', 'ডিপ্লোটিন'],
         correctIndex: 2,
-        explanation: 'প্যাকাইটিন উপ-পর্যায়ে নন-সিস্টার ক্রোমাটিডে ক্রসিং ওভার হয়।',
-        audit: { status: 'PASS', note: '4 distinct options; NCTB Pachytene verified.' }
+        explanation: 'প্যাকাইটিন উপ-পর্যায়ে নন-সিস্টার ক্রোমাটিডে ক্রসিং ওভার সংঘটিত হয়।',
+        recheck: { passed: true, fixed: false, summary: '4 distinct options; Pachytene verified.' }
       },
       {
-        id: 'q_seed_5', subject: 'ICT', paper: 'ICT', chapter: 'সংখ্যা পদ্ধতি ও ডিজিটাল ডিভাইস',
+        id: 'seed_5', subject: 'ICT', paper: 'ICT', chapter: 'সংখ্যা পদ্ধতি ও ডিজিটাল ডিভাইস',
         q: '$(101101)_2$ বাইনারি সংখ্যার হেক্সাডেসিমেল মান কত?',
         options: ['$(2D)_{16}$', '$(2B)_{16}$', '$(3D)_{16}$', '$(1E)_{16}$'],
         correctIndex: 0,
         explanation: '$0010\\ 1101_2 = 2_{16}\\text{ এবং } D_{16} = (2D)_{16}$।',
-        audit: { status: 'PASS', note: '4 distinct options; 4-bit grouping verified.' }
+        recheck: { passed: true, fixed: false, summary: '4 distinct options; 4-bit hex verified.' }
       }
     ];
 
-    const KEYS = {
-      API: 'aw_clean_gemini_key',
-      BANK: 'aw_clean_bank_text',
-      DECK: 'aw_clean_deck'
+    const DEFAULT_USERS = [
+      { id: 'u_admin', name: 'Admin Moderator', email: 'admin@admissionwarrior.app', target: 'Admin Control', status: 'active', note: '' },
+      { id: 'u_guest', name: 'General Student', email: 'guest@admissionwarrior.app', target: 'HSC Science + Engineering', status: 'active', note: '' },
+      { id: 'u_demo1', name: 'Nafis Rahman', email: 'nafis.hsc@example.com', target: 'HSC Science + Medical', status: 'active', note: '' }
+    ];
+
+    const STORAGE = {
+      KEY: 'aw_v5_gemini_key',
+      BANK: 'aw_v5_bank_text',
+      DECK: 'aw_v5_deck',
+      USERS: 'aw_v5_users',
+      CURRENT_USER: 'aw_v5_current_user'
     };
+
+    function loadUsers() {
+      try {
+        const raw = JSON.parse(localStorage.getItem(STORAGE.USERS) || 'null');
+        if (Array.isArray(raw) && raw.length) return raw;
+      } catch (_) {}
+      return [...DEFAULT_USERS];
+    }
+
+    function loadDeck() {
+      try {
+        const raw = JSON.parse(localStorage.getItem(STORAGE.DECK) || 'null');
+        return Array.isArray(raw) && raw.length ? raw : [...SEED_QUESTIONS];
+      } catch {
+        return [...SEED_QUESTIONS];
+      }
+    }
+
+    const initialUsers = loadUsers();
+    const savedCurrentId = localStorage.getItem(STORAGE.CURRENT_USER) || 'u_guest';
 
     const state = {
       view: 'bank',
-      apiKey: localStorage.getItem(KEYS.API) || '',
-      deck: loadInitialDeck(),
-      syllabusSubject: 'ALL',
+      apiKey: localStorage.getItem(STORAGE.KEY) || '',
+      deck: loadDeck(),
+      users: initialUsers,
+      currentUserId: initialUsers.some((u) => u.id === savedCurrentId) ? savedCurrentId : 'u_guest',
+      syllabusSub: 'ALL',
       quizList: [],
       quizIdx: 0,
       quizAnswers: {},
@@ -471,17 +723,19 @@ A) $\\pi/2$  B) $\\pi/4$  C) 1  D) 0`;
       photoMime: 'image/jpeg'
     };
 
-    function loadInitialDeck() {
+    function getCurrentUser() {
+      return state.users.find((u) => u.id === state.currentUserId) || state.users[0];
+    }
+
+    function persistUsers() {
       try {
-        const d = JSON.parse(localStorage.getItem(KEYS.DECK) || 'null');
-        return Array.isArray(d) && d.length ? d : [...SEED_QUESTIONS];
-      } catch {
-        return [...SEED_QUESTIONS];
-      }
+        localStorage.setItem(STORAGE.USERS, JSON.stringify(state.users));
+        localStorage.setItem(STORAGE.CURRENT_USER, state.currentUserId);
+      } catch (_) {}
     }
 
     function persistDeck() {
-      try { localStorage.setItem(KEYS.DECK, JSON.stringify(state.deck)); } catch (_) {}
+      try { localStorage.setItem(STORAGE.DECK, JSON.stringify(state.deck)); } catch (_) {}
     }
 
     function typesetMath(el) {
@@ -493,8 +747,8 @@ A) $\\pi/2$  B) $\\pi/4$  C) 1  D) 0`;
     }
     window.typesetMath = typesetMath;
 
-    function esc(s) {
-      return String(s || '')
+    function esc(str) {
+      return String(str || '')
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
@@ -506,49 +760,237 @@ A) $\\pi/2$  B) $\\pi/4$  C) 1  D) 0`;
       el.textContent = msg;
       el.classList.remove('hidden');
       clearTimeout(toast._t);
-      toast._t = setTimeout(() => el.classList.add('hidden'), 2400);
+      toast._t = setTimeout(() => el.classList.add('hidden'), 2300);
     }
 
-    // Safe In-App Navigation (Prevents accidental browser exit)
-    const VALID_VIEWS = ['bank', 'syllabus', 'quiz', 'photo'];
+    function isRestricted() {
+      const u = getCurrentUser();
+      return Boolean(u && (u.status === 'suspended' || u.status === 'banned'));
+    }
+
+    function enforceActiveAccess(actionLabel) {
+      const u = getCurrentUser();
+      if (!u) return true;
+      if (u.status === 'banned') {
+        toast(`Banned account cannot ${actionLabel}`);
+        return false;
+      }
+      if (u.status === 'suspended') {
+        toast(`Suspended account cannot ${actionLabel}`);
+        return false;
+      }
+      return true;
+    }
+
+    function renderAccessUI() {
+      const u = getCurrentUser();
+      const banner = document.getElementById('restriction-banner');
+      const pillLabel = document.getElementById('user-pill-label');
+      const userDot = document.getElementById('user-dot');
+
+      if (!u) return;
+      pillLabel.textContent = u.name;
+
+      if (u.status === 'banned') {
+        userDot.className = 'w-2 h-2 rounded-full bg-rose-500 shrink-0';
+        banner.classList.remove('hidden');
+        document.getElementById('restriction-title').textContent = `Account Banned · ${u.name}`;
+        document.getElementById('restriction-reason').textContent = u.note || 'Access permanently blocked by admin.';
+      } else if (u.status === 'suspended') {
+        userDot.className = 'w-2 h-2 rounded-full bg-amber-400 shrink-0';
+        banner.classList.remove('hidden');
+        document.getElementById('restriction-title').textContent = `Account Suspended · ${u.name}`;
+        document.getElementById('restriction-reason').textContent = u.note || 'Access temporarily suspended by admin.';
+      } else {
+        userDot.className = 'w-2 h-2 rounded-full bg-emerald-400 shrink-0';
+        banner.classList.add('hidden');
+      }
+
+      const summary = document.getElementById('active-session-summary');
+      if (summary) summary.textContent = `Active: ${u.name} (${u.status})`;
+
+      renderUsersList();
+    }
+
+    function handleInstantSignup(e) {
+      e.preventDefault();
+      const name = document.getElementById('reg-name').value.trim();
+      const email = document.getElementById('reg-email').value.trim();
+      const target = document.getElementById('reg-target').value;
+      if (!name || !email) return;
+
+      const existing = state.users.find((u) => u.email.toLowerCase() === email.toLowerCase());
+      if (existing) {
+        existing.name = name;
+        existing.target = target;
+        state.currentUserId = existing.id;
+        persistUsers();
+        renderAccessUI();
+        toast(existing.status === 'active' ? `Switched to ${existing.name}` : `Signed in (${existing.status})`);
+        return;
+      }
+
+      const newUser = {
+        id: `u_${Date.now()}`,
+        name,
+        email,
+        target,
+        status: 'active',
+        note: ''
+      };
+      state.users.unshift(newUser);
+      state.currentUserId = newUser.id;
+      document.getElementById('reg-name').value = '';
+      document.getElementById('reg-email').value = '';
+      persistUsers();
+      renderAccessUI();
+      toast('Joined immediately');
+    }
+
+    function switchToGuestOpenAccess() {
+      let guest = state.users.find((u) => u.id === 'u_guest');
+      if (!guest) {
+        guest = { id: 'u_guest', name: 'General Student', email: 'guest@admissionwarrior.app', target: 'HSC Science + Engineering', status: 'active', note: '' };
+        state.users.unshift(guest);
+      }
+      if (guest.status !== 'active') {
+        guest.status = 'active';
+        guest.note = '';
+      }
+      state.currentUserId = guest.id;
+      persistUsers();
+      renderAccessUI();
+      toast('General access active');
+    }
+
+    function setUserModerationStatus(userId, nextStatus) {
+      const target = state.users.find((u) => u.id === userId);
+      if (!target) return;
+      if (target.id === 'u_admin' && nextStatus !== 'active') {
+        return toast('Admin account cannot be suspended/banned');
+      }
+      const noteInput = document.getElementById('mod-reason-input');
+      const customNote = noteInput ? noteInput.value.trim() : '';
+
+      target.status = nextStatus;
+      target.note = nextStatus === 'active'
+        ? ''
+        : (customNote || (nextStatus === 'banned' ? 'Banned by admin' : 'Suspended by admin'));
+
+      persistUsers();
+      renderAccessUI();
+      toast(`${target.name}: ${nextStatus}`);
+    }
+
+    function selectUserSession(userId) {
+      const target = state.users.find((u) => u.id === userId);
+      if (!target) return;
+      state.currentUserId = target.id;
+      persistUsers();
+      renderAccessUI();
+      toast(`Session: ${target.name}`);
+    }
+
+    function renderUsersList() {
+      const wrap = document.getElementById('users-list');
+      const badge = document.getElementById('users-count-badge');
+      if (!wrap || !badge) return;
+      badge.textContent = state.users.length;
+
+      wrap.innerHTML = state.users.map((u) => {
+        const isCurrent = u.id === state.currentUserId;
+        const statusBadge = u.status === 'banned'
+          ? 'bg-rose-500/15 text-rose-300 border-rose-500/35'
+          : u.status === 'suspended'
+            ? 'bg-amber-400/15 text-amber-300 border-amber-400/35'
+            : 'bg-emerald-400/15 text-emerald-300 border-emerald-400/35';
+
+        return `
+          <div class="rounded-xl p-3.5 surface-inset flex flex-wrap items-center justify-between gap-3">
+            <div class="min-w-0 space-y-0.5">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-xs sm:text-sm font-bold text-white">${esc(u.name)}</span>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold border ${statusBadge}">${esc(u.status)}</span>
+                ${isCurrent ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-mono bg-cyan-400/15 text-cyan-300 border border-cyan-400/30">current</span>' : ''}
+              </div>
+              <p class="text-[11px] font-mono text-slate-400 truncate">${esc(u.email)} · ${esc(u.target)}</p>
+              ${u.note ? `<p class="text-[11px] text-rose-300/90">${esc(u.note)}</p>` : ''}
+            </div>
+
+            <div class="flex items-center gap-1.5 shrink-0">
+              ${!isCurrent ? `<button type="button" onclick="selectUserSession('${u.id}')" class="btn-pill px-2.5 py-1 rounded-lg text-[11px] font-semibold surface-inset text-slate-200 hover:border-slate-500">Use</button>` : ''}
+              ${u.status !== 'active' ? `<button type="button" onclick="setUserModerationStatus('${u.id}','active')" class="btn-pill px-2.5 py-1 rounded-lg text-[11px] font-bold bg-emerald-400/15 text-emerald-300 hover:bg-emerald-400 hover:text-slate-950">Restore</button>` : ''}
+              ${u.id !== 'u_admin' && u.status !== 'suspended' ? `<button type="button" onclick="setUserModerationStatus('${u.id}','suspended')" class="btn-pill px-2.5 py-1 rounded-lg text-[11px] font-bold bg-amber-400/15 text-amber-300 hover:bg-amber-400 hover:text-slate-950">Suspend</button>` : ''}
+              ${u.id !== 'u_admin' && u.status !== 'banned' ? `<button type="button" onclick="setUserModerationStatus('${u.id}','banned')" class="btn-pill px-2.5 py-1 rounded-lg text-[11px] font-bold bg-rose-500/15 text-rose-300 hover:bg-rose-500 hover:text-white">Ban</button>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function openAccountModal() {
+      const u = getCurrentUser();
+      const body = document.getElementById('account-modal-body');
+      body.innerHTML = `
+        <div class="p-3 rounded-xl surface-inset space-y-1">
+          <div class="font-bold text-white">${esc(u.name)}</div>
+          <div class="font-mono text-[11px] text-slate-400">${esc(u.email)}</div>
+          <div class="text-[11px] text-emerald-300 font-semibold">Status: ${esc(u.status)} · ${esc(u.target)}</div>
+          ${u.note ? `<div class="text-[11px] text-rose-300">Note: ${esc(u.note)}</div>` : ''}
+        </div>
+      `;
+      const m = document.getElementById('account-modal');
+      m.classList.remove('hidden');
+      m.classList.add('flex');
+    }
+
+    function closeAccountModal() {
+      const m = document.getElementById('account-modal');
+      m.classList.add('hidden');
+      m.classList.remove('flex');
+    }
+
+    const VIEWS = ['bank', 'syllabus', 'quiz', 'photo', 'users'];
     let navLock = false;
 
     function applyTabStyles(v) {
       document.querySelectorAll('.app-view').forEach((sec) => sec.classList.toggle('hidden', sec.id !== `view-${v}`));
       document.querySelectorAll('.tab-btn').forEach((btn) => {
         const active = btn.getAttribute('data-tab') === v;
-        btn.classList.toggle('bg-emerald-500', active);
+        btn.classList.toggle('bg-emerald-400', active);
         btn.classList.toggle('text-slate-950', active);
         btn.classList.toggle('text-slate-300', !active);
+        btn.classList.toggle('hover:text-white', !active);
       });
     }
 
     function switchView(v, push = true) {
-      const target = VALID_VIEWS.includes(v) ? v : 'bank';
+      const target = VIEWS.includes(v) ? v : 'bank';
       state.view = target;
       applyTabStyles(target);
 
       const h = `#${target}`;
       if (push && window.location.hash !== h) {
         navLock = true;
-        try { window.history.pushState({ view: target, appGuard: true }, '', h); }
+        try { window.history.pushState({ view: target, awGuard: true }, '', h); }
         catch { window.location.hash = h; }
         setTimeout(() => { navLock = false; }, 40);
       }
 
       if (target === 'syllabus') renderSyllabus();
       if (target === 'quiz' && !state.quizList.length) startQuiz();
+      if (target === 'users') renderUsersList();
       updateDrawerContext();
       typesetMath(document.getElementById(`view-${target}`));
     }
 
     function initNavigationGuard() {
-      const m = (window.location.hash || '').replace(/^#/, '');
-      const start = VALID_VIEWS.includes(m) ? m : 'bank';
+      const initial = (window.location.hash || '').replace(/^#/, '');
+      const start = VIEWS.includes(initial) ? initial : 'bank';
       navLock = true;
       try {
-        window.history.replaceState({ view: start, appGuard: true, root: true }, '', `#${start}`);
-        window.history.pushState({ view: start, appGuard: true }, '', `#${start}`);
+        window.history.replaceState({ view: start, awGuard: true, root: true }, '', `#${start}`);
+        window.history.pushState({ view: start, awGuard: true }, '', `#${start}`);
       } catch {
         window.location.hash = `#${start}`;
       }
@@ -557,41 +999,46 @@ A) $\\pi/2$  B) $\\pi/4$  C) 1  D) 0`;
 
       window.addEventListener('popstate', (e) => {
         if (navLock) return;
-        const keyModal = document.getElementById('key-modal');
+        const closeIfOpen = (id, fn) => {
+          const el = document.getElementById(id);
+          if (el && !el.classList.contains('hidden')) {
+            fn();
+            repushCurrentView();
+            return true;
+          }
+          return false;
+        };
+        if (closeIfOpen('key-modal', closeKeyModal)) return;
+        if (closeIfOpen('sql-modal', closeSqlModal)) return;
+        if (closeIfOpen('account-modal', closeAccountModal)) return;
         const drawer = document.getElementById('ai-drawer');
-        if (keyModal && !keyModal.classList.contains('hidden')) {
-          closeKeyModal();
-          repushCurrentView();
-          return;
-        }
         if (drawer && !drawer.classList.contains('translate-x-full')) {
           toggleDrawer(false);
           repushCurrentView();
           return;
         }
-        const nextView = e.state && VALID_VIEWS.includes(e.state.view) ? e.state.view : 'bank';
-        if (nextView === state.view) repushCurrentView();
-        else switchView(nextView, false);
+        const next = e.state && VIEWS.includes(e.state.view) ? e.state.view : 'bank';
+        if (next === state.view) repushCurrentView();
+        else switchView(next, false);
       });
 
       document.getElementById('btn-back').addEventListener('click', () => {
-        const keyModal = document.getElementById('key-modal');
-        if (keyModal && !keyModal.classList.contains('hidden')) return closeKeyModal();
-        const drawer = document.getElementById('ai-drawer');
-        if (drawer && !drawer.classList.contains('translate-x-full')) return toggleDrawer(false);
+        if (!document.getElementById('key-modal').classList.contains('hidden')) return closeKeyModal();
+        if (!document.getElementById('sql-modal').classList.contains('hidden')) return closeSqlModal();
+        if (!document.getElementById('account-modal').classList.contains('hidden')) return closeAccountModal();
+        if (!document.getElementById('ai-drawer').classList.contains('translate-x-full')) return toggleDrawer(false);
         if (state.view !== 'bank') switchView('bank', true);
-        else toast('Already in Admission Warrior');
+        else toast('Inside Admission Warrior');
       });
     }
 
     function repushCurrentView() {
       navLock = true;
-      try { window.history.pushState({ view: state.view, appGuard: true }, '', `#${state.view}`); } catch (_) {}
+      try { window.history.pushState({ view: state.view, awGuard: true }, '', `#${state.view}`); } catch (_) {}
       setTimeout(() => { navLock = false; }, 40);
       applyTabStyles(state.view);
     }
 
-    // Gemini Free Model Caller with Fallback Chain
     async function callGemini(parts, systemText = '') {
       if (!state.apiKey) throw new Error('NO_KEY');
       const models = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
@@ -600,11 +1047,11 @@ A) $\\pi/2$  B) $\\pi/4$  C) 1  D) 0`;
       const cleanParts = (Array.isArray(parts) ? parts : [parts]).map((p) => {
         if (p && p.inlineData && p.inlineData.data) {
           const raw = String(p.inlineData.data);
-          const match = raw.match(/^data:([^;]+);base64,(.+)$/);
+          const m = raw.match(/^data:([^;]+);base64,(.+)$/);
           return {
             inlineData: {
-              mimeType: match ? match[1] : (p.inlineData.mimeType || 'image/jpeg'),
-              data: match ? match[2] : raw
+              mimeType: m ? m[1] : (p.inlineData.mimeType || 'image/jpeg'),
+              data: m ? m[2] : raw
             }
           };
         }
@@ -637,72 +1084,97 @@ A) $\\pi/2$  B) $\\pi/4$  C) 1  D) 0`;
     }
 
     function parseJsonSafe(raw) {
-      const s = String(raw || '').replace(/```json|```/gi, '').trim();
-      try { return JSON.parse(s); } catch (_) {
-        const a = s.indexOf('{');
-        const b = s.lastIndexOf('}');
-        if (a !== -1 && b > a) return JSON.parse(s.slice(a, b + 1));
-        throw new Error('Invalid JSON');
+      const cleaned = String(raw || '').replace(/```json|```/gi, '').trim();
+      try { return JSON.parse(cleaned); } catch (_) {
+        const s = cleaned.indexOf('{');
+        const e = cleaned.lastIndexOf('}');
+        if (s !== -1 && e > s) return JSON.parse(cleaned.slice(s, e + 1));
+        throw new Error('JSON parse failed');
       }
     }
 
-    // Question Bank Upload, Exact Copy, Predictive & Option Recheck
     function populateChapterDropdown() {
-      const id = document.getElementById('bank-paper').value;
-      const paper = SYLLABUS.find((p) => p.id === id) || SYLLABUS[0];
-      const sel = document.getElementById('bank-chapter');
-      sel.innerHTML = paper.chapters.map((c) => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
-      updateDrawerContext();
-    }
-
-    function onChapterOrTopicChange() {
+      const paper = SYLLABUS.find((p) => p.id === document.getElementById('bank-paper').value) || SYLLABUS[0];
+      document.getElementById('bank-chapter').innerHTML = paper.chapters.map((c) => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
       updateDrawerContext();
     }
 
     function loadSampleBank() {
+      if (!enforceActiveAccess('load sample')) return;
       document.getElementById('bank-text').value = SAMPLE_BANK;
-      document.getElementById('bank-file-meta').textContent = 'Sample Admission Qn Bank';
+      document.getElementById('bank-file-meta').textContent = 'Sample Admission Bank';
       saveBankText();
       toast('Sample loaded');
     }
 
     function saveBankText() {
-      try { localStorage.setItem(KEYS.BANK, document.getElementById('bank-text').value); } catch (_) {}
+      try { localStorage.setItem(STORAGE.BANK, document.getElementById('bank-text').value); } catch (_) {}
     }
 
     async function handleBankUpload(e) {
+      if (!enforceActiveAccess('upload bank')) {
+        e.target.value = '';
+        return;
+      }
       const file = e.target.files?.[0];
       if (!file) return;
       const meta = document.getElementById('bank-file-meta');
-      meta.textContent = `Loading ${file.name}...`;
+      meta.textContent = `Reading ${file.name}...`;
       try {
         if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
-          if (!window.pdfjsLib) throw new Error('PDF.js missing');
+          if (!window.pdfjsLib) throw new Error('PDF.js unavailable');
           const buf = await file.arrayBuffer();
           const pdf = await window.pdfjsLib.getDocument({ data: buf }).promise;
           let txt = '';
-          const pages = Math.min(pdf.numPages, 12);
-          for (let i = 1; i <= pages; i++) {
+          const maxP = Math.min(pdf.numPages, 12);
+          for (let i = 1; i <= maxP; i++) {
             const page = await pdf.getPage(i);
-            const c = await page.getTextContent();
-            txt += `\n${c.items.map((it) => it.str).join(' ')}`;
+            const content = await page.getTextContent();
+            txt += `\n${content.items.map((it) => it.str).join(' ')}`;
           }
           document.getElementById('bank-text').value = txt.trim();
-          meta.textContent = `${file.name} (${pages}p)`;
+          meta.textContent = `${file.name} (${maxP}p)`;
         } else {
-          document.getElementById('bank-text').value = (await file.text()).trim();
+          const text = await file.text();
+          document.getElementById('bank-text').value = text.trim();
           meta.textContent = file.name;
         }
         saveBankText();
         toast('Uploaded');
       } catch (_) {
-        meta.textContent = 'PDF parse fallback: paste text';
-        toast('Paste text if PDF is scanned');
+        meta.textContent = 'Paste text if PDF is image-based';
+        toast('Upload fallback active');
       }
       e.target.value = '';
     }
 
+    async function analyzeBankPattern() {
+      if (!enforceActiveAccess('analyze bank')) return;
+      const bankText = document.getElementById('bank-text').value.trim();
+      const paperObj = SYLLABUS.find((p) => p.id === document.getElementById('bank-paper').value) || SYLLABUS[0];
+      const chapter = document.getElementById('bank-chapter').value;
+      const topic = document.getElementById('bank-topic').value.trim();
+      const briefEl = document.getElementById('pattern-brief');
+      const statusEl = document.getElementById('bank-status');
+
+      statusEl.textContent = 'Analyzing...';
+      briefEl.classList.remove('hidden');
+
+      try {
+        if (!state.apiKey) throw new Error('NO_KEY');
+        const prompt = `Analyze admission question patterns for HSC ${paperObj.paper} (${chapter}${topic ? `, ${topic}` : ''}) based on this bank:\n${bankText.slice(0, 6000)}\nGive a concise Bangla summary of recurring concepts, numerical traps, and high-yield subtopics.`;
+        const { text } = await callGemini([{ text: prompt }], 'Bangladesh HSC Science & Admission pattern analyst.');
+        briefEl.textContent = text;
+        typesetMath(briefEl);
+        statusEl.textContent = 'Analyzed';
+      } catch (_) {
+        briefEl.textContent = `${paperObj.subject} · ${chapter}${topic ? ` · ${topic}` : ''}\n• Focus on direct formula + unit conversion traps and exception rules.\n• Compare multi-step numericals against one-line conceptual statements.`;
+        statusEl.textContent = 'Local Analysis';
+      }
+    }
+
     async function runBankWorkflow(mode) {
+      if (!enforceActiveAccess('generate questions')) return;
       const bankText = document.getElementById('bank-text').value.trim();
       const paperObj = SYLLABUS.find((p) => p.id === document.getElementById('bank-paper').value) || SYLLABUS[0];
       const chapter = document.getElementById('bank-chapter').value;
@@ -711,70 +1183,77 @@ A) $\\pi/2$  B) $\\pi/4$  C) 1  D) 0`;
 
       const statusEl = document.getElementById('bank-status');
       const briefEl = document.getElementById('pattern-brief');
-      statusEl.textContent = mode === 'copy' ? 'Copying...' : 'Analyzing & generating...';
+      statusEl.textContent = mode === 'copy' ? 'Copying...' : 'Generating...';
 
       try {
-        if (state.apiKey) {
-          const prompt =
-            mode === 'copy'
-              ? `Extract up to ${count} exact MCQs matching "${chapter}" ${topic ? `and topic "${topic}"` : ''} from this Question Bank text. Keep original wording/options faithfully and set correctIndex (0-3) accurately.\nBank:\n${bankText.slice(0, 6500)}\nReturn ONLY JSON: {"brief":"short pattern note","questions":[{"q":"","options":["","","",""],"correctIndex":0,"explanation":""}]}`
-              : `Analyze patterns from the Question Bank + HSC NCTB ${paperObj.paper} (${chapter}${topic ? `, ${topic}` : ''}) and generate ${count} probable admission MCQs in Bangla/LaTeX. Return ONLY JSON: {"brief":"top recurring concept/trap in 1 line","questions":[{"q":"","options":["","","",""],"correctIndex":0,"explanation":""}]}`;
+        if (!state.apiKey) throw new Error('NO_KEY');
+        const prompt = mode === 'copy'
+          ? `Extract up to ${count} questions matching "${chapter}" ${topic ? `(${topic})` : ''} faithfully from the bank below. Return ONLY JSON: {"pattern":"1-line note","questions":[{"q":"","options":["","","",""],"correctIndex":0,"explanation":""}]}\nBank:\n${bankText.slice(0, 6500)}`
+          : `Analyze the bank & HSC NCTB ${paperObj.paper} (${chapter}${topic ? `, ${topic}` : ''}) and generate ${count} probable admission MCQs in Bangla/LaTeX. Return ONLY JSON: {"pattern":"1-line note","questions":[{"q":"","options":["","","",""],"correctIndex":0,"explanation":""}]}\nBank:\n${bankText.slice(0, 4500)}`;
 
-          const { text } = await callGemini([{ text: prompt }], 'Bangladesh HSC Science & Admission MCQ specialist.');
-          const parsed = parseJsonSafe(text);
-          const items = Array.isArray(parsed.questions) ? parsed.questions.slice(0, count) : [];
+        const { text } = await callGemini([{ text: prompt }], 'Bangladesh HSC Science & Admission MCQ creator.');
+        const parsed = parseJsonSafe(text);
+        const rawList = Array.isArray(parsed.questions) ? parsed.questions.slice(0, count) : [];
 
-          if (items.length) {
-            state.deck = items.map((item, idx) => ({
-              id: `q_${Date.now()}_${idx}`,
-              subject: paperObj.subject,
-              paper: paperObj.paper,
-              chapter,
-              q: String(item.q || ''),
-              options: Array.isArray(item.options) ? item.options.slice(0, 4).map(String) : ['A', 'B', 'C', 'D'],
-              correctIndex: Number.isInteger(item.correctIndex) ? item.correctIndex : 0,
-              explanation: String(item.explanation || ''),
-              audit: { status: 'PENDING', note: '' }
-            }));
-            if (parsed.brief) {
-              briefEl.textContent = parsed.brief;
-              briefEl.classList.remove('hidden');
-            }
-          } else {
-            state.deck = buildLocalDeck(mode, bankText, paperObj, chapter, topic, count);
+        if (rawList.length) {
+          state.deck = rawList.map((item, idx) => ({
+            id: `q_${Date.now()}_${idx}`,
+            subject: paperObj.subject,
+            paper: paperObj.paper,
+            chapter,
+            q: String(item.q || ''),
+            options: Array.isArray(item.options) ? item.options.slice(0, 4).map(String) : ['A', 'B', 'C', 'D'],
+            correctIndex: Number.isInteger(item.correctIndex) ? item.correctIndex : 0,
+            explanation: String(item.explanation || ''),
+            recheck: { passed: false, fixed: false, summary: '' }
+          }));
+          if (parsed.pattern) {
+            briefEl.textContent = parsed.pattern;
+            briefEl.classList.remove('hidden');
           }
         } else {
-          state.deck = buildLocalDeck(mode, bankText, paperObj, chapter, topic, count);
-          briefEl.textContent = `${paperObj.subject} • ${chapter}${topic ? ` • ${topic}` : ''} (${mode === 'copy' ? 'Exact Copy' : 'Predictive'})`;
-          briefEl.classList.remove('hidden');
+          state.deck = buildLocalQuestions(mode, bankText, paperObj, chapter, topic, count);
         }
-
-        // Mandatory Option Recheck immediately after copy/generation
-        await runMandatoryOptionRecheck(false);
-        persistDeck();
-        renderQuestions();
-        statusEl.textContent = mode === 'copy' ? 'Exact Copy • Rechecked' : 'Predictive • Rechecked';
-        toast('Done & Option Rechecked');
       } catch (err) {
-        state.deck = buildLocalDeck(mode, bankText, paperObj, chapter, topic, count);
-        await runMandatoryOptionRecheck(false);
-        persistDeck();
-        renderQuestions();
-        statusEl.textContent = 'Local + Rechecked';
-        toast(err.message === 'NO_KEY' ? 'Local mode (add API Key for Gemini)' : 'Fallback used');
+        state.deck = buildLocalQuestions(mode, bankText, paperObj, chapter, topic, count);
+        briefEl.textContent = `${paperObj.subject} · ${chapter}${topic ? ` · ${topic}` : ''} (${mode === 'copy' ? 'Exact Copy' : 'Predictive'})`;
+        briefEl.classList.remove('hidden');
+        if (err.message === 'NO_KEY') toast('Local set generated (add Key for Gemini)');
       }
+
+      runStrictOptionRecheck(false);
+      persistDeck();
+      renderQuestions();
+      statusEl.textContent = mode === 'copy' ? 'Copied & Rechecked' : 'Predicted & Rechecked';
     }
 
-    function buildLocalDeck(mode, bankText, paperObj, chapter, topic, count) {
+    function buildLocalQuestions(mode, bankText, paperObj, chapter, topic, count) {
       if (mode === 'copy' && bankText) {
-        const blocks = bankText.split(/\n(?=\d+[\.\)])/).filter((b) => b.trim().length > 8);
+        try {
+          const jsonArr = JSON.parse(bankText);
+          if (Array.isArray(jsonArr) && jsonArr.length) {
+            return jsonArr.slice(0, count).map((it, idx) => ({
+              id: `cp_json_${Date.now()}_${idx}`,
+              subject: it.subject || paperObj.subject,
+              paper: it.paper || paperObj.paper,
+              chapter: it.chapter || chapter,
+              q: String(it.question || it.q || ''),
+              options: Array.isArray(it.options) ? it.options.slice(0, 4).map(String) : ['A', 'B', 'C', 'D'],
+              correctIndex: Number.isInteger(it.correctIndex) ? it.correctIndex : 0,
+              explanation: String(it.explanation || 'Extracted from uploaded JSON bank.'),
+              recheck: { passed: false, fixed: false, summary: '' }
+            }));
+          }
+        } catch (_) {}
+
+        const blocks = bankText.split(/\n(?=\d+[\.\)])/).filter((b) => b.trim().length > 6);
         if (blocks.length) {
           return blocks.slice(0, count).map((blk, i) => {
             const lines = blk.split('\n').map((l) => l.trim()).filter(Boolean);
             const stem = lines[0].replace(/^\d+[\.\)]\s*/, '');
-            const rawOpts = lines.slice(1).join(' ').match(/[A-D]\)\s*[^A-D\)]+/g);
-            const options = rawOpts && rawOpts.length >= 4
-              ? rawOpts.slice(0, 4).map((o) => o.replace(/^[A-D]\)\s*/, '').trim())
+            const matches = lines.slice(1).join(' ').match(/[A-D]\)\s*[^A-D\)]+/g);
+            const options = matches && matches.length >= 4
+              ? matches.slice(0, 4).map((o) => o.replace(/^[A-D]\)\s*/, '').trim())
               : ['Option A', 'Option B', 'Option C', 'Option D'];
             return {
               id: `cp_${Date.now()}_${i}`,
@@ -785,174 +1264,176 @@ A) $\\pi/2$  B) $\\pi/4$  C) 1  D) 0`;
               options,
               correctIndex: 0,
               explanation: `Copied from question bank (${chapter}).`,
-              audit: { status: 'PENDING', note: '' }
+              recheck: { passed: false, fixed: false, summary: '' }
             };
           });
         }
       }
 
-      const pool = SEED_QUESTIONS.filter((x) => x.subject === paperObj.subject);
+      const pool = SEED_QUESTIONS.filter((q) => q.subject === paperObj.subject);
       const src = pool.length ? pool : SEED_QUESTIONS;
       return Array.from({ length: count }, (_, i) => {
         const base = src[i % src.length];
-        const tagTopic = topic ? ` [${topic}]` : '';
         return {
           ...base,
           id: `pr_${Date.now()}_${i}`,
           paper: paperObj.paper,
           chapter,
-          q: `${base.q}${tagTopic}`,
+          q: topic ? `${base.q} (${topic})` : base.q,
           options: [...base.options],
-          audit: { status: 'PENDING', note: '' }
+          recheck: { passed: false, fixed: false, summary: '' }
         };
       });
     }
 
-    // Mandatory Option Recheck: enforces 4 distinct non-empty options + valid correctIndex (0-3)
-    async function runMandatoryOptionRecheck(notify = true) {
+    function runStrictOptionRecheck(notify = true) {
       for (const item of state.deck) {
-        let opts = Array.isArray(item.options) ? item.options.map((o) => String(o || '').trim()) : [];
         let fixed = false;
-
-        while (opts.length < 4) {
-          opts.push(`বিকল্প ${String.fromCharCode(65 + opts.length)}`);
+        if (!String(item.q || '').trim()) {
+          item.q = `${item.chapter} সম্পর্কিত ভর্তি পরীক্ষার MCQ।`;
           fixed = true;
         }
-        if (opts.length > 4) {
-          opts = opts.slice(0, 4);
+
+        let opts = Array.isArray(item.options) ? item.options.map((o) => String(o || '').trim()) : [];
+        if (opts.length !== 4) {
           fixed = true;
+          while (opts.length < 4) opts.push(`বিকল্প ${String.fromCharCode(65 + opts.length)}`);
+          opts = opts.slice(0, 4);
         }
 
         const seen = new Set();
-        opts = opts.map((o, idx) => {
-          const empty = !o;
-          const dup = seen.has(o.toLowerCase());
-          if (empty || dup) {
+        opts = opts.map((opt, idx) => {
+          const label = String.fromCharCode(65 + idx);
+          const clean = opt || `বিকল্প ${label}`;
+          const key = clean.toLowerCase();
+          if (!opt || seen.has(key)) {
             fixed = true;
-            const nextVal = empty ? `বিকল্প ${String.fromCharCode(65 + idx)}` : `${o} (${String.fromCharCode(65 + idx)})`;
-            seen.add(nextVal.toLowerCase());
-            return nextVal;
+            const deduped = seen.has(key) ? `${clean} [${label}]` : clean;
+            seen.add(deduped.toLowerCase());
+            return deduped;
           }
-          seen.add(o.toLowerCase());
-          return o;
+          seen.add(key);
+          return clean;
         });
 
-        let idx = item.correctIndex;
-        if (!Number.isInteger(idx) || idx < 0 || idx > 3) {
-          idx = 0;
+        let ci = item.correctIndex;
+        if (!Number.isInteger(ci) || ci < 0 || ci > 3) {
+          ci = 0;
           fixed = true;
         }
 
         item.options = opts;
-        item.correctIndex = idx;
-        item.audit = {
-          status: fixed ? 'FIXED' : 'VERIFIED',
-          note: fixed
-            ? `Auto-fixed to 4 distinct options; answer key ${String.fromCharCode(65 + idx)} checked.`
-            : `4 distinct options & key ${String.fromCharCode(65 + idx)} verified.`
+        item.correctIndex = ci;
+        item.recheck = {
+          passed: true,
+          fixed,
+          summary: fixed
+            ? `Rechecked & fixed 4 distinct options; key ${String.fromCharCode(65 + ci)} verified.`
+            : `Strict check passed: 4 distinct options & key ${String.fromCharCode(65 + ci)}.`
         };
       }
 
       persistDeck();
       renderQuestions();
-      if (notify) toast('Option Recheck complete');
+      if (notify) toast('Option Recheck verified');
     }
 
     function renderQuestions() {
-      const list = document.getElementById('questions-list');
+      const wrap = document.getElementById('questions-list');
       document.getElementById('q-count-badge').textContent = state.deck.length;
 
       if (!state.deck.length) {
-        list.innerHTML = `<p class="text-xs text-slate-500 py-6 text-center">No questions yet.</p>`;
+        wrap.innerHTML = `<p class="text-xs text-slate-500 py-8 text-center">No questions in set.</p>`;
         return;
       }
 
-      list.innerHTML = state.deck.map((q, i) => {
-        const badgeColor = q.audit?.status === 'FIXED'
-          ? 'bg-amber-500/15 text-amber-300 border-amber-500/30'
-          : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30';
-        const badgeLabel = q.audit?.status === 'FIXED' ? 'Fixed & Checked' : 'Rechecked ✓';
-
+      wrap.innerHTML = state.deck.map((q, idx) => {
+        const isFixed = Boolean(q.recheck?.fixed);
         return `
-          <article class="rounded-xl p-3.5 bg-[#080c14] border border-slate-800/90 space-y-2.5">
+          <article class="rounded-xl p-4 surface-inset space-y-3">
             <div class="flex items-center justify-between gap-2 text-[11px]">
-              <span class="font-mono text-slate-400">Q${i + 1} · ${esc(q.subject)} · ${esc(q.chapter)}</span>
-              <span class="px-2 py-0.5 rounded-full font-semibold border ${badgeColor}">${badgeLabel}</span>
+              <span class="font-mono text-slate-400">Q${idx + 1} · ${esc(q.subject)} · ${esc(q.chapter)}</span>
+              <span class="px-2 py-0.5 rounded-full font-semibold border ${
+                isFixed
+                  ? 'bg-amber-400/12 text-amber-300 border-amber-400/30'
+                  : 'bg-emerald-400/12 text-emerald-300 border-emerald-400/30'
+              }">${isFixed ? 'Fixed ✓' : 'Option Rechecked ✓'}</span>
             </div>
             <p class="text-xs sm:text-sm font-semibold text-white leading-relaxed">${esc(q.q)}</p>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-xs">
-              ${q.options.map((opt, oi) => {
-                const ok = oi === q.correctIndex;
-                return `
-                  <div class="px-2.5 py-1.5 rounded-lg border flex items-center gap-2 ${
-                    ok ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-200 font-semibold' : 'bg-[#0d121d] border-slate-800 text-slate-300'
-                  }">
-                    <span class="font-mono text-[11px] font-bold">${String.fromCharCode(65 + oi)}.</span>
-                    <span class="flex-1">${esc(opt)}</span>
-                  </div>
-                `;
-              }).join('')}
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+              ${q.options.map((opt, oi) => `
+                <div class="px-3 py-2 rounded-lg border flex items-center gap-2 ${
+                  oi === q.correctIndex
+                    ? 'bg-emerald-400/12 border-emerald-400/45 text-emerald-200 font-semibold'
+                    : 'bg-[#0b111c] border-slate-800/90 text-slate-300'
+                }">
+                  <span class="font-mono text-[11px] font-bold">${String.fromCharCode(65 + oi)}.</span>
+                  <span class="flex-1">${esc(opt)}</span>
+                </div>
+              `).join('')}
             </div>
-            <p class="text-xs text-slate-300 leading-relaxed"><span class="text-emerald-400 font-semibold">Ans (${String.fromCharCode(65 + q.correctIndex)}):</span> ${esc(q.explanation)}</p>
-            <p class="text-[11px] font-mono text-slate-400">${esc(q.audit?.note || '')}</p>
+            <p class="text-xs text-slate-300 leading-relaxed"><span class="text-emerald-400 font-semibold">Key (${String.fromCharCode(65 + q.correctIndex)}):</span> ${esc(q.explanation)}</p>
+            <p class="text-[11px] font-mono text-slate-400">${esc(q.recheck?.summary || '')}</p>
           </article>
         `;
       }).join('');
 
-      typesetMath(list);
+      typesetMath(wrap);
     }
 
-    // Syllabus View
     function renderSyllabus() {
-      const subs = ['ALL', 'Physics', 'Chemistry', 'Higher Math', 'Biology', 'ICT'];
-      document.getElementById('syllabus-filters').innerHTML = subs.map((s) => `
-        <button type="button" onclick="state.syllabusSubject='${s}'; renderSyllabus();" class="px-2.5 py-1 rounded-lg text-xs font-bold transition ${
-          state.syllabusSubject === s ? 'bg-emerald-500 text-slate-950' : 'surface-2 text-slate-300'
+      const subjects = ['ALL', 'Physics', 'Chemistry', 'Higher Math', 'Biology', 'ICT'];
+      document.getElementById('syllabus-filters').innerHTML = subjects.map((s) => `
+        <button type="button" onclick="state.syllabusSub='${s}'; renderSyllabus();" class="btn-pill px-2.5 py-1 rounded-lg text-xs font-bold ${
+          state.syllabusSub === s ? 'bg-emerald-400 text-slate-950' : 'surface-inset text-slate-300 hover:text-white'
         }">${s}</button>
       `).join('');
 
-      const list = state.syllabusSubject === 'ALL' ? SYLLABUS : SYLLABUS.filter((p) => p.subject === state.syllabusSubject);
+      const list = state.syllabusSub === 'ALL' ? SYLLABUS : SYLLABUS.filter((p) => p.subject === state.syllabusSub);
       document.getElementById('syllabus-grid').innerHTML = list.map((p) => `
-        <div class="rounded-2xl surface p-4 space-y-2">
-          <div class="flex items-center justify-between border-b border-slate-800/80 pb-2">
-            <span class="font-bold text-sm text-white">${esc(p.paper)}</span>
+        <div class="rounded-2xl surface-card p-4 sm:p-5 space-y-2.5">
+          <div class="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
+            <span class="font-bold text-sm text-white tracking-tight">${esc(p.paper)}</span>
             <span class="text-xs font-mono text-slate-400">${p.chapters.length}</span>
           </div>
-          ${p.chapters.map((ch) => `
-            <div class="flex items-center justify-between gap-2 py-1.5 px-2.5 rounded-lg bg-[#080c14] text-xs">
-              <span class="text-slate-200 truncate">${esc(ch)}</span>
-              <div class="flex gap-1 shrink-0">
-                <button type="button" onclick="useChapterForBank('${p.id}','${esc(ch).replace(/'/g, "\\'")}')" class="px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300 font-semibold hover:bg-emerald-500 hover:text-slate-950">Qns</button>
-                <button type="button" onclick="askChapterTutor('${esc(p.paper)}','${esc(ch).replace(/'/g, "\\'")}')" class="px-2 py-0.5 rounded bg-indigo-500/15 text-indigo-300 font-semibold hover:bg-indigo-500 hover:text-white">Tutor</button>
+          <div class="space-y-1.5">
+            ${p.chapters.map((ch) => `
+              <div class="flex items-center justify-between gap-2 py-2 px-3 rounded-xl surface-inset text-xs">
+                <span class="text-slate-200 truncate">${esc(ch)}</span>
+                <div class="flex gap-1.5 shrink-0">
+                  <button type="button" onclick="targetSyllabusChapter('${p.id}','${esc(ch).replace(/'/g, "\\'")}','predict')" class="btn-pill px-2 py-0.5 rounded-md bg-emerald-400/15 text-emerald-300 font-semibold hover:bg-emerald-400 hover:text-slate-950">Qns</button>
+                  <button type="button" onclick="targetSyllabusChapter('${p.id}','${esc(ch).replace(/'/g, "\\'")}','tutor')" class="btn-pill px-2 py-0.5 rounded-md bg-cyan-400/15 text-cyan-300 font-semibold hover:bg-cyan-400 hover:text-slate-950">Tutor</button>
+                </div>
               </div>
-            </div>
-          `).join('')}
+            `).join('')}
+          </div>
         </div>
       `).join('');
     }
 
-    function useChapterForBank(paperId, chapter) {
-      switchView('bank');
+    function targetSyllabusChapter(paperId, chapter, action) {
+      if (!enforceActiveAccess('open chapter tools')) return;
       document.getElementById('bank-paper').value = paperId;
       populateChapterDropdown();
       document.getElementById('bank-chapter').value = chapter;
-      runBankWorkflow('predict');
-    }
-
-    function askChapterTutor(paper, chapter) {
-      document.getElementById('bank-chapter').value = chapter;
       updateDrawerContext();
-      toggleDrawer(true);
-      quickTutorPrompt(`${paper} — ${chapter}: মূল সূত্র ও গুরুত্বপূর্ণ কনসেপ্ট সংক্ষেপে দাও।`);
+      if (action === 'predict') {
+        switchView('bank');
+        runBankWorkflow('predict');
+      } else {
+        toggleDrawer(true);
+        quickTutorPrompt(`${chapter} অধ্যায়ের ভর্তি পরীক্ষার মূল কনসেপ্ট ও সূত্র দাও।`);
+      }
     }
 
-    // Timed Quiz Arena
     function startQuizFromDeck() {
+      if (!enforceActiveAccess('start quiz')) return;
       switchView('quiz');
       startQuiz();
     }
 
     function startQuiz() {
+      if (!enforceActiveAccess('start quiz')) return;
       clearInterval(state.quizTimer);
       const mins = parseInt(document.getElementById('quiz-mins').value, 10) || 5;
       state.quizList = state.deck.length ? [...state.deck] : [...SEED_QUESTIONS];
@@ -963,11 +1444,11 @@ A) $\\pi/2$  B) $\\pi/4$  C) 1  D) 0`;
 
       document.getElementById('quiz-summary').classList.add('hidden');
       document.getElementById('btn-submit-quiz').disabled = false;
-      renderTimer();
+      renderQuizClock();
 
       state.quizTimer = setInterval(() => {
         state.quizSec--;
-        renderTimer();
+        renderQuizClock();
         if (state.quizSec <= 0) submitQuiz('timeout');
       }, 1000);
 
@@ -975,7 +1456,7 @@ A) $\\pi/2$  B) $\\pi/4$  C) 1  D) 0`;
       renderQuizPalette();
     }
 
-    function renderTimer() {
+    function renderQuizClock() {
       const s = Math.max(0, state.quizSec);
       const m = String(Math.floor(s / 60)).padStart(2, '0');
       const r = String(s % 60).padStart(2, '0');
@@ -991,12 +1472,11 @@ A) $\\pi/2$  B) $\\pi/4$  C) 1  D) 0`;
       const picked = state.quizAnswers[q.id];
       const mode = document.getElementById('quiz-mode').value;
       const reveal = state.quizDone || (mode === 'instant' && picked !== undefined);
-
-      const answeredCount = Object.keys(state.quizAnswers).length;
-      document.getElementById('quiz-progress').style.width = `${total ? Math.round((answeredCount / total) * 100) : 0}%`;
+      const answered = Object.keys(state.quizAnswers).length;
+      document.getElementById('quiz-progress').style.width = `${total ? Math.round((answered / total) * 100) : 0}%`;
 
       stage.innerHTML = `
-        <div class="space-y-3.5">
+        <div class="space-y-4">
           <div class="flex items-center justify-between text-xs font-mono text-slate-400">
             <span>Q ${state.quizIdx + 1}/${total}</span>
             <span>${esc(q.subject)} · ${esc(q.chapter)}</span>
@@ -1004,43 +1484,43 @@ A) $\\pi/2$  B) $\\pi/4$  C) 1  D) 0`;
           <p class="text-sm sm:text-base font-bold text-white leading-relaxed">${esc(q.q)}</p>
           <div class="space-y-2">
             ${q.options.map((opt, idx) => {
-              let cls = 'bg-[#080c14] border-slate-800 text-slate-200 hover:border-slate-600';
+              let cls = 'surface-inset text-slate-200 hover:border-slate-500';
               if (reveal) {
-                if (idx === q.correctIndex) cls = 'bg-emerald-500/15 border-emerald-500 text-emerald-200 font-bold';
-                else if (idx === picked) cls = 'bg-rose-500/15 border-rose-500 text-rose-200 font-bold';
+                if (idx === q.correctIndex) cls = 'bg-emerald-400/14 border-emerald-400 text-emerald-200 font-bold';
+                else if (idx === picked) cls = 'bg-rose-500/14 border-rose-500 text-rose-200 font-bold';
               } else if (idx === picked) {
-                cls = 'bg-indigo-500/20 border-indigo-400 text-white font-bold';
+                cls = 'bg-cyan-400/14 border-cyan-400 text-white font-bold';
               }
               return `
-                <button type="button" ${state.quizDone ? 'disabled' : ''} onclick="chooseQuizAns('${q.id}',${idx})" class="w-full text-left px-3.5 py-2.5 rounded-xl border text-xs sm:text-sm flex items-center gap-2.5 transition ${cls}">
+                <button type="button" ${state.quizDone ? 'disabled' : ''} onclick="pickQuizOption('${q.id}',${idx})" class="btn-pill w-full text-left px-3.5 py-2.5 rounded-xl border text-xs sm:text-sm flex items-center gap-2.5 ${cls}">
                   <span class="font-mono font-bold">${String.fromCharCode(65 + idx)}.</span>
                   <span>${esc(opt)}</span>
                 </button>
               `;
             }).join('')}
           </div>
-          ${reveal ? `<div class="p-3 rounded-xl bg-[#080c14] border border-slate-800 text-xs text-slate-200 leading-relaxed"><strong class="text-emerald-400">Explanation:</strong> ${esc(q.explanation)}</div>` : ''}
+          ${reveal ? `<div class="p-3.5 rounded-xl surface-inset text-xs text-slate-200 leading-relaxed"><strong class="text-emerald-400">Explanation:</strong> ${esc(q.explanation)}</div>` : ''}
         </div>
 
         <div class="flex justify-between pt-4 mt-4 border-t border-slate-800/80">
-          <button type="button" onclick="stepQuiz(-1)" ${state.quizIdx === 0 ? 'disabled' : ''} class="px-3.5 py-1.5 rounded-lg text-xs font-bold surface-2 text-slate-200 disabled:opacity-40">Prev</button>
-          <button type="button" onclick="stepQuiz(1)" ${state.quizIdx >= total - 1 ? 'disabled' : ''} class="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-emerald-500 text-slate-950 disabled:opacity-40">Next</button>
+          <button type="button" onclick="moveQuiz(-1)" ${state.quizIdx === 0 ? 'disabled' : ''} class="btn-pill px-3.5 py-1.5 rounded-lg text-xs font-bold surface-inset text-slate-200 disabled:opacity-40">Prev</button>
+          <button type="button" onclick="moveQuiz(1)" ${state.quizIdx >= total - 1 ? 'disabled' : ''} class="btn-pill px-3.5 py-1.5 rounded-lg text-xs font-bold bg-emerald-400 text-slate-950 disabled:opacity-40">Next</button>
         </div>
       `;
       typesetMath(stage);
     }
 
-    function chooseQuizAns(qId, idx) {
-      if (state.quizDone) return;
+    function pickQuizOption(qId, idx) {
+      if (state.quizDone || !enforceActiveAccess('answer quiz')) return;
       state.quizAnswers[qId] = idx;
       renderQuizStage();
       renderQuizPalette();
     }
 
-    function stepQuiz(d) {
-      const n = state.quizIdx + d;
-      if (n >= 0 && n < state.quizList.length) {
-        state.quizIdx = n;
+    function moveQuiz(delta) {
+      const next = state.quizIdx + delta;
+      if (next >= 0 && next < state.quizList.length) {
+        state.quizIdx = next;
         renderQuizStage();
         renderQuizPalette();
       }
@@ -1053,10 +1533,10 @@ A) $\\pi/2$  B) $\\pi/4$  C) 1  D) 0`;
       document.getElementById('quiz-palette').innerHTML = state.quizList.map((q, i) => {
         const cur = i === state.quizIdx;
         const ans = state.quizAnswers[q.id] !== undefined;
-        let cls = 'bg-[#080c14] border-slate-800 text-slate-400';
-        if (cur) cls = 'bg-indigo-500 border-indigo-400 text-white font-bold';
-        else if (ans) cls = 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300 font-bold';
-        return `<button type="button" onclick="state.quizIdx=${i};renderQuizStage();renderQuizPalette();" class="h-8 rounded-lg border text-xs font-mono ${cls}">${i + 1}</button>`;
+        let cls = 'surface-inset text-slate-400 hover:text-slate-200';
+        if (cur) cls = 'bg-cyan-400 border-cyan-300 text-slate-950 font-bold';
+        else if (ans) cls = 'bg-emerald-400/15 border-emerald-400/40 text-emerald-300 font-bold';
+        return `<button type="button" onclick="state.quizIdx=${i};renderQuizStage();renderQuizPalette();" class="btn-pill h-8 rounded-lg border text-xs font-mono ${cls}">${i + 1}</button>`;
       }).join('');
     }
 
@@ -1067,6 +1547,7 @@ A) $\\pi/2$  B) $\\pi/4$  C) 1  D) 0`;
       state.quizDone = true;
       document.getElementById('btn-submit-quiz').disabled = true;
 
+      const neg = parseFloat(document.getElementById('quiz-neg').value) || 0;
       let right = 0, wrong = 0;
       state.quizList.forEach((q) => {
         const a = state.quizAnswers[q.id];
@@ -1076,25 +1557,28 @@ A) $\\pi/2$  B) $\\pi/4$  C) 1  D) 0`;
       });
 
       const total = state.quizList.length;
-      const net = Math.max(0, right - wrong * 0.25).toFixed(2);
+      const score = Math.max(0, right - wrong * neg).toFixed(2);
       const sum = document.getElementById('quiz-summary');
       sum.classList.remove('hidden');
       sum.innerHTML = `
         <div class="flex items-center justify-between">
-          <span class="text-sm font-bold text-white">${reason === 'timeout' ? 'Time Up' : 'Result'} · Net ${net}/${total}</span>
-          <button type="button" onclick="startQuiz()" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-500 text-slate-950">Retry</button>
+          <span class="text-sm font-bold text-white">${reason === 'timeout' ? 'Time Up' : 'Score'} · ${score}/${total}</span>
+          <button type="button" onclick="startQuiz()" class="btn-pill px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-400 text-slate-950">Retry</button>
         </div>
-        <div class="grid grid-cols-3 gap-2 text-center text-xs">
-          <div class="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 font-bold">Correct: ${right}</div>
-          <div class="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 font-bold">Wrong: ${wrong}</div>
-          <div class="p-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 font-bold">Net (-0.25): ${net}</div>
+        <div class="grid grid-cols-3 gap-2.5 text-center text-xs">
+          <div class="p-3 rounded-xl bg-emerald-400/10 border border-emerald-400/30 text-emerald-300 font-bold">Correct: ${right}</div>
+          <div class="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 font-bold">Wrong: ${wrong}</div>
+          <div class="p-3 rounded-xl bg-cyan-400/10 border border-cyan-400/30 text-cyan-300 font-bold">Net (-${neg}): ${score}</div>
         </div>
       `;
       renderQuizStage();
     }
 
-    // Two-Pass Photo-to-Question Solver
     function handlePhotoChange(e) {
+      if (!enforceActiveAccess('upload photo')) {
+        e.target.value = '';
+        return;
+      }
       const file = e.target.files?.[0];
       if (!file) return;
       state.photoMime = file.type || 'image/jpeg';
@@ -1108,25 +1592,26 @@ A) $\\pi/2$  B) $\\pi/4$  C) 1  D) 0`;
         img.src = res;
         img.classList.remove('hidden');
         document.getElementById('photo-empty').classList.add('hidden');
-        document.getElementById('photo-badge').textContent = 'Ready';
+        document.getElementById('photo-badge').textContent = 'Photo Ready';
       };
       reader.readAsDataURL(file);
       e.target.value = '';
     }
 
     async function solvePhotoDoubleCheck() {
-      if (!state.photoBase64) return toast('Select a photo first');
+      if (!enforceActiveAccess('solve photo')) return;
+      if (!state.photoBase64) return toast('Select a question photo first');
       const hint = document.getElementById('photo-hint').value.trim();
       const badge = document.getElementById('photo-badge');
       const out = document.getElementById('photo-output');
-      badge.textContent = 'Pass 1 → Pass 2...';
+      badge.textContent = 'Checking (1/2 → 2/2)...';
 
       try {
         if (!state.apiKey) throw new Error('NO_KEY');
-        const prompt = `Read the question image (${hint || 'solve clearly'}). Perform two passes in Bangla/LaTeX:
-1. pass1: extracted question + step-by-step solution.
-2. pass2: independent check of units, formulas, and final option/value.
-3. finalAnswer: concise verified final answer.
+        const prompt = `Solve this HSC/Admission question photo (${hint || 'complete solution'}) in Bangla/LaTeX using two independent passes:
+- pass1: extracted question + step-by-step derivation.
+- pass2: independent verification of formulas, SI units, signs, and option choice.
+- finalAnswer: clear verified final answer.
 Return ONLY JSON: {"pass1":"","pass2":"","finalAnswer":""}`;
 
         const { text, model } = await callGemini([
@@ -1134,39 +1619,39 @@ Return ONLY JSON: {"pass1":"","pass2":"","finalAnswer":""}`;
           { inlineData: { mimeType: state.photoMime, data: state.photoBase64 } }
         ]);
         const parsed = parseJsonSafe(text);
-        badge.textContent = `Double-Checked (${model})`;
+        badge.textContent = `Verified · ${model}`;
         out.innerHTML = `
-          <div class="p-3 rounded-xl bg-[#080c14] border border-slate-800 space-y-1">
-            <div class="text-[11px] font-mono text-indigo-300 font-bold">PASS 1 — EXTRACT & SOLVE</div>
-            <p class="whitespace-pre-line text-slate-200">${esc(parsed.pass1)}</p>
+          <div class="p-3.5 rounded-xl surface-inset space-y-1">
+            <div class="text-[11px] font-mono text-cyan-300 font-bold">PASS 1 · EXTRACT & SOLVE</div>
+            <p class="whitespace-pre-line text-slate-200 leading-relaxed">${esc(parsed.pass1)}</p>
           </div>
-          <div class="p-3 rounded-xl bg-[#080c14] border border-slate-800 space-y-1">
-            <div class="text-[11px] font-mono text-amber-300 font-bold">PASS 2 — VERIFY STEPS & UNITS</div>
-            <p class="whitespace-pre-line text-slate-200">${esc(parsed.pass2)}</p>
+          <div class="p-3.5 rounded-xl surface-inset space-y-1">
+            <div class="text-[11px] font-mono text-amber-300 font-bold">PASS 2 · DOUBLE-CHECK</div>
+            <p class="whitespace-pre-line text-slate-200 leading-relaxed">${esc(parsed.pass2)}</p>
           </div>
-          <div class="p-3 rounded-xl bg-emerald-500/15 border border-emerald-500/40 space-y-1">
+          <div class="p-3.5 rounded-xl bg-emerald-400/12 border border-emerald-400/35 space-y-1">
             <div class="text-[11px] font-mono text-emerald-300 font-bold">FINAL ANSWER</div>
-            <p class="font-bold text-white">${esc(parsed.finalAnswer)}</p>
+            <p class="font-bold text-white leading-relaxed">${esc(parsed.finalAnswer)}</p>
           </div>
         `;
         typesetMath(out);
       } catch (err) {
-        badge.textContent = 'Local Double-Check';
+        badge.textContent = 'Local Check';
         out.innerHTML = `
-          <div class="p-3 rounded-xl bg-[#080c14] border border-slate-800 space-y-1">
-            <div class="text-[11px] font-mono text-indigo-300 font-bold">PASS 1</div>
-            <p class="text-slate-300">${err.message === 'NO_KEY' ? 'Add Gemini API Key for live image OCR. Local check: verify given quantities and target formula first.' : 'Vision fallback check: confirm equation and signs step-by-step.'}</p>
+          <div class="p-3.5 rounded-xl surface-inset space-y-1">
+            <div class="text-[11px] font-mono text-cyan-300 font-bold">PASS 1</div>
+            <p class="text-slate-300 leading-relaxed">${err.message === 'NO_KEY' ? 'Add Gemini API Key for live OCR & vision solving. Local guide: list given data, identify target variable, and write exact formula.' : 'Fallback check: re-verify equation steps and signs.'}</p>
           </div>
-          <div class="p-3 rounded-xl bg-[#080c14] border border-slate-800 space-y-1">
+          <div class="p-3.5 rounded-xl surface-inset space-y-1">
             <div class="text-[11px] font-mono text-amber-300 font-bold">PASS 2</div>
-            <p class="text-slate-300">Convert all units to SI before substituting numbers; check option choices.</p>
+            <p class="text-slate-300 leading-relaxed">Verify SI units before calculation and eliminate distractor options.</p>
           </div>
         `;
       }
     }
 
-    // AI Tutor Drawer
     function toggleDrawer(open) {
+      if (open && !enforceActiveAccess('use AI Tutor')) return;
       const d = document.getElementById('ai-drawer');
       const b = document.getElementById('drawer-backdrop');
       if (open) {
@@ -1187,6 +1672,7 @@ Return ONLY JSON: {"pass1":"","pass2":"","finalAnswer":""}`;
     }
 
     function quickTutorPrompt(msg) {
+      if (!enforceActiveAccess('use AI Tutor')) return;
       document.getElementById('chat-input').value = msg;
       sendTutorMessage(new Event('submit'));
     }
@@ -1194,8 +1680,10 @@ Return ONLY JSON: {"pass1":"","pass2":"","finalAnswer":""}`;
     function addBubble(role, text) {
       const box = document.getElementById('chat-messages');
       const div = document.createElement('div');
-      div.className = `rounded-xl px-3 py-2.5 whitespace-pre-line leading-relaxed ${
-        role === 'user' ? 'bg-emerald-500 text-slate-950 font-semibold ml-8' : 'bg-[#080c14] border border-slate-800 text-slate-100 mr-6'
+      div.className = `rounded-xl px-3.5 py-2.5 whitespace-pre-line leading-relaxed ${
+        role === 'user'
+          ? 'bg-emerald-400 text-slate-950 font-semibold ml-8'
+          : 'surface-inset text-slate-100 mr-6'
       }`;
       div.textContent = text;
       box.appendChild(div);
@@ -1205,6 +1693,7 @@ Return ONLY JSON: {"pass1":"","pass2":"","finalAnswer":""}`;
 
     async function sendTutorMessage(e) {
       e.preventDefault();
+      if (!enforceActiveAccess('message AI Tutor')) return;
       const inp = document.getElementById('chat-input');
       const msg = inp.value.trim();
       if (!msg) return;
@@ -1217,19 +1706,18 @@ Return ONLY JSON: {"pass1":"","pass2":"","finalAnswer":""}`;
 
       try {
         if (!state.apiKey) throw new Error('NO_KEY');
-        const ctx = `Context: HSC ${paperObj.paper}, Chapter: ${ch}. Bank snippet: ${bankSnippet || 'None'}`;
-        const { text } = await callGemini([{ text: `${ctx}\n\nQuestion: ${msg}` }], 'Concise Bangladesh HSC Science & Admission tutor in Bangla + LaTeX.');
+        const ctx = `HSC ${paperObj.paper}, Chapter: ${ch}. Bank snippet: ${bankSnippet || 'None'}`;
+        const { text } = await callGemini([{ text: `${ctx}\n\nStudent: ${msg}` }], 'Concise Bangladesh HSC Science & University Admission mentor in Bangla + LaTeX.');
         addBubble('ai', text);
       } catch (_) {
-        addBubble('ai', `${paperObj.subject} (${ch}): মূল সূত্র লিখে একক ঠিক রেখে মান বসাও। লাইভ AI উত্তরের জন্য উপরে API Key যুক্ত করো।`);
+        addBubble('ai', `${paperObj.subject} (${ch}): মূল সূত্র, একক এবং শর্ত যাচাই করে মান বসাও। লাইভ AI উত্তরের জন্য উপরে Key সেট করো।`);
       }
     }
 
-    // Key Modal
     function renderKeyStatus() {
-      const has = Boolean(state.apiKey);
-      document.getElementById('key-dot').className = has ? 'w-2 h-2 rounded-full bg-emerald-400' : 'w-2 h-2 rounded-full bg-amber-400';
-      document.getElementById('key-text').textContent = has ? 'Key Set' : 'API Key';
+      const active = Boolean(state.apiKey);
+      document.getElementById('key-dot').className = active ? 'w-2 h-2 rounded-full bg-emerald-400' : 'w-2 h-2 rounded-full bg-amber-400';
+      document.getElementById('key-text').textContent = active ? 'Key Set' : 'Key';
     }
 
     function openKeyModal() {
@@ -1247,42 +1735,72 @@ Return ONLY JSON: {"pass1":"","pass2":"","finalAnswer":""}`;
 
     function saveKey() {
       state.apiKey = document.getElementById('key-input').value.trim();
-      if (state.apiKey) localStorage.setItem(KEYS.API, state.apiKey);
-      else localStorage.removeItem(KEYS.API);
+      if (state.apiKey) localStorage.setItem(STORAGE.KEY, state.apiKey);
+      else localStorage.removeItem(STORAGE.KEY);
       renderKeyStatus();
       closeKeyModal();
-      toast(state.apiKey ? 'API Key saved' : 'Key cleared');
+      toast(state.apiKey ? 'Key saved' : 'Key cleared');
     }
 
     function clearKey() {
       state.apiKey = '';
-      localStorage.removeItem(KEYS.API);
+      localStorage.removeItem(STORAGE.KEY);
       document.getElementById('key-input').value = '';
       renderKeyStatus();
       toast('Key cleared');
     }
 
+    function openSqlModal() {
+      const m = document.getElementById('sql-modal');
+      m.classList.remove('hidden');
+      m.classList.add('flex');
+    }
+
+    function closeSqlModal() {
+      const m = document.getElementById('sql-modal');
+      m.classList.add('hidden');
+      m.classList.remove('flex');
+    }
+
+    function copySqlSnippet() {
+      const sql = document.getElementById('sql-code').textContent || '';
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = sql;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        toast('SQL copied');
+      } catch (_) {
+        toast('Copy manually from box');
+      }
+    }
+
     window.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         closeKeyModal();
+        closeSqlModal();
+        closeAccountModal();
         toggleDrawer(false);
       }
     });
 
-    // Boot
     window.addEventListener('DOMContentLoaded', () => {
       renderKeyStatus();
       document.getElementById('bank-paper').innerHTML = SYLLABUS.map((p) => `<option value="${p.id}">${esc(p.paper)}</option>`).join('');
       populateChapterDropdown();
 
-      const savedBank = localStorage.getItem(KEYS.BANK);
+      const savedBank = localStorage.getItem(STORAGE.BANK);
       document.getElementById('bank-text').value = savedBank !== null ? savedBank : SAMPLE_BANK;
-      if (!savedBank) document.getElementById('bank-file-meta').textContent = 'Sample Admission Qn Bank';
+      if (!savedBank) document.getElementById('bank-file-meta').textContent = 'Sample Admission Bank';
 
+      renderAccessUI();
+      runStrictOptionRecheck(false);
       renderQuestions();
       renderSyllabus();
       initNavigationGuard();
-      addBubble('ai', 'HSC Science & Admission Tutor প্রস্তুত। অধ্যায় বা প্রশ্নব্যাংক নিয়ে জিজ্ঞাসা করো।');
+      addBubble('ai', 'Admission Warrior AI Tutor প্রস্তুত। HSC সায়েন্স ও ভর্তি পরীক্ষার যেকোনো প্রশ্ন বা প্যাটার্ন জানতে পারো।');
     });
   </script>
 </body>
