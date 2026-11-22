@@ -4,209 +4,212 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Admission Warrior — HSC & University Prep</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 </head>
 <body>
-  <!-- Top Navbar -->
-  <header class="topbar">
-    <div class="brand">
-      <span class="logo-triangle">▲</span>
-      <span class="brand-title">Admission Warrior</span>
-    </div>
-    <div class="top-actions">
-      <span id="currentUserBadge" class="badge">Guest</span>
-      <button id="apiKeyModalBtn" class="badge badge-ai" title="Configure Gemini API Key">AI: <span id="aiStatusText">off</span></button>
-      <button id="adminToggleBtn" class="btn-sm btn-outline">Admin</button>
-      <button id="themeToggleBtn" class="btn-icon" title="Toggle Dark/Light Theme">🌙</button>
+  <header>
+    <div class="wrap">
+      <div class="top">
+        <div class="logo">
+          <i>▲</i>
+          <span>Admission Warrior</span>
+        </div>
+        <div class="row">
+          <span id="who" class="tag">General Student</span>
+          <button id="aib" class="btn" type="button">AI: off</button>
+          <button id="admb" class="btn" type="button">Admin</button>
+          <button id="themeb" class="btn" type="button" title="Toggle Theme">☀️</button>
+        </div>
+      </div>
+
+      <div id="ban" class="banner"></div>
+
+      <nav id="nav">
+        <button class="btn on" type="button" data-tab="bank">Question Bank</button>
+        <button class="btn" type="button" data-tab="exam">Exam</button>
+        <button class="btn" type="button" data-tab="chat">AI Chat</button>
+        <button class="btn" type="button" data-tab="users">Users</button>
+      </nav>
     </div>
   </header>
 
-  <!-- Main Navigation Tabs -->
-  <nav class="tabs">
-    <button class="tab-btn active" data-tab="bankTab">Question Bank</button>
-    <button class="tab-btn" data-tab="examTab">Exam</button>
-    <button class="tab-btn" data-tab="aiTab">AI Chat</button>
-    <button class="tab-btn" data-tab="usersTab">Users</button>
-  </nav>
-
-  <main class="container">
+  <main class="wrap">
     <!-- TAB 1: QUESTION BANK -->
-    <section id="bankTab" class="tab-panel active">
+    <section id="tab-bank" class="tab on g2">
       <div class="card">
-        <h2>1 · Upload question bank</h2>
-        <div class="btn-row">
-          <label class="btn btn-primary file-label">
+        <h3>1 · Upload question bank</h3>
+        <div class="row">
+          <label class="btn p" style="margin:0">
             Upload file
-            <input type="file" id="bankFileInput" accept=".txt,.md,.csv,.json,.pdf" hidden />
+            <input id="bfile" type="file" accept=".txt,.md,.csv,.json,.pdf" hidden />
           </label>
-          <button id="loadSampleBtn" class="btn btn-secondary">Load sample</button>
-          <button id="clearBankBtn" class="btn btn-danger">Clear</button>
+          <button id="bsample" class="btn" type="button">Load sample</button>
+          <button id="bclear" class="btn d" type="button">Clear</button>
         </div>
-        <p class="hint">Supported: txt · md · csv · json · pdf</p>
-        <textarea id="bankTextarea" rows="6" placeholder="এখানে প্রশ্ন পেস্ট করো (যেমন: 1. প্রশ্ন... A) ... B) ... C) ... D) ... Ans: A) অথবা JSON পেস্ট করো..."></textarea>
-      </div>
+        <div id="bmeta" class="mut" style="font-size:12px;margin-top:6px">txt · md · csv · json · pdf</div>
 
-      <div class="card">
-        <h2>2 · Analyze & generate (max 60 MCQ)</h2>
-        <div class="grid-2">
-          <div class="form-group">
-            <label for="genSubject">Subject</label>
-            <select id="genSubject">
+        <label for="bt">Question bank text / JSON</label>
+        <textarea id="bt" rows="7" placeholder="প্রশ্ন পেস্ট করো (যেমন: 1. প্রশ্ন... A) ... B) ... C) ... D) ...) অথবা JSON পেস্ট করো..."></textarea>
+
+        <h3 style="margin-top:16px">2 · Analyze & generate (max 60 MCQ)</h3>
+        <div class="row">
+          <div class="f">
+            <label for="gsub">Subject</label>
+            <select id="gsub">
               <option value="All">All 4 subjects</option>
               <option value="Physics">Physics</option>
               <option value="Chemistry">Chemistry</option>
-              <option value="Higher Math">Higher Math</option>
+              <option value="Math">Higher Math</option>
               <option value="Biology">Biology</option>
             </select>
           </div>
-          <div class="form-group">
-            <label for="genCount">Questions (1–60)</label>
-            <input type="number" id="genCount" min="1" max="60" value="20" />
+          <div class="f">
+            <label for="gcount">Questions (1–60)</label>
+            <input id="gcount" type="number" min="1" max="60" value="20" />
           </div>
         </div>
 
-        <div class="btn-row">
-          <button id="analyzeBankBtn" class="btn btn-secondary">Analyze bank</button>
-          <button id="extractBankBtn" class="btn btn-secondary">Extract from bank</button>
-          <button id="generateMcqBtn" class="btn btn-primary">Generate predictable MCQs</button>
+        <div class="row" style="margin-top:10px">
+          <button id="banalyze" class="btn" type="button">Analyze bank</button>
+          <button id="bcopy" class="btn" type="button">Extract from bank</button>
+          <button id="bgen" class="btn p" type="button">Generate predictable MCQs</button>
         </div>
 
-        <div id="analysisOutput" class="info-box hidden"></div>
+        <div id="gstat" class="mut" style="font-size:12px;margin-top:8px">Ready</div>
+        <div id="analysis" class="q pre mut" style="font-size:12.5px">Bank paste/upload করো → "Analyze bank" → "Generate predictable MCQs". Built-in 20 টি প্রশ্ন সব সময় exam-এ থাকে।</div>
+      </div>
 
-        <div class="set-header">
-          <h3>Question set: <span id="setCount">0</span></h3>
-          <div class="btn-row">
-            <button id="exportJsonBtn" class="btn-sm btn-outline">Export JSON</button>
-            <button id="deleteSetBtn" class="btn-sm btn-danger">Delete set</button>
-            <button id="goToExamBtn" class="btn-sm btn-primary">Go to exam →</button>
+      <div class="card">
+        <div class="row sp">
+          <h3>Question set <span id="qcount" class="tag">0</span></h3>
+          <div class="row">
+            <button id="bexp" class="btn" type="button">Export JSON</button>
+            <button id="bdel" class="btn d" type="button">Delete set</button>
+            <button class="btn p" type="button" onclick="showTab('exam')">Go to exam →</button>
           </div>
         </div>
-        <p class="hint">Bank paste/upload করো → "Analyze bank" → "Generate predictable MCQs". Built-in 20 টি প্রশ্ন সব সময় exam-এ থাকে।</p>
-        <div id="questionPreviewList" class="preview-list"></div>
+        <div id="qlist"></div>
       </div>
     </section>
 
     <!-- TAB 2: EXAM -->
-    <section id="examTab" class="tab-panel">
-      <div id="examSetupCard" class="card">
-        <h2>Exam setup</h2>
-        <div class="checkbox-group">
-          <label><input type="checkbox" name="examSub" value="Physics" checked /> Physics</label>
-          <label><input type="checkbox" name="examSub" value="Chemistry" checked /> Chemistry</label>
-          <label><input type="checkbox" name="examSub" value="Higher Math" checked /> Higher Math</label>
-          <label><input type="checkbox" name="examSub" value="Biology" checked /> Biology</label>
+    <section id="tab-exam" class="tab">
+      <div id="ecfg" class="card">
+        <div class="row sp">
+          <h3>Exam setup</h3>
+          <span id="epool" class="tag">Pool: 20 questions</span>
         </div>
 
-        <div class="grid-3">
-          <div class="form-group">
-            <label for="examQuestionsCount">Questions (max 60)</label>
-            <input type="number" id="examQuestionsCount" min="1" max="60" value="20" />
+        <div class="row" style="margin-top:8px">
+          <label class="chk"><input class="esub" type="checkbox" value="Physics" checked /> Physics</label>
+          <label class="chk"><input class="esub" type="checkbox" value="Chemistry" checked /> Chemistry</label>
+          <label class="chk"><input class="esub" type="checkbox" value="Math" checked /> Higher Math</label>
+          <label class="chk"><input class="esub" type="checkbox" value="Biology" checked /> Biology</label>
+        </div>
+
+        <div class="row" style="margin-top:8px">
+          <div class="f">
+            <label for="ecount">Questions (max 60)</label>
+            <input id="ecount" type="number" min="1" max="60" value="20" />
           </div>
-          <div class="form-group">
-            <label for="examMinutes">Minutes</label>
-            <input type="number" id="examMinutes" min="1" max="180" value="20" />
+          <div class="f">
+            <label for="emin">Minutes</label>
+            <input id="emin" type="number" min="1" max="180" value="20" />
           </div>
-          <div class="form-group">
-            <label for="negativeMark">Negative mark</label>
-            <select id="negativeMark">
+          <div class="f">
+            <label for="eneg">Negative mark</label>
+            <select id="eneg">
               <option value="0.25">−0.25</option>
-              <option value="0.50">−0.50</option>
+              <option value="0.5">−0.50</option>
               <option value="0">None</option>
             </select>
           </div>
         </div>
 
-        <button id="startExamBtn" class="btn btn-primary btn-full">Start exam</button>
-      </div>
-
-      <!-- Active Exam Arena -->
-      <div id="examArena" class="card hidden">
-        <div class="exam-sticky-bar">
-          <div>প্রশ্ন: <strong id="answeredProgress">0/0</strong></div>
-          <div class="timer-pill">⏱ <span id="timerDisplay">20:00</span></div>
-          <button id="submitExamBtn" class="btn btn-danger btn-sm">Submit Exam</button>
+        <div class="row" style="margin-top:14px">
+          <button id="estart" class="btn p" type="button">Start exam</button>
         </div>
-        <div id="examQuestionsContainer" class="exam-list"></div>
       </div>
 
-      <!-- Exam Result & Solutions (Unlocked ONLY after Submit) -->
-      <div id="examResultCard" class="card hidden">
-        <h2>Exam Result & Solutions</h2>
-        <div id="scoreSummary" class="score-grid"></div>
-        <div id="solutionsContainer" class="exam-list"></div>
-        <button id="retakeExamBtn" class="btn btn-primary btn-full">New Exam Setup</button>
-      </div>
+      <div id="earea"></div>
     </section>
 
     <!-- TAB 3: AI CHAT -->
-    <section id="aiTab" class="tab-panel">
+    <section id="tab-chat" class="tab">
       <div class="card">
-        <h2>Gemini AI tutor</h2>
-        <p class="hint">HSC Physics · Chemistry · Math · Biology</p>
-        <div class="btn-row quick-prompts">
-          <button class="btn-sm btn-outline prompt-chip" data-prompt="HSC Physics ও Chemistry-র সবচেয়ে গুরুত্বপূর্ণ ১০টি সূত্র ব্যাখ্যাসহ দাও।">Formulas</button>
-          <button class="btn-sm btn-outline prompt-chip" data-prompt="DU ও BUET ভর্তি পরীক্ষার উপযোগী ৫টি কঠিন MCQ প্রশ্ন দাও এবং শেষে উত্তর ও ব্যাখ্যা দাও।">Practice MCQ</button>
-          <button class="btn-sm btn-outline prompt-chip" data-prompt="শেষ মুহূর্তের HSC Science ভর্তি প্রস্তুতির জন্য একটি ৩০ দিনের রুটিন তৈরি করো।">Study plan</button>
+        <div class="row sp">
+          <h3>Gemini AI tutor</h3>
+          <span class="mut" style="font-size:12px">HSC Physics · Chemistry · Math · Biology</span>
         </div>
 
-        <div id="chatMessages" class="chat-box">
-          <div class="msg msg-ai">আসসালামু আলাইকুম! আমি তোমার Admission Warrior AI Tutor। Physics, Chemistry, Math বা Biology-র যেকোনো প্রশ্ন করো অথবা ছবির আইকনে (📷) চাপ দিয়ে প্রশ্ন আপলোড করো।</div>
+        <div class="row" style="margin-bottom:10px">
+          <button class="btn" type="button" data-q="HSC Physics ও Chemistry-র সবচেয়ে গুরুত্বপূর্ণ ১০টি সূত্র ও ধারণা সংক্ষেপে দাও।">Formulas</button>
+          <button class="btn" type="button" data-q="HSC ও বিশ্ববিদ্যালয় ভর্তি পরীক্ষার উপযোগী ৫টি মানসম্মত MCQ দাও এবং শেষে উত্তর ও ব্যাখ্যা দাও।">Practice MCQ</button>
+          <button class="btn" type="button" data-q="HSC Science ও ভর্তি প্রস্তুতির জন্য একটি কার্যকর Study plan তৈরি করে দাও।">Study plan</button>
         </div>
 
-        <div id="imagePreviewBar" class="image-preview hidden">
-          <span id="imageFileName"></span>
-          <button id="removeImgBtn" class="btn-sm btn-danger">✕</button>
-        </div>
+        <div id="chatbox"></div>
 
-        <div class="chat-input-row">
-          <label class="btn-icon upload-img-btn" title="Upload Question Image">
+        <div id="cimgname" class="mut" style="font-size:12px;margin-top:6px"></div>
+        <div class="row" style="margin-top:8px">
+          <label class="btn" style="margin:0" title="Upload Question Image">
             📷
-            <input type="file" id="chatImageInput" accept="image/*" hidden />
+            <input id="cimg" type="file" accept="image/*" hidden />
           </label>
-          <input type="text" id="chatInput" placeholder="যেকোনো প্রশ্ন করো..." />
-          <button id="sendChatBtn" class="btn btn-primary">Send</button>
+          <input id="cin" class="f" type="text" placeholder="যেকোনো প্রশ্ন করো..." />
+          <button id="csend" class="btn p" type="button">Send</button>
         </div>
       </div>
     </section>
 
-    <!-- TAB 4: USERS & ADMIN -->
-    <section id="usersTab" class="tab-panel">
+    <!-- TAB 4: USERS -->
+    <section id="tab-users" class="tab">
       <div class="card">
-        <h2>Open sign-up · instant access</h2>
-        <div class="chat-input-row">
-          <input type="text" id="signupNameInput" placeholder="তোমার নাম লেখো (যেমন: Tanvir Ahmed)" />
-          <button id="signupBtn" class="btn btn-primary">Sign up & use now</button>
+        <h3>Open sign-up · instant access</h3>
+        <div class="row">
+          <input id="sname" class="f" type="text" placeholder="তোমার নাম লেখো" />
+          <button id="ssign" class="btn p" type="button">Sign up & use now</button>
         </div>
-        <p class="hint">Approval লাগে না। শুধু Admin (PIN login: 1234) suspend/ban করতে পারে।</p>
+        <p class="mut" style="font-size:12px;margin:8px 0 0">Approval লাগে না। শুধু Admin (PIN login) suspend/ban করতে পারে।</p>
+        <input id="reason" class="hide" type="text" placeholder="Suspend / Ban করার কারণ (Admin note)..." style="margin-top:10px" />
       </div>
 
       <div class="card">
-        <div class="set-header">
-          <h3>Members <span id="membersCount" class="badge">0</span></h3>
-          <span id="adminStatusBadge" class="hint">Admin Mode: Locked</span>
-        </div>
-        <div id="membersList" class="members-list"></div>
+        <h3>Members <span id="ucount" class="tag">0</span></h3>
+        <div id="ulist"></div>
       </div>
     </section>
   </main>
 
   <!-- Gemini API Key Modal -->
-  <div id="apiKeyModal" class="modal hidden">
-    <div class="modal-content card">
-      <h3>Gemini API key</h3>
-      <p class="hint">Browser-এ সেভ থাকে। Google AI Studio (aistudio.google.com) থেকে ফ্রি API Key এনে এখানে দাও।</p>
-      <input type="password" id="apiKeyInput" placeholder="AIzaSy..." />
-      <div class="btn-row" style="margin-top: 12px; justify-content: flex-end;">
-        <button id="removeApiKeyBtn" class="btn btn-danger btn-sm">Remove</button>
-        <button id="cancelApiKeyBtn" class="btn btn-secondary btn-sm">Cancel</button>
-        <button id="saveApiKeyBtn" class="btn btn-primary btn-sm">Save</button>
+  <div id="keym" class="modal" role="dialog" aria-modal="true">
+    <div class="card" style="width:min(440px,100%)">
+      <div class="row sp">
+        <h3 style="margin:0">Gemini API key</h3>
+        <button id="keyclose" class="btn" type="button">✕</button>
+      </div>
+      <div id="keyinfo" class="mut" style="font-size:12px;margin-top:6px">Browser-এ সেভ থাকে। npm start দিয়ে চালালে .env-এর key ব্যবহার হয়, এখানে দিতে হয় না।</div>
+      <label for="keyin">API Key</label>
+      <input id="keyin" type="password" placeholder="AIzaSy..." />
+      <div class="row" style="margin-top:12px;justify-content:flex-end">
+        <button id="keydel" class="btn d" type="button">Remove</button>
+        <button id="keysave" class="btn p" type="button">Save</button>
       </div>
     </div>
   </div>
 
-  <div id="toast" class="toast hidden"></div>
+  <div id="toast"></div>
+
   <script src="main.js"></script>
 </body>
 </html>
