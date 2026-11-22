@@ -3,15 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Admission Warrior (Gemini)</title>
+<title>Admission Warrior — HSC Science & Admission Prep</title>
 <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&family=Plus+Jakarta+Sans:wght@500;700;800&display=swap" rel="stylesheet">
 <script>window.MathJax={tex:{inlineMath:[['$','$']]},options:{skipHtmlTags:['script','style','textarea']}};</script>
 <script async src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js"></script>
 <style>
-:root{--bg:#f4f7f6;--card:#fff;--ink:#0f1f1a;--mut:#5b6b65;--line:#dde6e2;--pri:#0f9d74;--pri-ink:#fff;--acc:#0891b2;--bad:#e11d48;--warn:#d97706;--soft:#ecf5f1;
+:root{--bg:#f5f7fb;--card:#fff;--ink:#1c2740;--mut:#66728a;--line:#e1e7f2;--pri:#3b6fd4;--pri-ink:#fff;--acc:#6b9bf2;--bad:#e11d48;--warn:#d97706;--soft:#eef2fa;
 box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#070b12;--card:#101826;--ink:#eef4f2;--mut:#93a39d;--line:#1f2c3a;--pri:#34d399;--pri-ink:#04130d;--acc:#22d3ee;--soft:#0b1320;color-scheme:dark}}
-:root[data-theme=dark]{--bg:#070b12;--card:#101826;--ink:#eef4f2;--mut:#93a39d;--line:#1f2c3a;--pri:#34d399;--pri-ink:#04130d;--acc:#22d3ee;--soft:#0b1320;color-scheme:dark}
 *{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
 body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.6 'Plus Jakarta Sans','Hind Siliguri',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
 header{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(14px);border-bottom:1px solid var(--line)}
@@ -46,16 +44,16 @@ input:focus,select:focus,textarea:focus{outline:2px solid color-mix(in srgb,var(
 #drawer{position:fixed;top:0;right:0;height:100%;width:min(400px,100%);background:var(--card);border-left:1px solid var(--line);z-index:8;display:none;flex-direction:column;padding-top:env(safe-area-inset-top,0px)}
 #msgs{flex:1;overflow:auto;padding:12px;display:flex;flex-direction:column;gap:8px}.m{padding:9px 12px;border-radius:14px;background:var(--soft);white-space:pre-wrap}.m.u{background:var(--pri);color:var(--pri-ink);margin-left:30px}
 .scroll{overflow-x:auto}
-</style>
+.ok{color:#15803d!important}.tag.ok{background:#e9f8ef;border-color:#bfe8cd}.opt.c{border-color:#22a55a;background:#e9f8ef}.fm{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}.fm div{padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--soft)}.fm b{display:block;font-size:12px;color:var(--pri);margin-bottom:4px}</style>
 </head>
 <body>
 <header>
  <div class="bar">
   <div class="logo"><i>▲</i>Admission Warrior</div>
-  <div class="row"><span class="tag" id="who">Guest</span><button class="btn" id="kb" onclick="keyM(1)">Gemini Key</button><button class="btn" id="ab" onclick="adminLogin()">Admin</button><button class="btn p" onclick="chat(1)">AI Chat</button></div>
+  <div class="row"><span class="tag" id="who">Guest</span><button class="btn" id="ab" onclick="adminLogin()">Admin</button></div>
  </div>
  <nav id="tabs">
-  <button class="btn" data-t="bank">Question Bank</button><button class="btn" data-t="quiz">Quiz</button><button class="btn" data-t="photo">Photo Solver</button><button class="btn" data-t="users" id="tab-users">Users</button>
+  <button class="btn" data-t="bank">Question Bank</button><button class="btn" data-t="quiz">Quiz</button><button class="btn" data-t="formulas">Formula Sheet</button><button class="btn" data-t="users" id="tab-users">Users</button>
  </nav>
 </header>
 <div class="banner" id="ban"></div>
@@ -90,16 +88,20 @@ input:focus,select:focus,textarea:focus{outline:2px solid color-mix(in srgb,var(
  <div class="grid g2" style="grid-template-columns:1fr"><div class="card" id="qs"></div><div class="card"><h3>Palette <span id="pm"></span></h3><div class="pal" id="pal"></div></div></div>
  <div class="card hide" id="sum"></div>
 </section>
-<!-- PHOTO -->
-<section id="v-photo" class="hide grid g2">
- <div class="card"><h3>Photo question</h3>
-  <div class="row"><label class="btn p" style="margin:0;cursor:pointer">Take photo<input type="file" accept="image/*" capture="environment" hidden onchange="pick(event)"></label><label class="btn" style="margin:0;cursor:pointer">Choose image<input type="file" accept="image/*" hidden onchange="pick(event)"></label></div>
-  <img id="pv" class="hide" style="max-width:100%;max-height:240px;border-radius:12px;margin-top:10px;object-fit:contain" alt="">
-  <textarea id="pt" rows="2" placeholder="অথবা প্রশ্ন type করো" style="margin-top:10px"></textarea>
-  <button class="btn p" style="width:100%;margin-top:10px" onclick="solve()">Solve & Double-check (2 pass)</button>
- </div>
- <div class="card"><h3>Result <span id="ps" class="tag">Ready</span></h3><div id="pr" class="mut">Pass 1 solve করে, Pass 2 formula, sign, unit যাচাই করে।</div></div>
-</section>
+<section id="v-formulas" class="hide grid"><div class="card"><h3>Key formulas & traps</h3><div class="fm">
+<div><b>Physics · তাপগতিবিদ্যা</b>কার্নো দক্ষতা $\eta=1-\frac{T_2}{T_1}$ (তাপমাত্রা কেলভিনে)</div>
+<div><b>Physics · কাজ-শক্তি</b>$KE=\frac12mv^2,\;W=Fs\cos\theta$</div>
+<div><b>Physics · চল তড়িৎ</b>$V=IR,\;P=VI=I^2R$</div>
+<div><b>Chemistry · পরিমাণগত</b>$n=\frac{m}{M},\;PV=nRT$; STP-তে 1 mol = 22.4 L</div>
+<div><b>Chemistry · pH</b>$pH=-\log[H^+]$, $pH+pOH=14$</div>
+<div><b>Chemistry · জৈব</b>অ্যালডল ঘনীভবনে $\alpha$-হাইড্রোজেন আবশ্যক</div>
+<div><b>Math · যোগজীকরণ</b>$\int_0^a f(x)dx=\int_0^a f(a-x)dx$; $\int x^n dx=\frac{x^{n+1}}{n+1}$</div>
+<div><b>Math · ম্যাট্রিক্স</b>$\det\begin{pmatrix}a&b\\c&d\end{pmatrix}=ad-bc$</div>
+<div><b>Math · বৃত্ত</b>$(x-h)^2+(y-k)^2=r^2$</div>
+<div><b>Biology</b>ক্রসিং ওভার: মায়োসিস-১ এর প্যাকাইটিন; DNA-তে A=T, G≡C</div>
+<div><b>ICT</b>NAND ও NOR = Universal Gate; $(1010)_2=(10)_{10}=(A)_{16}$</div>
+<div><b>Exam tip</b>Negative marking থাকলে দুটো option বাদ না দিতে পারলে guess এড়াও; একক (unit) আগে SI-তে আনো।</div>
+</div></div></section>
 <!-- USERS -->
 <section id="v-users" class="hide grid g2">
  <div class="card" style="align-content:start"><h3>Open sign-up · instant access</h3>
@@ -111,9 +113,6 @@ input:focus,select:focus,textarea:focus{outline:2px solid color-mix(in srgb,var(
 </section>
 </main>
 
-<aside id="drawer"><div class="row" style="padding:12px;justify-content:space-between;border-bottom:1px solid var(--line)"><b>HSC & Admission AI Chat</b><button class="btn" onclick="chat(0)">✕</button></div><div id="msgs"></div>
- <div class="row" style="padding:10px;border-top:1px solid var(--line);flex-wrap:nowrap"><input id="ci" class="f" placeholder="যেকোনো প্রশ্ন..." onkeydown="if(event.key==='Enter')ask()"><button class="btn p" onclick="ask()">Send</button></div></aside>
-<div id="km" class="hide" style="position:fixed;inset:0;z-index:9;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;padding:16px"><div class="card" style="width:min(380px,100%)"><h3>Gemini API Key</h3><input id="ki" type="password" placeholder="AIza..."><p class="mut" style="font-size:12px">Key শুধু তোমার browser-এ save থাকে। aistudio.google.com থেকে free key নাও।</p><div class="row" style="justify-content:space-between"><button class="btn d" onclick="$('#ki').value='';saveKey()">Clear</button><div class="row"><button class="btn" onclick="keyM(0)">Cancel</button><button class="btn p" onclick="saveKey()">Save</button></div></div></div></div>
 <div id="toast"></div>
 
 <script>
@@ -130,11 +129,22 @@ const INIT=[
 {id:'i2',subject:'Chemistry',chapter:'জৈব রসায়ন',src:'Sample',q:'কোন যৌগটি অ্যালডল ঘনীভবন দেয়?',options:['$HCHO$','$C_6H_5CHO$','$CH_3CHO$','$(CH_3)_3CCHO$'],correctIndex:2,explanation:'$CH_3CHO$-এ $\\alpha$-H আছে।'},
 {id:'i3',subject:'Higher Math',chapter:'যোগজীকরণ',src:'Sample',q:'$\\int_0^{\\pi/2}\\frac{\\sin x}{\\sin x+\\cos x}dx$ এর মান?',options:['$\\frac{\\pi}{2}$','$\\frac{\\pi}{4}$','$1$','$0$'],correctIndex:1,explanation:'$2I=\\frac{\\pi}{2}\\Rightarrow I=\\frac{\\pi}{4}$'}];
 const FALL=[
-{subject:'Physics',chapter:'তাপগতিবিদ্যা',q:'গ্যাসের তাপমাত্রা (K) দ্বিগুণ করলে $v_{rms}$ কত গুণ হয়?',options:['$\\sqrt2$','$2$','$4$','$\\frac1{\\sqrt2}$'],correctIndex:0,explanation:'$v_{rms}\\propto\\sqrt T$'},
-{subject:'Chemistry',chapter:'জৈব রসায়ন',q:'টলেন বিকারক কার সাথে সিলভার মিরর দেয়?',options:['অ্যালডিহাইড','কিটোন','ইথার','অ্যালকেন'],correctIndex:0,explanation:'অ্যালডিহাইড $Ag^+$ কে $Ag$-এ বিজারিত করে।'},
-{subject:'Higher Math',chapter:'যোগজীকরণ',q:'$\\frac{d}{dx}\\ln\\sin x=?$',options:['$\\cot x$','$\\tan x$','$-\\cot x$','$\\sec x$'],correctIndex:0,explanation:'$\\frac{\\cos x}{\\sin x}=\\cot x$'},
-{subject:'Biology',chapter:'কোষ বিভাজন',q:'কোন বিভাজনে ক্রোমোজোম সংখ্যা অর্ধেক হয়?',options:['মায়োসিস','মাইটোসিস','অ্যামাইটোসিস','সাইটোকাইনেসিস'],correctIndex:0,explanation:'মায়োসিস হ্রাসমূলক বিভাজন।'},
-{subject:'ICT',chapter:'সংখ্যা পদ্ধতি',q:'কোন গেটকে Universal Gate বলে?',options:['NAND ও NOR','AND ও OR','XOR ও XNOR','NOT'],correctIndex:0,explanation:'শুধু NAND বা NOR দিয়ে সব গেট বানানো যায়।'}];
+{subject:'Physics',chapter:'ভেক্টর',q:'দুটি ভেক্টর পরস্পর লম্ব হলে তাদের স্কেলার গুণফল $\\vec A\\cdot\\vec B$ কত?',options:['$0$','$AB$','$1$','$A+B$'],correctIndex:0,explanation:'$\\vec A\\cdot\\vec B=AB\\cos90^\\circ=0$'},
+{subject:'Physics',chapter:'কাজ, শক্তি ও ক্ষমতা',q:'$2\\text{ kg}$ ভরের বস্তু $3\\text{ m/s}$ বেগে চললে গতিশক্তি কত?',options:['$6\\text{ J}$','$9\\text{ J}$','$18\\text{ J}$','$3\\text{ J}$'],correctIndex:1,explanation:'$KE=\\frac12\\cdot2\\cdot3^2=9\\text{ J}$'},
+{subject:'Physics',chapter:'তাপগতিবিদ্যা',q:'গ্যাসের তাপমাত্রা (K) দ্বিগুণ করলে $v_{rms}$ কত গুণ হয়?',options:['$2$','$\\sqrt2$','$4$','$\\frac1{\\sqrt2}$'],correctIndex:1,explanation:'$v_{rms}\\propto\\sqrt T$'},
+{subject:'Physics',chapter:'চল তড়িৎ',q:'$6\\,\\Omega$ রোধে $12\\text{ V}$ প্রয়োগ করলে তড়িৎ প্রবাহ কত?',options:['$0.5\\text{ A}$','$72\\text{ A}$','$2\\text{ A}$','$18\\text{ A}$'],correctIndex:2,explanation:'$I=V/R=12/6=2\\text{ A}$'},
+{subject:'Chemistry',chapter:'গুণগত রসায়ন',q:'$0.01\\text{ M}$ HCl দ্রবণের pH কত?',options:['$1$','$12$','$7$','$2$'],correctIndex:3,explanation:'$pH=-\\log(10^{-2})=2$'},
+{subject:'Chemistry',chapter:'পরিমাণগত রসায়ন',q:'STP-তে 1 mol আদর্শ গ্যাসের আয়তন কত?',options:['$22.4\\text{ L}$','$24.5\\text{ L}$','$11.2\\text{ L}$','$44.8\\text{ L}$'],correctIndex:0,explanation:'STP ($0^\\circ C$, 1 atm)-তে মোলার আয়তন $22.4\\text{ L}$।'},
+{subject:'Chemistry',chapter:'জৈব রসায়ন',q:'ইথানলের কার্যকরী মূলক কোনটি?',options:['$-CHO$','$-COOH$','$-OH$','$>C=O$'],correctIndex:2,explanation:'অ্যালকোহলের কার্যকরী মূলক হাইড্রক্সিল $-OH$।'},
+{subject:'Higher Math',chapter:'ম্যাট্রিক্স ও নির্ণায়ক',q:'$\\begin{vmatrix}1&2\\\\3&4\\end{vmatrix}$ এর মান কত?',options:['$2$','$10$','$-10$','$-2$'],correctIndex:3,explanation:'$1\\cdot4-2\\cdot3=-2$'},
+{subject:'Higher Math',chapter:'বৃত্ত',q:'$x^2+y^2=25$ বৃত্তের ব্যাসার্ধ কত?',options:['$5$','$25$','$\\sqrt5$','$10$'],correctIndex:0,explanation:'$r^2=25\\Rightarrow r=5$'},
+{subject:'Higher Math',chapter:'যোগজীকরণ',q:'$\\int_0^1 x\\,dx$ এর মান কত?',options:['$1$','$\\frac12$','$0$','$2$'],correctIndex:1,explanation:'$\\left[\\frac{x^2}{2}\\right]_0^1=\\frac12$'},
+{subject:'Biology',chapter:'কোষ ও এর গঠন',q:'কোষের শক্তিঘর বলা হয় কোনটিকে?',options:['রাইবোসোম','গলগি বডি','লাইসোসোম','মাইটোকন্ড্রিয়া'],correctIndex:3,explanation:'মাইটোকন্ড্রিয়ায় ATP তৈরি হয়।'},
+{subject:'Biology',chapter:'জিনতত্ত্ব ও বিবর্তন',q:'DNA-তে থাইমিনের সাথে কোন bases জোড়া বাঁধে?',options:['গুয়ানিন','সাইটোসিন','অ্যাডেনিন','ইউরাসিল'],correctIndex:2,explanation:'A=T এবং G≡C জোড়া বাঁধে।'},
+{subject:'Biology',chapter:'কোষ বিভাজন',q:'কোন বিভাজনে ক্রোমোজোম সংখ্যা অর্ধেক হয়?',options:['মাইটোসিস','মায়োসিস','অ্যামাইটোসিস','সাইটোকাইনেসিস'],correctIndex:1,explanation:'মায়োসিস হ্রাসমূলক বিভাজন।'},
+{subject:'ICT',chapter:'সংখ্যা পদ্ধতি ও ডিজিটাল ডিভাইস',q:'$(1010)_2$ এর দশমিক মান কত?',options:['$8$','$12$','$10$','$14$'],correctIndex:2,explanation:'$8+0+2+0=10$'},
+{subject:'ICT',chapter:'সংখ্যা পদ্ধতি ও ডিজিটাল ডিভাইস',q:'কোন গেটকে Universal Gate বলে?',options:['NAND ও NOR','AND ও OR','XOR ও XNOR','NOT'],correctIndex:0,explanation:'শুধু NAND বা NOR দিয়ে সব গেট বানানো যায়।'},
+{subject:'ICT',chapter:'ওয়েব ডিজাইন পরিচিতি ও HTML',q:'HTML-এ সবচেয়ে বড় হেডিং ট্যাগ কোনটি?',options:['h6','head','h1','hr'],correctIndex:2,explanation:'h1 সবচেয়ে বড়, h6 সবচেয়ে ছোট।'}];
 const L=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k));return v??d}catch{return d}},S=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch{}};
 let Q=L('aw_q',INIT),view='bank',sample=null,me={id:null,name:'Guest'},qz=[],qi=0,qa={},qdone=false,qt=0,qh=null,photo=null,busy=false,isOwner=false,myStatus='active';
 function toast(m){const t=$('#toast');t.textContent=m;t.style.display='block';clearTimeout(toast.h);toast.h=setTimeout(()=>t.style.display='none',2300)}
@@ -165,7 +175,7 @@ async function gen(mode){
  if(sample){try{const j=await sample.json(`${mode==='copy'?'Extract faithfully':'Create new admission-level'} ${c.n} MCQs for Bangladesh HSC Science. Subject ${c.sub}, chapter ${c.ch}${c.top?', topic '+c.top:''}. Use LaTeX with $...$. Return ONLY JSON {"questions":[{"q":"","options":["","","",""],"correctIndex":0,"explanation":"","subject":"","chapter":""}]}\nBank:\n${c.bank.slice(0,5000)}`);list=j.questions?.slice(0,c.n)}catch{}}
  if(!list?.length){const base=mode==='copy'&&parseBank(c.bank,c.sub,c.ch).length?parseBank(c.bank,c.sub,c.ch):(FALL.filter(f=>c.sub==='All'||f.subject===c.sub));
   if(!base.length)base.push(...FALL);
-  list=Array.from({length:c.n},(_,i)=>({...base[i%base.length],q:base[i%base.length].q+(mode==='new'&&c.top?` [${c.top}]`:'')}))}
+  list=Array.from({length:Math.min(c.n,base.length)},(_,i)=>({...base[i%base.length],q:base[i%base.length].q+(mode==='new'&&c.top?` [${c.top}]`:'')}))}
  Q=list.map((x,i)=>({id:'g'+Date.now()+i,subject:x.subject||c.sub,chapter:x.chapter||c.ch,src:mode==='copy'?'Exact Copy':'Predictive',q:x.q,options:x.options,correctIndex:x.correctIndex,explanation:x.explanation}));
  recheck(0);status('Done & rechecked ✓');toast(Q.length+' questions ready')}
 function recheck(notify){let fx=0;Q=Q.map((it,i)=>{let f=0,q=String(it.q||'').trim();if(!q){q='প্রশ্ন '+(i+1);f=1}
@@ -174,7 +184,7 @@ function recheck(notify){let fx=0;Q=Q.map((it,i)=>{let f=0,q=String(it.q||'').tr
  let a=it.correctIndex;if(!Number.isInteger(a)||a<0||a>3){a=0;f=1}fx+=f;return{...it,q,options:o,correctIndex:a,fixed:!!f}});
  S('aw_q',Q);renderQ();if(notify)toast(fx?`Fixed ${fx} question(s)`:'All options verified ✓')}
 function renderQ(){$('#qn').textContent=Q.length;$('#ql').innerHTML=Q.map((x,i)=>`<div class="q"><div class="row mut" style="font-size:11px;justify-content:space-between"><span>Q${i+1} · ${esc(x.subject)} · ${esc(x.chapter)} · ${esc(x.src)}</span><span class="tag ${x.fixed?'wn':'ok'}">${x.fixed?'Fixed ✓':'Rechecked ✓'}</span></div><p style="font-weight:700;margin:8px 0">${esc(x.q)}</p>${x.options.map((o,j)=>`<div class="opt ${j===x.correctIndex?'c':''}"><b>${'ABCD'[j]}.</b><span>${esc(o)}</span></div>`).join('')}<p style="font-size:12.5px;margin:10px 0 0"><b class="ok">Answer ${'ABCD'[x.correctIndex]}:</b> ${esc(x.explanation)}</p></div>`).join('')||'<div class="q mut">কোনো প্রশ্ন নেই।</div>';tex($('#ql'))}
-function exp(){if(!allowed('export'))return;const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(Q,null,2)],{type:'application/json'}));a.download='questions.json';a.click()}
+async function exp(){if(!allowed('export'))return;try{const d=await claude.use('downloads');if(!d)return toast('Export এখানে চালু নেই');await d.save({filename:'questions.json',data:JSON.stringify(Q,null,2)});toast('Exported')}catch{toast('Export হয়নি')}}
 /* ---------- quiz ---------- */
 function startQuiz(){if(!allowed('start quiz'))return;clearInterval(qh);qz=[...Q];qi=0;qa={};qdone=false;qt=+$('#qm').value*60;$('#sum').classList.add('hide');$('#sbm').disabled=false;clock();
  qh=setInterval(()=>{qt--;clock();if(qt<=0)submitQ('Time up · ')},1000);paintQ()}
@@ -186,34 +196,7 @@ function paintQ(){const q=qz[qi],st=$('#qs');if(!q){st.innerHTML='<p class="mut"
 function pickA(id,j){if(qdone||!allowed('answer'))return;qa[id]=j;paintQ()}
 function submitQ(pre=''){if(!qz.length)return;clearInterval(qh);qdone=true;$('#sbm').disabled=true;const ng=+$('#neg').value;let c=0,w=0;qz.forEach(q=>{const a=qa[q.id];if(a===undefined)return;a===q.correctIndex?c++:w++});const net=Math.max(0,c-w*ng).toFixed(2),s=$('#sum');s.classList.remove('hide');
  s.innerHTML=`<div class="row" style="justify-content:space-between"><b>${pre}Score: ${net} / ${qz.length}</b><button class="btn p" onclick="startQuiz()">Try again</button></div><div class="row" style="margin-top:10px"><span class="tag ok">Correct ${c}</span><span class="tag bd">Wrong ${w}</span><span class="tag">Net (−${ng}) ${net}</span></div>`;paintQ()}
-/* ---------- photo ---------- */
-function pick(e){if(!allowed('attach photo'))return;const f=e.target.files[0];if(!f)return;photo=f;const i=$('#pv');i.src=URL.createObjectURL(f);i.classList.remove('hide');$('#ps').textContent='Image ready';e.target.value=''}
-async function solve(){
- if(!allowed('solve'))return;const t=$('#pt').value.trim();if(!photo&&!t)return toast('ছবি দাও বা প্রশ্ন লেখো');
- if(!sample)return $('#pr').innerHTML='<p class="wn">Gemini key দিলে AI solver চালু হবে (উপরে Gemini Key বাটন)।</p>';
- $('#ps').textContent='Pass 1 & 2...';
- try{const j=await sample.json(`Solve this Bangladesh HSC/admission question${t?' (context: '+t+')':''} in TWO independent passes. Use LaTeX $...$. Return ONLY JSON {"pass1":"step-by-step solution","pass2":"independent check of formula, units, signs, options","finalAnswer":"concise verified answer"}`,photo?{images:[photo]}:{});
-  $('#pr').innerHTML=[['Pass 1 · Solve','acc',j.pass1],['Pass 2 · Double-check','warn',j.pass2],['Final answer','pri',j.finalAnswer]].map(([h,c,b])=>`<div class="q" style="border-color:var(--${c})"><b style="font-size:11px;color:var(--${c})">${h}</b><div style="white-space:pre-line">${esc(b)}</div></div>`).join('');$('#ps').textContent='Verified ✓';tex($('#pr'))}
- catch{$('#ps').textContent='Failed';$('#pr').innerHTML='<p class="wn">Solve করা যায়নি, আবার চেষ্টা করো।</p>'}}
-/* ---------- chat ---------- */
-function chat(o){$('#drawer').style.display=o?'flex':'none';if(o&&!$('#msgs').children.length)bub('Admission Warrior-এ স্বাগতম! HSC Physics, Chemistry, Math, Biology বা ICT নিয়ে প্রশ্ন করো।')}
-function bub(t,u){const d=document.createElement('div');d.className='m'+(u?' u':'');d.textContent=t;$('#msgs').append(d);$('#msgs').scrollTop=1e9;tex(d)}
-async function ask(){const i=$('#ci'),p=i.value.trim();if(!p||!allowed('chat'))return;i.value='';bub(p,1);if(!sample)return bub('Gemini key দাও, তাহলে live AI reply পাবে।');
- try{bub((await sample(`You are a helpful Bangladesh HSC Science & admission tutor. Answer concisely in the student's language. Question: ${p}`)).text)}catch{bub('এখন উত্তর দেওয়া যাচ্ছে না, আবার চেষ্টা করো।')}}
-/* ---------- Gemini ---------- */
-let KEY=L('aw_key','');
-const b64=b=>new Promise(r=>{const f=new FileReader();f.onload=()=>r(String(f.result).split(',')[1]);f.readAsDataURL(b)});
-async function gem(parts){
- let err;for(const m of ['gemini-2.5-flash','gemini-2.0-flash','gemini-1.5-flash']){try{
-  const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${encodeURIComponent(KEY)}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{role:'user',parts}]})});
-  if(!r.ok){const e=await r.json().catch(()=>({}));throw new Error(e?.error?.message||'HTTP '+r.status)}
-  const d=await r.json(),t=d?.candidates?.[0]?.content?.parts?.map(p=>p.text||'').join('\n').trim();if(t)return t}catch(e){err=e}}
- throw err||new Error('Gemini failed')}
-async function gsample(p,o={}){const parts=[{text:p}];for(const b of [].concat(o.images||[]))parts.push({inlineData:{mimeType:b.type||'image/jpeg',data:await b64(b)}});return{text:await gem(parts)}}
-gsample.json=async(p,o)=>{const t=(await gsample(p,o)).text.replace(/```json|```/gi,'').trim();try{return JSON.parse(t)}catch{return JSON.parse(t.slice(t.indexOf('{'),t.lastIndexOf('}')+1))}};
-function updKey(){sample=KEY?gsample:null;$('#kb').textContent=KEY?'Key Active ✓':'Gemini Key';$('#mode').textContent=KEY?'Gemini AI + automatic option recheck':'Local generator + option recheck (AI-র জন্য Gemini key দাও)'}
-function keyM(o){const m=$('#km');m.style.display=o?'flex':'none';if(o)$('#ki').value=KEY}
-function saveKey(){KEY=$('#ki').value.trim();S('aw_key',KEY);updKey();keyM(0);toast(KEY?'Gemini key saved':'Key removed')}
+function updKey(){$('#mode').textContent='Built-in smart generator + automatic option recheck (কোনো API key লাগে না)'}
 /* ---------- users: open sign-up + admin-only moderation (this browser) ---------- */
 let users=L('aw_users',[{id:'guest',name:'General Student',track:'HSC Science + Engineering',status:'active',note:''}]),aid=L('aw_aid','guest');
 const cur=()=>users.find(u=>u.id===aid)||users[0];
@@ -239,8 +222,8 @@ function signup(){const name=$('#sn').value.trim();if(!name)return toast('না
 function boot(){
  $('#sub').innerHTML=Object.keys(CH).map(s=>`<option value="${s}">${s==='All'?'All HSC Science':s}</option>`).join('');chaps();
  $('#bt').value=L('aw_bank',SAMPLE);renderQ();updKey();refreshUser();
- go(['bank','quiz','photo','users'].includes(location.hash.slice(1))?location.hash.slice(1):'bank')}
-addEventListener('keydown',e=>{if(e.key==='Escape'){chat(0);keyM(0)}});
+ go(['bank','quiz','formulas','users'].includes(location.hash.slice(1))?location.hash.slice(1):'bank')}
+addEventListener('keydown',e=>{});
 boot();
 </script>
 </body>
