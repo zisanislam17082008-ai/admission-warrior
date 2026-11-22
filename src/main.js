@@ -619,8 +619,6 @@ async function init() {
   }
 }
 
-supabase.auth.onAuthStateChange(() => {
-  setTimeout(init, 0);
-});
-
+// Initialize the app once.
 init();
+
