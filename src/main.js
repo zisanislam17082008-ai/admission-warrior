@@ -110,6 +110,13 @@ const genSet = () => LS.get('aw_gen', []);
 const allQ = () => [...SEED, ...genSet()];
 
 /* ================= theme & tabs ================= */
+const TAB_TITLES = {
+  chat: 'দ্রুত প্রশ্ন',
+  hub: 'প্রস্তুতি ও পরীক্ষা',
+  bank: 'প্রশ্নব্যাংক',
+  users: 'মেম্বারস'
+};
+
 function setTheme(t) {
   document.documentElement.dataset.theme = t;
   const tb = $('#themeb');
@@ -124,7 +131,8 @@ function toggleTheme() {
 
 function showTab(t) {
   $$('.tab').forEach(s => s.classList.toggle('on', s.id === 'tab-' + t));
-  $$('#nav .btn').forEach(b => b.classList.toggle('on', b.dataset.tab === t));
+  $$('#nav .vtab').forEach(b => b.classList.toggle('on', b.dataset.tab === t));
+  if ($('#headerTitle')) $('#headerTitle').textContent = TAB_TITLES[t] || 'Admission Warrior';
   location.hash = t;
   typeset(document.body);
 }
@@ -136,11 +144,68 @@ if ($('#nav')) {
   });
 }
 
-if ($('#themeb')) {
-  $('#themeb').addEventListener('click', toggleTheme);
+if ($('#goHomeBtn')) $('#goHomeBtn').addEventListener('click', () => showTab('hub'));
+if ($('#menuDrawerBtn')) {
+  $('#menuDrawerBtn').addEventListener('click', () => {
+    const order = ['chat', 'hub', 'bank', 'users'];
+    const curTab = order.find(id => $('#tab-' + id)?.classList.contains('on')) || 'chat';
+    showTab(order[(order.indexOf(curTab) + 1) % order.length]);
+  });
+}
+if ($('#themeb')) $('#themeb').addEventListener('click', toggleTheme);
+
+/* ================= hub helpers ================= */
+let selectedTrack = 'Varsity';
+let proMode = false;
+
+$$('.track-pill').forEach(btn => {
+  btn.addEventListener('click', () => {
+    $$('.track-pill').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    selectedTrack = btn.dataset.track || 'Varsity';
+    toast(`ট্র্যাক: ${selectedTrack}`);
+  });
+});
+
+window.selectProgramPreset = function (track) {
+  selectedTrack = track;
+  $$('.track-pill').forEach(b => b.classList.toggle('active', b.dataset.track === track));
+  if ($('#ecfg')) {
+    $('#ecfg').scrollIntoView({ behavior: 'smooth' });
+    toast(`${track} প্রোগ্রাম সিলেক্ট হয়েছে — Start exam চাপো`);
+  }
+};
+
+if ($('#proModeBtn')) {
+  $('#proModeBtn').addEventListener('click', () => {
+    proMode = !proMode;
+    $('#proModeBtn').classList.toggle('active', proMode);
+    toast(proMode ? 'প্রো মোড চালু (বিস্তারিত ব্যাখ্যা)' : 'সাধারণ মোড চালু');
+  });
 }
 
-/* ================= users & moderation (this browser) ================= */
+if ($('#quickModelTestBtn')) {
+  $('#quickModelTestBtn').addEventListener('click', () => {
+    if ($('#ecount')) $('#ecount').value = '20';
+    if ($('#emin')) $('#emin').value = '20';
+    $('#estart')?.click();
+  });
+}
+
+if ($('#quickCombinedBtn')) {
+  $('#quickCombinedBtn').addEventListener('click', () => {
+    if ($('#ecount')) $('#ecount').value = '12';
+    if ($('#emin')) $('#emin').value = '15';
+    $('#estart')?.click();
+  });
+}
+
+function refreshHubStats() {
+  if ($('#poolStat')) $('#poolStat').textContent = String(allQ().length);
+  if ($('#bestScoreStat')) $('#bestScoreStat').textContent = (LS.get('aw_best_pct', 0) || 0) + '%';
+}
+
+/* ================= users & moderation ================= */
 let users = LS.get('aw_users', [{ id: 'g', name: 'General Student', status: 'active', note: '' }]);
 let aid = LS.get('aw_aid', 'g');
 let admin = false;
@@ -164,6 +229,7 @@ function refreshUser() {
   const u = cur();
   const b = $('#ban');
   if ($('#who')) $('#who').textContent = (admin ? 'Admin · ' : '') + u.name;
+  if ($('#greetName')) $('#greetName').textContent = u.name;
   if ($('#admb')) $('#admb').textContent = admin ? 'Admin ✓ (logout)' : 'Admin';
   if ($('#reason')) $('#reason').classList.toggle('hide', !admin);
   if (b) {
@@ -231,9 +297,7 @@ function adminLogin() {
   refreshUser();
 }
 
-if ($('#admb')) {
-  $('#admb').addEventListener('click', adminLogin);
-}
+if ($('#admb')) $('#admb').addEventListener('click', adminLogin);
 
 if ($('#ssign')) {
   $('#ssign').addEventListener('click', () => {
@@ -254,7 +318,7 @@ if ($('#ssign')) {
   });
 }
 
-/* ================= Gemini (server proxy first, browser key second) ================= */
+/* ================= Gemini ================= */
 let SERVER = false;
 
 async function probe() {
@@ -475,6 +539,7 @@ function renderBank() {
     typeset($('#qlist'));
   }
   if ($('#epool')) $('#epool').textContent = `Pool: ${allQ().length} questions`;
+  refreshHubStats();
 }
 
 const limit = () => Math.min(60, Math.max(1, +($('#gcount')?.value) || 20));
@@ -603,7 +668,7 @@ if ($('#bgen')) {
         for (let t = 0; t < 8 && out.length < n; t++) {
           const need = Math.min(15, n - out.length);
           setStat(`Gemini generating... ${out.length}/${n}`);
-          const prompt = `Bangladesh NCTB HSC syllabus-ভিত্তিক বিশ্ববিদ্যালয় ভর্তি পরীক্ষার (DU/JU/RU/CU/GST/BUET/Medical মানের) ${need} টি নতুন, মৌলিক, সম্ভাব্য (predictable) MCQ বানাও।
+          const prompt = `Bangladesh NCTB HSC syllabus-ভিত্তিক বিশ্ববিদ্যালয় ভর্তি পরীক্ষার (${selectedTrack} মানের) ${need} টি নতুন, মৌলিক, সম্ভাব্য (predictable) MCQ বানাও।
 Subject: ${sub === 'All' ? 'Physics, Chemistry, Math, Biology — চার বিষয়ে সমানভাবে ভাগ করো' : sub}.
 নিচের question bank বিশ্লেষণ করে বারবার আসা chapter/pattern/difficulty অনুযায়ী প্রশ্ন বানাও, কিন্তু হুবহু কপি করবে না এবং এই প্রশ্নগুলো এড়াবে: ${stems()}
 নিয়ম: প্রশ্ন বাংলায়, math/chemistry-তে LaTeX $...$; ঠিক ৪টি আলাদা অপশন; ঠিক একটি সঠিক উত্তর; সংক্ষিপ্ত ধাপে ব্যাখ্যা; গণনা নিজে যাচাই করো।
@@ -714,7 +779,7 @@ function drawExam() {
   const done = Object.keys(ex.ans).length;
 
   $('#earea').innerHTML = `
-    <div class="card">
+    <div class="hero-panel">
       <div class="row sp">
         <div class="row">
           <b>Question ${ex.i + 1} / ${n}</b>
@@ -738,7 +803,7 @@ function drawExam() {
         <button class="btn p" ${ex.i < n - 1 ? '' : 'disabled'} onclick="jumpQ(${ex.i + 1})">Next</button>
       </div>
     </div>
-    <div class="card">
+    <div class="hero-panel">
       <h3>Palette · ${done}/${n} answered</h3>
       <div class="pal">
         ${ex.qs.map((x, idx) => `
@@ -776,9 +841,12 @@ function submitExam(pre) {
   const net = Math.max(0, c - w * ex.neg);
   const n = ex.qs.length;
   const pct = Math.round((net / n) * 100);
+  const prevBest = LS.get('aw_best_pct', 0) || 0;
+  if (pct > prevBest) LS.set('aw_best_pct', pct);
+  refreshHubStats();
 
   $('#earea').innerHTML = `
-    <div class="card">
+    <div class="hero-panel">
       <div class="row sp">
         <div>
           <div class="mut">${esc(pre)}Your score</div>
@@ -800,7 +868,7 @@ function submitExam(pre) {
         </div>
       `).join('')}
     </div>
-    <div class="card">
+    <div class="hero-panel">
       <h3>Answer review</h3>
       ${ex.qs.map((q, idx) => {
         const a = ex.ans[q.id];
@@ -831,6 +899,7 @@ function submitExam(pre) {
 if ($('#estart')) {
   $('#estart').addEventListener('click', () => {
     if (!allowed('start exam')) return;
+    showTab('hub');
     const subs = $$('.esub:checked').map(i => i.value);
     const pool = allQ().filter(q => subs.includes(q.subject));
     if (!pool.length) return toast('অন্তত একটি বিষয় বেছে নাও');
@@ -856,17 +925,19 @@ if ($('#estart')) {
     }, 1000);
 
     drawExam();
+    $('#earea')?.scrollIntoView({ behavior: 'smooth' });
     if (n < requested) toast(`Pool-এ ${n} টি প্রশ্ন আছে — Bank থেকে আরও generate করো`);
   });
 }
 
-/* ================= AI chat ================= */
+/* ================= AI quick chat ================= */
 const hist = [];
 let cimg = null;
 
 function bubble(t, u) {
   const box = $('#chatbox');
   if (!box) return null;
+  if ($('#chatEmptyState')) $('#chatEmptyState').classList.add('hide');
   const d = document.createElement('div');
   d.className = 'm' + (u ? ' u' : '');
   d.textContent = t;
@@ -884,27 +955,43 @@ if ($('#cimg')) {
   });
 }
 
+if ($('#micBtn')) {
+  $('#micBtn').addEventListener('click', () => {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) return toast('এই ব্রাউজারে ভয়েস ইনপুট সাপোর্ট নেই');
+    const rec = new SR();
+    rec.lang = 'bn-BD';
+    rec.onresult = ev => {
+      if ($('#cin')) $('#cin').value = ev.results[0][0].transcript;
+    };
+    rec.start();
+    toast('কথা বলো...');
+  });
+}
+
 async function sendChat(p) {
   const promptText = String(p ?? $('#cin')?.value ?? '').trim();
   if (!promptText && !cimg) return;
   if (!allowed('chat')) return;
 
+  const prog = $('#chatProgram')?.value || 'ভার্সিটি · স্থিতিবিদ্যা';
   if ($('#cin')) $('#cin').value = '';
   bubble((cimg ? '📷 ' : '') + promptText, 1);
   const wait = bubble('...');
 
   if (!hasAI()) {
-    if (wait) wait.textContent = 'AI চালু নেই। উপরে "AI" বাটনে Gemini key দাও, অথবা .env-এ GEMINI_API_KEY দিয়ে npm start চালাও।';
+    if (wait) wait.textContent = 'AI চালু নেই। উপরে "AI: off" বাটনে Gemini key দাও।';
     return;
   }
 
   try {
     const ctx = hist.slice(-8).map(h => `${h[0]}: ${h[1]}`).join('\n');
+    const detailRule = proMode ? 'Give detailed step-by-step explanation and key exam tips.' : 'Keep the explanation clear and concise.';
     const a = await gemini(
-      `${ctx}\nStudent: ${promptText || 'এই ছবির প্রশ্নটি সমাধান করো।'}\nTutor:`,
+      `${ctx}\nContext: ${prog}\nStudent: ${promptText || 'এই ছবির প্রশ্নটি সমাধান করো।'}\nTutor:`,
       {
         images: cimg ? [cimg] : [],
-        system: 'You are a friendly expert tutor for Bangladeshi HSC Science and university admission tests (Physics, Chemistry, Higher Math, Biology). Reply in the student\'s language (Bangla by default), step by step, concise. Use LaTeX $...$ for math. Double-check calculations and state the final answer clearly.'
+        system: `You are a friendly expert tutor for Bangladeshi HSC Science and university admission tests (Physics, Chemistry, Higher Math, Biology). Reply in Bangla by default. ${detailRule} Use LaTeX $...$ for math and state the final answer clearly.`
       }
     );
     hist.push(['Student', promptText || '[Image]'], ['Tutor', a]);
@@ -917,7 +1004,6 @@ async function sendChat(p) {
   } finally {
     cimg = null;
     if ($('#cimgname')) $('#cimgname').textContent = '';
-    if ($('#chatbox')) $('#chatbox').scrollTop = 1e9;
   }
 }
 
@@ -928,14 +1014,13 @@ if ($('#cin')) $('#cin').addEventListener('keydown', e => {
 $$('[data-q]').forEach(b => b.addEventListener('click', () => sendChat(b.dataset.q)));
 
 /* ================= boot ================= */
-setTheme(LS.get('aw_theme', matchMedia('(prefers-color-scheme:dark)').matches ? 'dark' : 'light'));
+setTheme(LS.get('aw_theme', 'dark'));
 renderBank();
 refreshUser();
 updAI();
 probe();
-bubble('Admission Warrior-এ স্বাগতম! HSC Physics, Chemistry, Math, Biology বা ভর্তি প্রস্তুতি নিয়ে প্রশ্ন করো। প্রশ্নের ছবিও দিতে পারো (📷)।');
 const h0 = location.hash.slice(1);
-showTab(['bank', 'exam', 'chat', 'users'].includes(h0) ? h0 : 'bank');
+showTab(['chat', 'hub', 'bank', 'users'].includes(h0) ? h0 : 'chat');
 addEventListener('keydown', e => {
   if (e.key === 'Escape') closeKey();
 });
