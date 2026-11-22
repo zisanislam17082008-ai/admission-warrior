@@ -777,16 +777,27 @@ async function openContent(id) {
     return;
   }
 
+  // Mobile browser async-er por window.open block kore,
+  // tai click-er shathe shathe blank tab khule nei
+  const win = window.open('', '_blank');
+
   try {
     const { data, error } = await supabase.storage
       .from(BUCKET)
-      .createSignedUrl(item.file_path, 300);
+      .createSignedUrl(item.file_path, 600);
 
     if (error) throw error;
 
-    window.open(data.signedUrl, '_blank', 'noopener');
+    if (win) {
+      win.opener = null;
+      win.location.href = data.signedUrl;
+    } else {
+      // Popup block hole same tab-e kholo
+      window.location.href = data.signedUrl;
+    }
 
   } catch (error) {
+    if (win) win.close();
     notify('Unable to open content: ' + error.message);
   }
 }
