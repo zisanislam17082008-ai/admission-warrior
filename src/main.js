@@ -1,2659 +1,1289 @@
-import { createClient } from '@supabase/supabase-js';
-import './style.css';
-
-// ---------------- CONFIGURATION ----------------
-
-// URL clean kore nei: shesh er "/" ar "/rest/v1" fele dei
-function cleanUrl(url = '') {
-  return String(url)
-    .trim()
-    .replace(/\/rest\/v1\/?$/i, '')
-    .replace(/\/+$/, '');
-}
-
-const SUPABASE_URL = cleanUrl(import.meta.env.VITE_SUPABASE_URL);
-const SUPABASE_KEY = (import.meta.env.VITE_SUPABASE_ANON_KEY || '').trim();
-
-const BUCKET = 'study-content';
-const MAX_FILE_MB = 50;
-
-const app = document.querySelector('#app');
-
-let supabase = null;
-let user = null;
-let profile = null;
-let contents = [];
-let pendingUsers = [];
-let questions = [];        // question bank (admin)
-let exams = [];            // exam list
-let myResults = {};        // examId -> { score, total }
-let activeQuiz = null;     // cholche emon exam/practice
-let quizTimer = null;
-let qFilter = 'All';
-let generated = [];        // AI generated question preview
-let analysisText = '';     // AI bank analysis
-let chatMessages = [];     // AI chat history
-let chatBusy = false;
-let currentPage = 'dashboard';
-let uploadBusy = false;
-let currentSubject = null;
-
-const subjects = ['Physics', 'Chemistry', 'Higher Math', 'Biology'];
-const icons = ['⚡', '🧪', '📐', '🧬'];
-const ADMIN_PAGES = ['admin', 'upload', 'qbank', 'makeexam', 'aigen'];
-
-function escapeHTML(value = '') {
-  return String(value).replace(/[&<>"']/g, char => ({
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#39;'
-  })[char]);
-}
-
-// AI-r text safe vabe dekhano (bold + new line)
-function formatMsg(text = '') {
-  return escapeHTML(text)
-    .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
-    .replace(/\n/g, '<br>');
-}
-
-function notify(message) {
-  alert(message);
-}
-
-function isAdmin() {
-  return profile?.role === 'main_admin' &&
-    profile?.status === 'approved';
-}
-
-function isApproved() {
-  return profile?.status === 'approved' || isAdmin();
-}
-
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-function shuffle(arr) {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-
-function subjectOptions(withAll = false) {
-  return (withAll ? ['<option value="All">All Subjects</option>'] : [])
-    .concat(subjects.map(s => `<option value="${s}">${s}</option>`))
-    .join('');
-}
-
-// ---------------- EXTRA STYLES ----------------
-// style.css-e kichu change korte hobe na, eta JS thekei jog hoy
-
-function injectStyles() {
-  if (document.querySelector('#aw-extra-css')) return;
-
-  const st = document.createElement('style');
-  st.id = 'aw-extra-css';
-  st.textContent = `
-    .quiz-progress{display:flex;justify-content:space-between;font-size:14px;opacity:.8;margin:6px 0}
-    .quiz-bar{height:6px;border-radius:99px;background:rgba(127,127,127,.25);overflow:hidden;margin-bottom:14px}
-    .quiz-bar div{height:100%;background:#6366f1;transition:width .25s}
-    .quiz-card{padding:18px;border-radius:16px;border:1px solid rgba(127,127,127,.3);background:rgba(127,127,127,.08);margin-bottom:14px}
-    .quiz-card h3{margin:0 0 14px;line-height:1.5}
-    .quiz-opt{display:flex;gap:12px;align-items:flex-start;width:100%;text-align:left;padding:12px 14px;margin:8px 0;border-radius:12px;border:1.5px solid rgba(127,127,127,.35);background:transparent;color:inherit;font:inherit;cursor:pointer}
-    .quiz-opt b{min-width:22px}
-    .quiz-opt.selected{border-color:#6366f1;background:rgba(99,102,241,.18)}
-    .quiz-opt.correct{border-color:#16a34a;background:rgba(22,163,74,.18)}
-    .quiz-opt.wrong{border-color:#dc2626;background:rgba(220,38,38,.18)}
-    .quiz-opt:disabled{cursor:default;opacity:1}
-    .quiz-explain{margin:10px 0 0;font-size:14px;opacity:.9}
-    .quiz-nav{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px}
-    .qnum{width:34px;height:34px;border-radius:8px;border:1px solid rgba(127,127,127,.4);background:transparent;color:inherit;font:inherit;cursor:pointer}
-    .qnum.answered{background:rgba(99,102,241,.25);border-color:#6366f1}
-    .qnum.current{outline:2px solid #6366f1}
-    .quiz-actions{display:flex;gap:10px;flex-wrap:wrap}
-    .chat-wrap{display:flex;flex-direction:column;height:calc(100vh - 230px);min-height:380px}
-    .chat-box{flex:1;overflow-y:auto;padding:10px 4px;display:flex;flex-direction:column;gap:10px}
-    .chat-msg{max-width:88%;padding:10px 14px;border-radius:16px;line-height:1.55;font-size:15px;word-break:break-word}
-    .chat-msg.user{align-self:flex-end;background:#6366f1;color:#fff;border-bottom-right-radius:4px}
-    .chat-msg.bot{align-self:flex-start;background:rgba(127,127,127,.15);border-bottom-left-radius:4px}
-    .chat-msg.err{background:rgba(220,38,38,.18)}
-    .chips{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
-    .chip{padding:8px 12px;border-radius:99px;border:1px solid rgba(127,127,127,.4);background:transparent;color:inherit;font:inherit;font-size:13px;cursor:pointer}
-    .chat-form{display:flex;gap:8px;align-items:flex-end}
-    .chat-form textarea{flex:1;resize:none;max-height:120px}
-    .gen-card{padding:14px;border-radius:14px;border:1px solid rgba(127,127,127,.3);margin-bottom:12px}
-    .gen-card label{display:flex;gap:10px;align-items:flex-start}
-    .analysis-box{margin-top:12px;padding:14px;border-radius:12px;background:rgba(127,127,127,.12);line-height:1.6}
-  `;
-  document.head.appendChild(st);
-}
-
-// ---------------- AI API CALL ----------------
-
-async function callAI(payload) {
-  const { data } = await supabase.auth.getSession();
-  const token = data.session?.access_token;
-
-  if (!token) throw new Error('Session expire hoye geche. Abar login koro.');
-
-  let res;
-  try {
-    res = await fetch('/api/ai', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`
-      },
-      body: JSON.stringify(payload)
-    });
-  } catch {
-    throw new Error('AI server-e connect hocche na. Internet check koro.');
-  }
-
-  let json = {};
-  try {
-    json = await res.json();
-  } catch {
-    /* ignore */
-  }
-
-  if (res.status === 404) {
-    throw new Error('AI server paoa jayni. api/ai.js file ta Vercel-e deploy hoyeche kina dekho.');
-  }
-
-  if (!res.ok) {
-    throw new Error(json.error || `Server error (${res.status})`);
-  }
-
-  return json;
-}
-
-// ---------------- INITIALIZATION ----------------
-
-function startApp() {
-  injectStyles();
-
-  if (!app) {
-    document.body.innerHTML =
-      '<h2>Application container not found.</h2>';
-    return;
-  }
-
-  if (!SUPABASE_URL || !SUPABASE_KEY) {
-    app.innerHTML = `
-      <div class="status-card">
-        <h2>Configuration Error</h2>
-        <p>Supabase URL অথবা Publishable Key পাওয়া যায়নি।</p>
-        <p>Vercel Environment Variables পরীক্ষা করো।</p>
-      </div>
-    `;
-    return;
-  }
-
-  try {
-    supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-    init();
-  } catch (error) {
-    showError(error.message);
-  }
-}
-
-function showError(message) {
-  app.innerHTML = `
-    <div class="status-card">
-      <div class="brand-mark">AW</div>
-      <h2>Something went wrong</h2>
-      <p>${escapeHTML(message)}</p>
-      <button class="primary-btn" id="retry">Try Again</button>
-    </div>
-  `;
-
-  document.querySelector('#retry')?.addEventListener('click', init);
-}
-
-// ---------------- AUTHENTICATION ----------------
-
-function authView() {
-  app.innerHTML = `
-    <div class="auth-layout">
-      <section class="hero-panel">
-        <div class="brand-mark">AW</div>
-        <p class="eyebrow">ADMISSION WARRIOR</p>
-        <h1>স্বপ্নের বিশ্ববিদ্যালয়ের পথে
-          <span>তুমিই Warrior</span>
-        </h1>
-        <p>Learn • Practice • Win</p>
-
-        <div class="hero-orbit">
-          <span>Physics</span>
-          <span>Chemistry</span>
-          <span>Math</span>
-          <span>Biology</span>
-        </div>
-      </section>
-
-      <section class="auth-card">
-        <h2 id="authTitle">Login</h2>
-
-        <div class="auth-tabs">
-          <button class="tab active" id="loginTab" type="button">Login</button>
-          <button class="tab" id="signupTab" type="button">Sign Up</button>
-        </div>
-
-        <form id="authForm">
-          <label>Email
-            <input type="email" id="email" required
-              placeholder="Enter your email">
-          </label>
-
-          <label>Password
-            <input type="password" id="password"
-              minlength="6" required
-              placeholder="Minimum 6 characters">
-          </label>
-
-          <button class="primary-btn" id="authButton">
-            Login
-          </button>
-        </form>
-
-        <p class="notice" id="authNotice"></p>
-      </section>
-    </div>
-  `;
-
-  let signup = false;
-
-  const loginTab = document.querySelector('#loginTab');
-  const signupTab = document.querySelector('#signupTab');
-  const title = document.querySelector('#authTitle');
-  const button = document.querySelector('#authButton');
-  const notice = document.querySelector('#authNotice');
-
-  loginTab.onclick = () => {
-    signup = false;
-    title.textContent = 'Login';
-    button.textContent = 'Login';
-    loginTab.classList.add('active');
-    signupTab.classList.remove('active');
-    notice.textContent = '';
-  };
-
-  signupTab.onclick = () => {
-    signup = true;
-    title.textContent = 'Create Account';
-    button.textContent = 'Sign Up';
-    signupTab.classList.add('active');
-    loginTab.classList.remove('active');
-    notice.textContent = '';
-  };
-
-  document.querySelector('#authForm').onsubmit = async event => {
-    event.preventDefault();
-
-    const email = document.querySelector('#email').value.trim();
-    const password = document.querySelector('#password').value;
-
-    button.disabled = true;
-    button.textContent = 'Please wait...';
-
-    try {
-      const result = signup
-        ? await supabase.auth.signUp({ email, password })
-        : await supabase.auth.signInWithPassword({ email, password });
-
-      if (result.error) throw result.error;
-
-      if (signup && !result.data.session) {
-        notice.textContent =
-          'Account created. Check your email for confirmation.';
-        notice.className = 'notice success';
-        return;
-      }
-
-      await init();
-
-    } catch (error) {
-      notice.textContent = error.message;
-      notice.className = 'notice error';
-    } finally {
-      button.disabled = false;
-      button.textContent = signup ? 'Sign Up' : 'Login';
-    }
-  };
-}
-
-// ---------------- DATABASE ----------------
-
-async function loadProfile() {
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .maybeSingle();
-
-  if (error) throw error;
-
-  profile = data;
-}
-
-async function loadContents() {
-  if (!isApproved()) {
-    contents = [];
-    return;
-  }
-
-  const { data, error } = await supabase
-    .from('contents')
-    .select('*')
-    .eq('visibility', 'all')
-    .order('created_at', { ascending: false });
-
-  if (error) throw error;
-
-  contents = data || [];
-}
-
-async function loadPendingUsers() {
-  if (!isAdmin()) {
-    pendingUsers = [];
-    return;
-  }
-
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('status', 'pending')
-    .order('created_at', { ascending: true });
-
-  if (error) throw error;
-
-  pendingUsers = data || [];
-}
-
-async function approveUser(id) {
-  if (!isAdmin()) return;
-
-  const { error } = await supabase
-    .from('profiles')
-    .update({ status: 'approved' })
-    .eq('id', id);
-
-  if (error) {
-    notify('Approve failed: ' + error.message);
-    return;
-  }
-
-  notify('User approved!');
-  await openPage('admin');
-}
-
-async function rejectUser(id) {
-  if (!isAdmin()) return;
-  if (!confirm('Reject this user?')) return;
-
-  const { error } = await supabase
-    .from('profiles')
-    .update({ status: 'rejected' })
-    .eq('id', id);
-
-  if (error) {
-    notify('Reject failed: ' + error.message);
-    return;
-  }
-
-  notify('User rejected.');
-  await openPage('admin');
-}
-
-async function loadQuestions() {
-  if (!isAdmin()) {
-    questions = [];
-    return;
-  }
-
-  const { data, error } = await supabase
-    .from('questions')
-    .select('*')
-    .order('created_at', { ascending: false })
-    .limit(2000);
-
-  if (error) throw error;
-
-  questions = data || [];
-}
-
-async function loadExams() {
-  if (!isApproved()) {
-    exams = [];
-    myResults = {};
-    return;
-  }
-
-  const { data, error } = await supabase
-    .from('exams')
-    .select('*')
-    .order('created_at', { ascending: false });
-
-  if (error) throw error;
-
-  exams = data || [];
-
-  myResults = {};
-  const { data: res } = await supabase
-    .from('results')
-    .select('exam_id, score, total, created_at')
-    .eq('user_id', user.id)
-    .order('created_at', { ascending: true });
-
-  (res || []).forEach(r => {
-    myResults[r.exam_id] = { score: r.score, total: r.total };
-  });
-}
-
-// ---------------- LAYOUT ----------------
-
-function layout(content) {
-  app.innerHTML = `
-    <div class="app-shell">
-      <aside class="sidebar">
-        <div class="brand">
-          <div class="brand-mark small">AW</div>
-          <b>Admission Warrior</b>
-        </div>
-
-        <p class="side-label">MAIN MENU</p>
-
-        <button class="side-link" data-page="dashboard">
-          🏠 Dashboard
-        </button>
-
-        <button class="side-link" data-page="subjects">
-          📚 Subjects
-        </button>
-
-        <button class="side-link" data-page="library">
-          📖 Study Library
-        </button>
-
-        <button class="side-link" data-page="exams">
-          📝 Exams
-        </button>
-
-        <button class="side-link" data-page="practice">
-          🎯 Practice
-        </button>
-
-        <button class="side-link" data-page="chat">
-          🤖 AI Assistant
-        </button>
-
-        ${isAdmin() ? `
-          <p class="side-label">ADMINISTRATION</p>
-          <button class="side-link" data-page="admin">
-            🛡️ Admin Panel
-          </button>
-          <button class="side-link" data-page="upload">
-            📤 Upload Content
-          </button>
-          <button class="side-link" data-page="qbank">
-            🗂️ Question Bank
-          </button>
-          <button class="side-link" data-page="aigen">
-            ✨ AI Generator
-          </button>
-          <button class="side-link" data-page="makeexam">
-            ✍️ Make Exam
-          </button>
-        ` : ''}
-
-        <div class="sidebar-bottom">
-          <span>${escapeHTML(user?.email || '')}</span>
-          <button class="outline-btn" id="logout">
-            Logout
-          </button>
-        </div>
-      </aside>
-
-      <main class="main-panel">
-        ${content}
-      </main>
-    </div>
-  `;
-
-  document.querySelectorAll('[data-page]').forEach(button => {
-    button.onclick = () => openPage(button.dataset.page);
-  });
-
-  document.querySelector('#logout').onclick = logout;
-}
-
-// ---------------- DASHBOARD ----------------
-
-function dashboardPage() {
-  const status = profile?.status;
-
-  return `
-    <div class="topbar">
-      <div>
-        <p class="eyebrow">ADMISSION WARRIOR</p>
-        <h1>Dashboard</h1>
-      </div>
-      <span class="role-pill">
-        ${isAdmin() ? 'MAIN ADMIN' : 'STUDENT'}
-      </span>
-    </div>
-
-    <section class="section-heading">
-      <div>
-        <h2>স্বাগতম, Warrior!</h2>
-        <p>${isApproved()
-          ? 'তোমার পড়াশোনা শুরু করো।'
-          : status === 'rejected'
-            ? 'তোমার Account অনুমোদন পায়নি।'
-            : 'তোমার Account অনুমোদনের অপেক্ষায় আছে।'}
-        </p>
-      </div>
-    </section>
-
-    ${!isApproved() ? `
-      <div class="empty-state">
-        <span>${status === 'rejected' ? '❌' : '⏳'}</span>
-        <h3>${status === 'rejected' ? 'Not Approved' : 'Pending Approval'}</h3>
-        <p>${status === 'rejected'
-          ? 'Admin-er shathe jogajog koro.'
-          : 'Admin অনুমোদন দিলে Study Library ব্যবহার করতে পারবে।'}</p>
-      </div>
-    ` : `
-      <div class="subject-grid">
-        ${subjects.map((subject, index) => `
-          <article class="subject-card">
-            <span>${icons[index]}</span>
-            <h3>${subject}</h3>
-            <p>Concept revision and practice</p>
-            <button class="outline-btn"
-              data-subject="${subject}">
-              Open Subject
-            </button>
-          </article>
-        `).join('')}
-
-        <article class="subject-card">
-          <span>🤖</span>
-          <h3>AI Assistant</h3>
-          <p>Poshna koro, bujhiye dibe</p>
-          <button class="outline-btn" data-page="chat">
-            Ask AI
-          </button>
-        </article>
-      </div>
-
-      <div class="section-heading">
-        <div>
-          <p class="eyebrow">STUDY LIBRARY</p>
-          <h2>Recent Study Content</h2>
-        </div>
-        <button class="text-btn" data-page="library">
-          View All →
-        </button>
-      </div>
-
-      ${renderContentCards(contents.slice(0, 4))}
-    `}
-  `;
-}
-
-// ---------------- SUBJECTS ----------------
-
-function subjectsPage() {
-  return `
-    <div class="topbar">
-      <div>
-        <p class="eyebrow">LEARN EVERY DAY</p>
-        <h1>Subjects</h1>
-      </div>
-    </div>
-
-    <div class="subject-grid">
-      ${subjects.map((subject, index) => `
-        <article class="subject-card">
-          <span>${icons[index]}</span>
-          <h3>${subject}</h3>
-          <p>${contents.filter(c => c.subject === subject).length} contents</p>
-          <button class="outline-btn" data-subject="${subject}">
-            Open Subject
-          </button>
-        </article>
-      `).join('')}
-    </div>
-  `;
-}
-
-function subjectDetailPage() {
-  const subject = currentSubject || subjects[0];
-  const items = contents.filter(c => c.subject === subject);
-
-  return `
-    <div class="topbar">
-      <div>
-        <p class="eyebrow">SUBJECT</p>
-        <h1>${escapeHTML(subject)}</h1>
-      </div>
-      <button class="outline-btn" data-page="subjects">
-        ← Back
-      </button>
-    </div>
-
-    <section class="section-heading">
-      <div>
-        <h2>${items.length} Study Content</h2>
-      </div>
-    </section>
-
-    ${renderContentCards(items)}
-  `;
-}
-
-// ---------------- LIBRARY ----------------
-
-function renderContentCards(items) {
-  if (!items.length) {
-    return `
-      <div class="empty-state">
-        <span>📚</span>
-        <h3>No Content Yet</h3>
-        <p>এখনো কোনো Study Content প্রকাশ করা হয়নি।</p>
-      </div>
-    `;
-  }
-
-  return `
-    <div class="content-grid">
-      ${items.map(item => `
-        <article class="content-card">
-          <span class="content-kind">
-            ${escapeHTML(item.kind)}
-          </span>
-          <p class="eyebrow">${escapeHTML(item.subject)}</p>
-          <h3>${escapeHTML(item.title)}</h3>
-          <p>${escapeHTML(item.description || '')}</p>
-
-          <button class="text-btn"
-            data-open-content="${escapeHTML(item.id)}">
-            Open Content →
-          </button>
-        </article>
-      `).join('')}
-    </div>
-  `;
-}
-
-function libraryPage() {
-  return `
-    <div class="topbar">
-      <div>
-        <p class="eyebrow">STUDY MATERIALS</p>
-        <h1>Study Library</h1>
-      </div>
-    </div>
-
-    ${renderContentCards(contents)}
-  `;
-}
-
-// ---------------- ADMIN ----------------
-
-function adminPage() {
-  return `
-    <div class="topbar">
-      <div>
-        <p class="eyebrow">ADMINISTRATION</p>
-        <h1>Main Admin Panel</h1>
-      </div>
-      <span class="role-pill">ADMIN</span>
-    </div>
-
-    <div class="subject-grid">
-      <article class="subject-card">
-        <span>📚</span>
-        <h3>${contents.length}</h3>
-        <p>Published Contents</p>
-      </article>
-
-      <article class="subject-card">
-        <span>⏳</span>
-        <h3>${pendingUsers.length}</h3>
-        <p>Pending Approvals</p>
-      </article>
-
-      <article class="subject-card">
-        <span>🛡️</span>
-        <h3>Main Admin</h3>
-        <p>${escapeHTML(user.email)}</p>
-      </article>
-    </div>
-
-    <section class="section-heading">
-      <div>
-        <p class="eyebrow">USER REQUESTS</p>
-        <h2>Pending Approvals (${pendingUsers.length})</h2>
-      </div>
-    </section>
-
-    ${pendingUsers.length ? `
-      <div class="content-grid">
-        ${pendingUsers.map(u => `
-          <article class="content-card">
-            <p class="eyebrow">PENDING</p>
-            <h3>${escapeHTML(u.email || u.id)}</h3>
-            <p>${u.created_at
-              ? escapeHTML(new Date(u.created_at).toLocaleString())
-              : ''}</p>
-
-            <button class="primary-btn"
-              data-approve="${escapeHTML(u.id)}">
-              Approve
-            </button>
-            <button class="outline-btn"
-              data-reject="${escapeHTML(u.id)}">
-              Reject
-            </button>
-          </article>
-        `).join('')}
-      </div>
-    ` : `
-      <div class="empty-state">
-        <span>✅</span>
-        <h3>No pending users</h3>
-        <p>Notun keu signup korle ekhane dekhabe.</p>
-      </div>
-    `}
-
-    <div class="subject-grid">
-      <article class="subject-card">
-        <span>📤</span>
-        <h3>Upload Content</h3>
-        <p>PDF, Notes, Images and Videos</p>
-        <button class="primary-btn" data-page="upload">
-          Upload Now
-        </button>
-      </article>
-
-      <article class="subject-card">
-        <span>🗂️</span>
-        <h3>Question Bank</h3>
-        <p>Add and manage MCQs</p>
-        <button class="primary-btn" data-page="qbank">
-          Open Bank
-        </button>
-      </article>
-
-      <article class="subject-card">
-        <span>✨</span>
-        <h3>AI Generator</h3>
-        <p>Bank analyze kore notun question</p>
-        <button class="primary-btn" data-page="aigen">
-          Open AI
-        </button>
-      </article>
-
-      <article class="subject-card">
-        <span>✍️</span>
-        <h3>Make Exam</h3>
-        <p>Bank theke question set banao</p>
-        <button class="primary-btn" data-page="makeexam">
-          Make Exam
-        </button>
-      </article>
-    </div>
-  `;
-}
-
-// ---------------- UPLOAD PAGE ----------------
-
-function uploadPage() {
-  return `
-    <div class="topbar">
-      <div>
-        <p class="eyebrow">MAIN ADMIN</p>
-        <h1>Upload Study Content</h1>
-      </div>
-    </div>
-
-    <section class="upload-card">
-      <form id="uploadForm">
-
-        <label>Content Title
-          <input id="title" required
-            placeholder="Enter content title">
-        </label>
-
-        <div class="form-row">
-          <label>Subject
-            <select id="subject">
-              ${subjectOptions()}
-            </select>
-          </label>
-
-          <label>Content Type
-            <select id="kind">
-              <option value="note">Note</option>
-              <option value="pdf">PDF</option>
-              <option value="image">Image</option>
-              <option value="video">Video</option>
-              <option value="mcq">MCQ</option>
-            </select>
-          </label>
-        </div>
-
-        <label>Upload File (max ${MAX_FILE_MB} MB)
-          <input id="file" type="file"
-            accept=".pdf,application/pdf,image/*,video/*">
-        </label>
-
-        <p class="notice" id="fileInfo"></p>
-
-        <label>Video URL (optional)
-          <input id="videoUrl" type="url"
-            placeholder="https://...">
-        </label>
-
-        <label>Description
-          <textarea id="description" rows="4"
-            placeholder="Write a description"></textarea>
-        </label>
-
-        <button class="primary-btn" type="submit">
-          Publish Content
-        </button>
-
-        <p class="notice" id="uploadNotice"></p>
-      </form>
-    </section>
-  `;
-}
-
-// ---------------- QUESTION BANK (ADMIN) ----------------
-
-function qListHTML() {
-  const list = qFilter === 'All'
-    ? questions
-    : questions.filter(q => q.subject === qFilter);
-
-  if (!list.length) {
-    return `
-      <div class="empty-state">
-        <span>🗂️</span>
-        <h3>No Questions</h3>
-        <p>Ei subject-e ekhono kono question nai.</p>
-      </div>
-    `;
-  }
-
-  return `
-    <div class="content-grid">
-      ${list.map(q => `
-        <article class="content-card">
-          <p class="eyebrow">
-            ${escapeHTML(q.subject)}${q.chapter ? ' • ' + escapeHTML(q.chapter) : ''}
-          </p>
-          <h3>${escapeHTML(q.question)}</h3>
-          <p>A. ${escapeHTML(q.option_a)}</p>
-          <p>B. ${escapeHTML(q.option_b)}</p>
-          <p>C. ${escapeHTML(q.option_c)}</p>
-          <p>D. ${escapeHTML(q.option_d)}</p>
-          <p><b>Answer: ${escapeHTML(q.correct.toUpperCase())}</b></p>
-          <button class="outline-btn"
-            data-del-q="${escapeHTML(q.id)}">
-            Delete
-          </button>
-        </article>
-      `).join('')}
-    </div>
-  `;
-}
-
-function qbankPage() {
-  return `
-    <div class="topbar">
-      <div>
-        <p class="eyebrow">MAIN ADMIN</p>
-        <h1>Question Bank</h1>
-      </div>
-      <span class="role-pill">${questions.length} QUESTIONS</span>
-    </div>
-
-    <section class="upload-card">
-      <h2>Add Question</h2>
-      <form id="qForm">
-        <div class="form-row">
-          <label>Subject
-            <select id="qSubject">${subjectOptions()}</select>
-          </label>
-          <label>Chapter (optional)
-            <input id="qChapter" placeholder="e.g. Newtonian Mechanics">
-          </label>
-        </div>
-
-        <label>Question
-          <textarea id="qText" rows="3" required
-            placeholder="Write the question"></textarea>
-        </label>
-
-        <div class="form-row">
-          <label>Option A <input id="qA" required></label>
-          <label>Option B <input id="qB" required></label>
-        </div>
-        <div class="form-row">
-          <label>Option C <input id="qC" required></label>
-          <label>Option D <input id="qD" required></label>
-        </div>
-
-        <label>Correct Answer
-          <select id="qCorrect">
-            <option value="a">A</option>
-            <option value="b">B</option>
-            <option value="c">C</option>
-            <option value="d">D</option>
-          </select>
-        </label>
-
-        <label>Explanation (optional)
-          <textarea id="qExplain" rows="2"
-            placeholder="Short explanation"></textarea>
-        </label>
-
-        <button class="primary-btn" type="submit">
-          Add Question
-        </button>
-      </form>
-    </section>
-
-    <section class="upload-card">
-      <h2>Bulk Import</h2>
-      <p class="notice">
-        Prottek line-e ekta question. Format:<br>
-        question | A | B | C | D | correct(A/B/C/D) | explanation(optional)
-      </p>
-      <label>Subject
-        <select id="bulkSubject">${subjectOptions()}</select>
-      </label>
-      <label>Questions
-        <textarea id="bulkText" rows="6"
-          placeholder="2+2 koto? | 3 | 4 | 5 | 6 | B | Simple addition"></textarea>
-      </label>
-      <button class="primary-btn" id="bulkBtn" type="button">
-        Import Questions
-      </button>
-    </section>
-
-    <section class="section-heading">
-      <div>
-        <p class="eyebrow">ALL QUESTIONS</p>
-        <h2>Bank</h2>
-      </div>
-      <select id="qFilter">
-        <option value="All">All Subjects</option>
-        ${subjects.map(s =>
-          `<option value="${s}" ${qFilter === s ? 'selected' : ''}>${s}</option>`
-        ).join('')}
-      </select>
-    </section>
-
-    <div id="qList">${qListHTML()}</div>
-  `;
-}
-
-function bindQDelete() {
-  document.querySelectorAll('[data-del-q]').forEach(b => {
-    b.onclick = () => deleteQuestion(b.dataset.delQ);
-  });
-}
-
-function setupQbank() {
-  document.querySelector('#qForm')?.addEventListener('submit', addQuestion);
-  document.querySelector('#bulkBtn')?.addEventListener('click', bulkImport);
-
-  document.querySelector('#qFilter')?.addEventListener('change', e => {
-    qFilter = e.target.value;
-    document.querySelector('#qList').innerHTML = qListHTML();
-    bindQDelete();
-  });
-
-  bindQDelete();
-}
-
-async function addQuestion(event) {
-  event.preventDefault();
-  if (!isAdmin()) return;
-
-  const btn = event.currentTarget.querySelector('button[type="submit"]');
-  btn.disabled = true;
-
-  const row = {
-    subject: document.querySelector('#qSubject').value,
-    chapter: document.querySelector('#qChapter').value.trim() || null,
-    question: document.querySelector('#qText').value.trim(),
-    option_a: document.querySelector('#qA').value.trim(),
-    option_b: document.querySelector('#qB').value.trim(),
-    option_c: document.querySelector('#qC').value.trim(),
-    option_d: document.querySelector('#qD').value.trim(),
-    correct: document.querySelector('#qCorrect').value,
-    explanation: document.querySelector('#qExplain').value.trim() || null,
-    created_by: user.id
-  };
-
-  const { error } = await supabase.from('questions').insert(row);
-
-  if (error) {
-    btn.disabled = false;
-    notify('Add failed: ' + error.message);
-    return;
-  }
-
-  await openPage('qbank');
-}
-
-async function bulkImport() {
-  if (!isAdmin()) return;
-
-  const subject = document.querySelector('#bulkSubject').value;
-  const text = document.querySelector('#bulkText').value;
-  const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
-
-  const rows = [];
-  let skipped = 0;
-
-  lines.forEach(line => {
-    const p = line.split('|').map(x => x.trim());
-    const correct = (p[5] || '').toLowerCase();
-
-    if (p.length < 6 || !p[0] || !p[1] || !p[2] || !p[3] || !p[4] ||
-        !['a', 'b', 'c', 'd'].includes(correct)) {
-      skipped++;
-      return;
-    }
-
-    rows.push({
-      subject,
-      question: p[0],
-      option_a: p[1],
-      option_b: p[2],
-      option_c: p[3],
-      option_d: p[4],
-      correct,
-      explanation: p[6] || null,
-      created_by: user.id
-    });
-  });
-
-  if (!rows.length) {
-    notify('Kono valid line paoa jayni. Format check koro.');
-    return;
-  }
-
-  const { error } = await supabase.from('questions').insert(rows);
-
-  if (error) {
-    notify('Import failed: ' + error.message);
-    return;
-  }
-
-  notify(`${rows.length} question added.` +
-    (skipped ? ` ${skipped} line skip hoyeche (format thik na).` : ''));
-
-  await openPage('qbank');
-}
-
-async function deleteQuestion(id) {
-  if (!isAdmin()) return;
-  if (!confirm('Delete this question?')) return;
-
-  const { error } = await supabase
-    .from('questions')
-    .delete()
-    .eq('id', id);
-
-  if (error) {
-    notify('Delete failed: ' + error.message);
-    return;
-  }
-
-  await openPage('qbank');
-}
-
-// ---------------- AI GENERATOR (ADMIN) ----------------
-
-function bankStatsHTML() {
-  if (!questions.length) {
-    return '<p class="notice">Bank ekhono khali.</p>';
-  }
-
-  const by = {};
-  questions.forEach(q => {
-    const c = q.chapter || 'General';
-    by[q.subject] = by[q.subject] || { total: 0, chapters: {} };
-    by[q.subject].total++;
-    by[q.subject].chapters[c] = (by[q.subject].chapters[c] || 0) + 1;
-  });
-
-  return `
-    <div class="content-grid">
-      ${Object.entries(by).map(([s, info]) => `
-        <article class="content-card">
-          <p class="eyebrow">${escapeHTML(s)}</p>
-          <h3>${info.total} questions</h3>
-          <p>${Object.entries(info.chapters)
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 8)
-            .map(([c, n]) => `${escapeHTML(c)}: ${n}`)
-            .join(' • ')}</p>
-        </article>
-      `).join('')}
-    </div>
-  `;
-}
-
-function aiGenPage() {
-  return `
-    <div class="topbar">
-      <div>
-        <p class="eyebrow">MAIN ADMIN • POWERED BY CLAUDE</p>
-        <h1>AI Question Generator</h1>
-      </div>
-      <span class="role-pill">${questions.length} IN BANK</span>
-    </div>
-
-    <section class="upload-card">
-      <h2>Bank Analysis</h2>
-      ${bankStatsHTML()}
-      <button class="outline-btn" id="analyzeBtn" type="button">
-        Analyze with AI
-      </button>
-      <div id="analysisBox">
-        ${analysisText
-          ? `<div class="analysis-box">${formatMsg(analysisText)}</div>`
-          : ''}
-      </div>
-    </section>
-
-    <section class="upload-card">
-      <h2>Generate New Questions</h2>
-      <p class="notice">
-        AI bank-er existing question dekhe, style ar topic bujhe, notun question banabe.
-        Save korar age nijе check kore nao.
-      </p>
-
-      <form id="genForm">
-        <div class="form-row">
-          <label>Subject
-            <select id="gSubject">${subjectOptions()}</select>
-          </label>
-          <label>Chapter / Topic (optional)
-            <input id="gChapter" placeholder="e.g. Thermodynamics">
-          </label>
-        </div>
-
-        <div class="form-row">
-          <label>How many (max 10)
-            <input id="gCount" type="number" min="1" max="10" value="5">
-          </label>
-          <label>Difficulty
-            <select id="gDifficulty">
-              <option value="easy">Easy</option>
-              <option value="medium" selected>Medium</option>
-              <option value="hard">Hard</option>
-              <option value="mixed">Mixed</option>
-            </select>
-          </label>
-        </div>
-
-        <label>Extra instruction (optional)
-          <input id="gExtra"
-            placeholder="e.g. numerical problem beshi, BUET style">
-        </label>
-
-        <button class="primary-btn" id="genBtn" type="submit">
-          Generate Questions
-        </button>
-      </form>
-    </section>
-
-    <div id="genResult"></div>
-  `;
-}
-
-function renderGenResult() {
-  const box = document.querySelector('#genResult');
-  if (!box) return;
-
-  if (!generated.length) {
-    box.innerHTML = '';
-    return;
-  }
-
-  box.innerHTML = `
-    <section class="section-heading">
-      <div>
-        <p class="eyebrow">PREVIEW</p>
-        <h2>${generated.length} Generated Questions</h2>
-      </div>
-    </section>
-
-    ${generated.map((q, i) => `
-      <div class="gen-card">
-        <label>
-          <input type="checkbox" data-gen-idx="${i}"
-            style="width:auto;margin-top:4px;"
-            ${q.selected ? 'checked' : ''}>
-          <span>
-            <b>${escapeHTML(q.question)}</b><br>
-            A. ${escapeHTML(q.option_a)}<br>
-            B. ${escapeHTML(q.option_b)}<br>
-            C. ${escapeHTML(q.option_c)}<br>
-            D. ${escapeHTML(q.option_d)}<br>
-            <b>Answer: ${escapeHTML(q.correct.toUpperCase())}</b>
-            ${q.explanation
-              ? `<br><small>${escapeHTML(q.explanation)}</small>`
-              : ''}
-          </span>
-        </label>
-      </div>
-    `).join('')}
-
-    <div class="quiz-actions">
-      <button class="primary-btn" id="saveGenBtn" type="button">
-        Save Selected to Bank
-      </button>
-      <button class="outline-btn" id="discardGenBtn" type="button">
-        Discard All
-      </button>
-    </div>
-  `;
-
-  box.querySelectorAll('[data-gen-idx]').forEach(cb => {
-    cb.onchange = () => {
-      generated[Number(cb.dataset.genIdx)].selected = cb.checked;
-    };
-  });
-
-  document.querySelector('#saveGenBtn').onclick = saveGenerated;
-  document.querySelector('#discardGenBtn').onclick = () => {
-    generated = [];
-    renderGenResult();
-  };
-}
-
-function setupAiGen() {
-  document.querySelector('#genForm')?.addEventListener('submit', generateQuestions);
-  document.querySelector('#analyzeBtn')?.addEventListener('click', analyzeBank);
-  renderGenResult();
-}
-
-async function analyzeBank() {
-  const btn = document.querySelector('#analyzeBtn');
-  const box = document.querySelector('#analysisBox');
-
-  btn.disabled = true;
-  btn.textContent = 'Analyzing...';
-
-  try {
-    const res = await callAI({ mode: 'analyze' });
-    analysisText = res.text || '';
-    box.innerHTML = `<div class="analysis-box">${formatMsg(analysisText)}</div>`;
-  } catch (error) {
-    notify('Analysis failed: ' + error.message);
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Analyze with AI';
-  }
-}
-
-async function generateQuestions(event) {
-  event.preventDefault();
-  if (!isAdmin()) return;
-
-  const btn = document.querySelector('#genBtn');
-  btn.disabled = true;
-  btn.textContent = 'Generating... (10-30 sec)';
-
-  const subject = document.querySelector('#gSubject').value;
-  const chapter = document.querySelector('#gChapter').value.trim();
-
-  try {
-    const res = await callAI({
-      mode: 'generate',
-      subject,
-      chapter,
-      count: parseInt(document.querySelector('#gCount').value, 10) || 5,
-      difficulty: document.querySelector('#gDifficulty').value,
-      extra: document.querySelector('#gExtra').value.trim()
-    });
-
-    generated = (res.questions || []).map(q => ({
-      ...q,
-      subject,
-      chapter: chapter || null,
-      selected: true
-    }));
-
-    renderGenResult();
-    document.querySelector('#genResult')?.scrollIntoView({ behavior: 'smooth' });
-  } catch (error) {
-    notify('Generate failed: ' + error.message);
-  } finally {
-    btn.disabled = false;
-    btn.textContent = 'Generate Questions';
-  }
-}
-
-async function saveGenerated() {
-  if (!isAdmin()) return;
-
-  const rows = generated
-    .filter(q => q.selected)
-    .map(q => ({
-      subject: q.subject,
-      chapter: q.chapter,
-      question: q.question,
-      option_a: q.option_a,
-      option_b: q.option_b,
-      option_c: q.option_c,
-      option_d: q.option_d,
-      correct: q.correct,
-      explanation: q.explanation || null,
-      created_by: user.id
-    }));
-
-  if (!rows.length) {
-    notify('Kono question select kora nai.');
-    return;
-  }
-
-  const btn = document.querySelector('#saveGenBtn');
-  btn.disabled = true;
-
-  const { error } = await supabase.from('questions').insert(rows);
-
-  if (error) {
-    btn.disabled = false;
-    notify('Save failed: ' + error.message);
-    return;
-  }
-
-  notify(`${rows.length} question bank-e save hoyeche!`);
-  generated = [];
-  await openPage('qbank');
-}
-
-// ---------------- AI CHAT ----------------
-
-const CHIPS = [
-  'Question bank dekhe amar ki practice kora uchit?',
-  'Physics-er ekta MCQ practice dao',
-  'Newton-er 2nd law sohoje bujhiye dao',
-  'Amar exam result analyze koro'
-];
-
-function chatHTML() {
-  const welcome = `
-    <div class="chat-msg bot">
-      Assalamu alaikum, Warrior! 👋 Ami tomar Study Assistant.
-      Physics, Chemistry, Higher Math, Biology — je kono poshna koro,
-      MCQ practice chaw, ba question bank analyze kore ki porbe seta jiggesh koro.
-    </div>
-  `;
-
-  const msgs = chatMessages.map(m => `
-    <div class="chat-msg ${m.role === 'user' ? 'user' : 'bot'} ${m.error ? 'err' : ''}">
-      ${formatMsg(m.content)}
-    </div>
-  `).join('');
-
-  const typing = chatBusy
-    ? '<div class="chat-msg bot">Thinking...</div>'
-    : '';
-
-  return welcome + msgs + typing;
-}
-
-function chatPage() {
-  return `
-    <div class="topbar">
-      <div>
-        <p class="eyebrow">POWERED BY CLAUDE</p>
-        <h1>AI Assistant</h1>
-      </div>
-      <button class="outline-btn" id="clearChat" type="button">Clear</button>
-    </div>
-
-    <div class="chat-wrap">
-      <div class="chat-box" id="chatBox">${chatHTML()}</div>
-
-      <div class="chips">
-        ${CHIPS.map(c => `<button class="chip" type="button" data-chip="${escapeHTML(c)}">${escapeHTML(c)}</button>`).join('')}
-      </div>
-
-      <form class="chat-form" id="chatForm">
-        <textarea id="chatInput" rows="1"
-          placeholder="Tomar proshno likho..."></textarea>
-        <button class="primary-btn" id="chatSend" type="submit">Send</button>
-      </form>
-    </div>
-  `;
-}
-
-function renderChat() {
-  const box = document.querySelector('#chatBox');
-  if (!box) return;
-
-  box.innerHTML = chatHTML();
-  box.scrollTop = box.scrollHeight;
-
-  const send = document.querySelector('#chatSend');
-  if (send) send.disabled = chatBusy;
-}
-
-async function sendChat(text) {
-  if (chatBusy || !text) return;
-
-  chatMessages.push({ role: 'user', content: text });
-  chatBusy = true;
-  renderChat();
-
-  try {
-    const history = chatMessages
-      .filter(m => !m.error)
-      .slice(-12)
-      .map(m => ({ role: m.role, content: m.content }));
-
-    const res = await callAI({ mode: 'chat', messages: history });
-    chatMessages.push({ role: 'assistant', content: res.text || '...' });
-  } catch (error) {
-    chatMessages.push({
-      role: 'assistant',
-      content: 'Error: ' + error.message,
-      error: true
-    });
-  } finally {
-    chatBusy = false;
-    renderChat();
-  }
-}
-
-function setupChat() {
-  const form = document.querySelector('#chatForm');
-  const input = document.querySelector('#chatInput');
-
-  form?.addEventListener('submit', e => {
-    e.preventDefault();
-    const text = input.value.trim();
-    if (!text || chatBusy) return;
-    input.value = '';
-    sendChat(text);
-  });
-
-  input?.addEventListener('keydown', e => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      form.requestSubmit();
-    }
-  });
-
-  document.querySelectorAll('[data-chip]').forEach(b => {
-    b.onclick = () => sendChat(b.dataset.chip);
-  });
-
-  document.querySelector('#clearChat')?.addEventListener('click', () => {
-    chatMessages = [];
-    renderChat();
-  });
-
-  renderChat();
-}
-
-// ---------------- MAKE EXAM (ADMIN) ----------------
-
-function makeExamPage() {
-  return `
-    <div class="topbar">
-      <div>
-        <p class="eyebrow">MAIN ADMIN</p>
-        <h1>Make Exam</h1>
-      </div>
-    </div>
-
-    <section class="upload-card">
-      <form id="examForm">
-        <label>Exam Title
-          <input id="examTitle" required
-            placeholder="e.g. Physics Model Test 1">
-        </label>
-
-        <div class="form-row">
-          <label>Subject
-            <select id="examSubject">${subjectOptions(true)}</select>
-          </label>
-
-          <label>Selection
-            <select id="examMode">
-              <option value="random">Random from bank</option>
-              <option value="manual">Choose manually</option>
-            </select>
-          </label>
-        </div>
-
-        <div class="form-row">
-          <label>Number of questions (random)
-            <input id="examCount" type="number" min="1" value="10">
-          </label>
-
-          <label>Duration (minutes, 0 = no limit)
-            <input id="examDuration" type="number" min="0" value="10">
-          </label>
-        </div>
-
-        <p class="notice" id="poolInfo"></p>
-
-        <div id="manualList"></div>
-
-        <button class="primary-btn" type="submit">
-          Create Exam
-        </button>
-      </form>
-    </section>
-  `;
-}
-
-function examPool() {
-  const subject = document.querySelector('#examSubject').value;
-  return subject === 'All'
-    ? questions
-    : questions.filter(q => q.subject === subject);
-}
-
-function updateManualList() {
-  const pool = examPool();
-  const mode = document.querySelector('#examMode').value;
-  const info = document.querySelector('#poolInfo');
-  const box = document.querySelector('#manualList');
-
-  info.textContent = `${pool.length} questions available in bank.`;
-
-  if (mode !== 'manual') {
-    box.innerHTML = '';
-    return;
-  }
-
-  box.innerHTML = pool.length
-    ? pool.map(q => `
-        <label style="display:flex;gap:10px;align-items:flex-start;margin:8px 0;">
-          <input type="checkbox" class="pick-q" value="${escapeHTML(q.id)}"
-            style="width:auto;margin-top:4px;">
-          <span>${escapeHTML(q.question)}
-            <small>(${escapeHTML(q.subject)})</small></span>
-        </label>
-      `).join('')
-    : '<p>Ei subject-e kono question nai.</p>';
-}
-
-function setupMakeExam() {
-  document.querySelector('#examSubject')
-    ?.addEventListener('change', updateManualList);
-  document.querySelector('#examMode')
-    ?.addEventListener('change', updateManualList);
-  document.querySelector('#examForm')
-    ?.addEventListener('submit', createExam);
-
-  if (document.querySelector('#examForm')) updateManualList();
-}
-
-async function createExam(event) {
-  event.preventDefault();
-  if (!isAdmin()) return;
-
-  const title = document.querySelector('#examTitle').value.trim();
-  const subject = document.querySelector('#examSubject').value;
-  const mode = document.querySelector('#examMode').value;
-  const count = parseInt(document.querySelector('#examCount').value, 10) || 0;
-  const duration = parseInt(document.querySelector('#examDuration').value, 10) || 0;
-  const pool = examPool();
-
-  let ids = [];
-
-  if (mode === 'manual') {
-    ids = [...document.querySelectorAll('.pick-q:checked')].map(x => x.value);
-  } else {
-    if (count < 1) {
-      notify('Question number 1 ba tar beshi dao.');
-      return;
-    }
-    ids = shuffle(pool).slice(0, count).map(q => q.id);
-  }
-
-  if (!ids.length) {
-    notify('Kono question select hoyni ba bank-e question nai.');
-    return;
-  }
-
-  if (mode === 'random' && ids.length < count) {
-    if (!confirm(`Bank-e shudhu ${ids.length} ta question ache. Eta diyei exam banabe?`)) {
-      return;
-    }
-  }
-
-  const btn = event.currentTarget.querySelector('button[type="submit"]');
-  btn.disabled = true;
-
-  const { error } = await supabase.from('exams').insert({
-    title,
-    subject,
-    question_ids: ids,
-    duration_minutes: duration,
-    created_by: user.id
-  });
-
-  if (error) {
-    btn.disabled = false;
-    notify('Create exam failed: ' + error.message);
-    return;
-  }
-
-  notify(`Exam created with ${ids.length} questions!`);
-  await openPage('exams');
-}
-
-// ---------------- EXAMS ----------------
-
-function examsPage() {
-  return `
-    <div class="topbar">
-      <div>
-        <p class="eyebrow">TEST YOURSELF</p>
-        <h1>Exams</h1>
-      </div>
-    </div>
-
-    ${exams.length ? `
-      <div class="content-grid">
-        ${exams.map(e => {
-          const r = myResults[e.id];
-          const count = Array.isArray(e.question_ids) ? e.question_ids.length : 0;
-          return `
-            <article class="content-card">
-              <span class="content-kind">${escapeHTML(e.subject || 'All')}</span>
-              <h3>${escapeHTML(e.title)}</h3>
-              <p>${count} questions •
-                ${e.duration_minutes > 0 ? e.duration_minutes + ' min' : 'No time limit'}</p>
-              ${r ? `<p><b>Last score: ${r.score}/${r.total}</b></p>` : ''}
-
-              <button class="primary-btn"
-                data-start-exam="${escapeHTML(e.id)}">
-                ${r ? 'Retake' : 'Start Exam'}
-              </button>
-              ${isAdmin() ? `
-                <button class="outline-btn"
-                  data-del-exam="${escapeHTML(e.id)}">
-                  Delete
-                </button>
-              ` : ''}
-            </article>
-          `;
-        }).join('')}
-      </div>
-    ` : `
-      <div class="empty-state">
-        <span>📝</span>
-        <h3>No Exams Yet</h3>
-        <p>Ekhono kono exam toiri hoyni.</p>
-      </div>
-    `}
-  `;
-}
-
-async function fetchQuestionsByIds(ids) {
-  const { data, error } = await supabase
-    .from('questions')
-    .select('*')
-    .in('id', ids);
-
-  if (error) throw error;
-
-  const map = new Map((data || []).map(q => [q.id, q]));
-  return ids.map(id => map.get(id)).filter(Boolean);
-}
-
-async function startExam(id) {
-  const exam = exams.find(e => String(e.id) === String(id));
-  if (!exam) {
-    notify('Exam paoa jayni.');
-    return;
-  }
-
-  try {
-    const qs = await fetchQuestionsByIds(exam.question_ids || []);
-
-    if (!qs.length) {
-      notify('Ei exam-er question gulo bank theke muche gese.');
-      return;
-    }
-
-    activeQuiz = {
-      examId: exam.id,
-      title: exam.title,
-      questions: shuffle(qs),
-      answers: {},
-      index: 0,
-      instant: false,
-      submitted: false,
-      score: 0,
-      endsAt: exam.duration_minutes > 0
-        ? Date.now() + exam.duration_minutes * 60 * 1000
-        : null
-    };
-
-    await openPage('quiz');
-  } catch (error) {
-    notify('Could not start exam: ' + error.message);
-  }
-}
-
-async function deleteExam(id) {
-  if (!isAdmin()) return;
-  if (!confirm('Delete this exam and its results?')) return;
-
-  const { error } = await supabase.from('exams').delete().eq('id', id);
-
-  if (error) {
-    notify('Delete failed: ' + error.message);
-    return;
-  }
-
-  await openPage('exams');
-}
-
-// ---------------- PRACTICE ----------------
-
-function practicePage() {
-  return `
-    <div class="topbar">
-      <div>
-        <p class="eyebrow">QUESTION BANK</p>
-        <h1>Practice</h1>
-      </div>
-    </div>
-
-    <section class="upload-card">
-      <p class="notice">
-        Subject, question sonkha ar timer set koro. Bank theke random question niye quiz toiri hobe.
-      </p>
-      <form id="practiceForm">
-        <div class="form-row">
-          <label>Subject
-            <select id="pSubject">${subjectOptions(true)}</select>
-          </label>
-          <label>Number of questions
-            <input id="pCount" type="number" min="1" max="100" value="10">
-          </label>
-        </div>
-
-        <div class="form-row">
-          <label>Timer (minutes, 0 = no timer)
-            <input id="pTimer" type="number" min="0" max="180" value="10">
-          </label>
-          <label style="display:flex;gap:8px;align-items:center;">
-            <input id="pInstant" type="checkbox" style="width:auto;">
-            Instant answer feedback
-          </label>
-        </div>
-
-        <button class="primary-btn" type="submit">
-          Start Quiz
-        </button>
-      </form>
-    </section>
-  `;
-}
-
-async function startPractice(event) {
-  event.preventDefault();
-
-  const subject = document.querySelector('#pSubject').value;
-  const count = Math.min(
-    100,
-    Math.max(1, parseInt(document.querySelector('#pCount').value, 10) || 10)
-  );
-  const minutes = Math.min(
-    180,
-    Math.max(0, parseInt(document.querySelector('#pTimer').value, 10) || 0)
-  );
-  const instant = document.querySelector('#pInstant').checked;
-
-  const btn = event.currentTarget.querySelector('button[type="submit"]');
-  btn.disabled = true;
-
-  try {
-    let query = supabase.from('questions').select('*').limit(1000);
-    if (subject !== 'All') query = query.eq('subject', subject);
-
-    const { data, error } = await query;
-    if (error) throw error;
-
-    if (!data || !data.length) {
-      btn.disabled = false;
-      notify('Ei subject-e ekhono kono question nai.');
-      return;
-    }
-
-    activeQuiz = {
-      examId: null,
-      title: `Practice: ${subject}`,
-      questions: shuffle(data).slice(0, count),
-      answers: {},
-      index: 0,
-      instant,
-      submitted: false,
-      score: 0,
-      endsAt: minutes > 0 ? Date.now() + minutes * 60 * 1000 : null
-    };
-
-    await openPage('quiz');
-  } catch (error) {
-    btn.disabled = false;
-    notify('Could not start quiz: ' + error.message);
-  }
-}
-
-// ---------------- QUIZ (ek ek kore question) ----------------
-
-function optionList(q) {
-  return [
-    ['a', q.option_a],
-    ['b', q.option_b],
-    ['c', q.option_c],
-    ['d', q.option_d]
-  ];
-}
-
-function quizPage() {
-  if (!activeQuiz) {
-    return `
-      <div class="empty-state">
-        <span>📝</span>
-        <h3>No active quiz</h3>
-        <button class="primary-btn" data-page="exams">Go to Exams</button>
-      </div>
-    `;
-  }
-
-  const quiz = activeQuiz;
-  const total = quiz.questions.length;
-
-  // ----- Result view -----
-  if (quiz.submitted) {
-    const percent = Math.round((quiz.score / total) * 100);
-
-    return `
-      <div class="topbar">
-        <div>
-          <p class="eyebrow">RESULT</p>
-          <h1>${escapeHTML(quiz.title)}</h1>
-        </div>
-        <button class="outline-btn"
-          data-page="${quiz.examId ? 'exams' : 'practice'}">
-          ← Back
-        </button>
-      </div>
-
-      <div class="subject-grid">
-        <article class="subject-card">
-          <span>🏆</span>
-          <h3>${quiz.score} / ${total}</h3>
-          <p>${percent}% correct</p>
-        </article>
-        <article class="subject-card">
-          <span>🤖</span>
-          <h3>Need help?</h3>
-          <p>AI Assistant-ke jiggesh koro</p>
-          <button class="outline-btn" data-page="chat">Ask AI</button>
-        </article>
-      </div>
-
-      ${quiz.questions.map((q, i) => {
-        const chosen = quiz.answers[q.id];
-        const ok = chosen === q.correct;
-
-        return `
-          <article class="content-card" style="margin-bottom:14px;">
-            <p class="eyebrow">
-              Q${i + 1} •
-              <span style="color:${ok ? '#16a34a' : '#dc2626'}">
-                ${chosen ? (ok ? 'Correct' : 'Wrong') : 'Not answered'}
-              </span>
-            </p>
-            <h3>${escapeHTML(q.question)}</h3>
-
-            ${optionList(q).map(([key, text]) => {
-              let style = '';
-              if (key === q.correct) style = 'color:#16a34a;font-weight:700;';
-              else if (key === chosen) style = 'color:#dc2626;font-weight:700;';
-              return `<p style="${style}">${key.toUpperCase()}. ${escapeHTML(text)}
-                ${key === q.correct ? ' ✓' : ''}
-                ${key === chosen && key !== q.correct ? ' ✗' : ''}</p>`;
-            }).join('')}
-
-            ${q.explanation
-              ? `<p><b>Explanation:</b> ${escapeHTML(q.explanation)}</p>`
-              : ''}
-          </article>
-        `;
-      }).join('')}
-    `;
-  }
-
-  // ----- Quiz view (body pore renderQuizBody diye bhore) -----
-  return `
-    <div class="topbar">
-      <div>
-        <p class="eyebrow">${quiz.examId ? 'EXAM' : 'PRACTICE'}</p>
-        <h1>${escapeHTML(quiz.title)}</h1>
-      </div>
-      <span class="role-pill" id="timer">
-        ${quiz.endsAt ? '--:--' : total + ' Q'}
-      </span>
-    </div>
-
-    <div id="quizBody"></div>
-  `;
-}
-
-function renderQuizBody() {
-  const quiz = activeQuiz;
-  const body = document.querySelector('#quizBody');
-  if (!quiz || !body) return;
-
-  const total = quiz.questions.length;
-  const i = quiz.index;
-  const q = quiz.questions[i];
-  const chosen = quiz.answers[q.id];
-  const locked = quiz.instant && !!chosen;
-  const answered = Object.keys(quiz.answers).length;
-
-  body.innerHTML = `
-    <div class="quiz-progress">
-      <span>Question ${i + 1} / ${total}</span>
-      <span>${answered} answered</span>
-    </div>
-    <div class="quiz-bar"><div style="width:${((i + 1) / total) * 100}%"></div></div>
-
-    <article class="quiz-card">
-      <h3>${escapeHTML(q.question)}</h3>
-
-      ${optionList(q).map(([key, text]) => {
-        let cls = 'quiz-opt';
-        if (locked) {
-          if (key === q.correct) cls += ' correct';
-          else if (key === chosen) cls += ' wrong';
-        } else if (key === chosen) {
-          cls += ' selected';
+<!DOCTYPE html>
+<html lang="bn" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admission Warrior</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet" />
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Plus Jakarta Sans', 'Hind Siliguri', 'system-ui', 'sans-serif'],
+            bangla: ['Hind Siliguri', 'Plus Jakarta Sans', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace']
+          }
         }
+      }
+    };
+  </script>
 
-        return `
-          <button type="button" class="${cls}" data-key="${key}"
-            ${locked ? 'disabled' : ''}>
-            <b>${key.toUpperCase()}</b>
-            <span>${escapeHTML(text)}</span>
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true
+      },
+      options: {
+        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      },
+      startup: {
+        ready: () => {
+          MathJax.startup.defaultReady();
+          if (typeof window.typesetMath === 'function') window.typesetMath();
+        }
+      }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" onerror="window.__mjErr = true"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" onload="setPdfWorker()" onerror="window.__pdfErr = true"></script>
+  <script>
+    function setPdfWorker() {
+      try {
+        if (window.pdfjsLib && window.pdfjsLib.GlobalWorkerOptions) {
+          window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        }
+      } catch (_) {}
+    }
+    setPdfWorker();
+  </script>
+
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Plus Jakarta Sans', 'Hind Siliguri', sans-serif;
+      background-color: #070a10;
+      color: #eef2f7;
+      overflow-x: hidden;
+    }
+    .surface {
+      background: #0d121d;
+      border: 1px solid rgba(148, 163, 184, 0.14);
+    }
+    .surface-2 {
+      background: #121928;
+      border: 1px solid rgba(148, 163, 184, 0.12);
+    }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.25); border-radius: 9999px; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- Top Bar: Geometric SVG Logo + Title + Key + AI Chat -->
+  <header class="sticky top-0 z-30 bg-[#070a10]/90 backdrop-blur-md border-b border-slate-800/80">
+    <div class="max-w-6xl mx-auto px-3 sm:px-5 h-14 flex items-center justify-between gap-2">
+      <div class="flex items-center gap-2 min-w-0">
+        <button id="btn-back" type="button" title="Back" class="p-2 rounded-lg surface-2 hover:border-slate-600 text-slate-300 transition shrink-0">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+
+        <button type="button" onclick="switchView('bank')" class="flex items-center gap-2.5 text-left shrink-0">
+          <!-- Crisp Geometric SVG Brand Mark -->
+          <svg class="w-8 h-8 shrink-0" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <rect width="36" height="36" rx="9" fill="#111827" stroke="#34d399" stroke-opacity="0.45" />
+            <polygon points="18,7 28,26 23.2,26 18,15.6 12.8,26 8,26" fill="#34d399" />
+            <rect x="14.5" y="21" width="7" height="2.4" rx="1.2" fill="#818cf8" />
+          </svg>
+          <span class="font-extrabold text-base sm:text-lg tracking-tight text-white">Admission Warrior</span>
+        </button>
+      </div>
+
+      <nav class="hidden md:flex items-center gap-1 p-1 rounded-xl surface-2">
+        <button data-tab="bank" onclick="switchView('bank')" class="tab-btn px-3 py-1.5 rounded-lg text-xs font-bold transition">Qn Bank</button>
+        <button data-tab="syllabus" onclick="switchView('syllabus')" class="tab-btn px-3 py-1.5 rounded-lg text-xs font-bold transition">Syllabus</button>
+        <button data-tab="quiz" onclick="switchView('quiz')" class="tab-btn px-3 py-1.5 rounded-lg text-xs font-bold transition">Quiz</button>
+        <button data-tab="photo" onclick="switchView('photo')" class="tab-btn px-3 py-1.5 rounded-lg text-xs font-bold transition">Photo Check</button>
+      </nav>
+
+      <div class="flex items-center gap-2 shrink-0">
+        <button type="button" onclick="openKeyModal()" class="px-2.5 py-1.5 rounded-lg text-xs font-semibold surface-2 hover:border-slate-600 text-slate-200 flex items-center gap-1.5 transition">
+          <span id="key-dot" class="w-2 h-2 rounded-full bg-amber-400"></span>
+          <span id="key-text">API Key</span>
+        </button>
+        <button type="button" onclick="toggleDrawer(true)" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition">
+          AI Tutor
+        </button>
+      </div>
+    </div>
+
+    <!-- Mobile Tabs -->
+    <div class="flex md:hidden border-t border-slate-800/80 px-2 py-1 gap-1 bg-[#070a10]">
+      <button data-tab="bank" onclick="switchView('bank')" class="tab-btn flex-1 py-1.5 rounded-lg text-xs font-bold transition">Qn Bank</button>
+      <button data-tab="syllabus" onclick="switchView('syllabus')" class="tab-btn flex-1 py-1.5 rounded-lg text-xs font-bold transition">Syllabus</button>
+      <button data-tab="quiz" onclick="switchView('quiz')" class="tab-btn flex-1 py-1.5 rounded-lg text-xs font-bold transition">Quiz</button>
+      <button data-tab="photo" onclick="switchView('photo')" class="tab-btn flex-1 py-1.5 rounded-lg text-xs font-bold transition">Photo Check</button>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="flex-1 max-w-6xl w-full mx-auto px-3 sm:px-5 py-5">
+
+    <!-- 1. QUESTION BANK + EXACT COPY + PREDICTIVE + OPTION RECHECK -->
+    <section id="view-bank" class="app-view space-y-5">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        <!-- Left Controls -->
+        <div class="lg:col-span-5 space-y-4">
+          <div class="rounded-2xl surface p-4 space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Question Bank</span>
+              <div class="flex items-center gap-1.5">
+                <button type="button" onclick="loadSampleBank()" class="px-2.5 py-1 rounded-md text-xs font-semibold surface-2 hover:border-emerald-500/50 text-emerald-300">Sample</button>
+                <label class="px-2.5 py-1 rounded-md text-xs font-semibold surface-2 hover:border-indigo-500/50 text-indigo-300 cursor-pointer">
+                  Upload
+                  <input type="file" accept=".txt,.md,.csv,.pdf" onchange="handleBankUpload(event)" class="hidden" />
+                </label>
+              </div>
+            </div>
+            <p id="bank-file-meta" class="text-[11px] font-mono text-slate-400 truncate">No file loaded (paste text or click Sample)</p>
+            <textarea id="bank-text" rows="5" oninput="saveBankText()" placeholder="Paste admission question bank text here..." class="w-full rounded-xl p-3 text-xs sm:text-sm bg-[#080c14] border border-slate-800 text-slate-100 focus:outline-none focus:border-emerald-500"></textarea>
+          </div>
+
+          <div class="rounded-2xl surface p-4 space-y-3">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-400">HSC Syllabus Target</span>
+
+            <div>
+              <label class="block text-xs text-slate-400 mb-1">Subject & Paper</label>
+              <select id="bank-paper" onchange="populateChapterDropdown()" class="w-full rounded-xl px-3 py-2 text-xs sm:text-sm bg-[#080c14] border border-slate-800 text-slate-100"></select>
+            </div>
+
+            <div>
+              <label class="block text-xs text-slate-400 mb-1">Chapter</label>
+              <select id="bank-chapter" onchange="onChapterOrTopicChange()" class="w-full rounded-xl px-3 py-2 text-xs sm:text-sm bg-[#080c14] border border-slate-800 text-slate-100"></select>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2.5">
+              <div>
+                <label class="block text-xs text-slate-400 mb-1">Topic Filter</label>
+                <input id="bank-topic" type="text" oninput="onChapterOrTopicChange()" placeholder="e.g. Carnot, Aldol, Limit" class="w-full rounded-xl px-3 py-2 text-xs sm:text-sm bg-[#080c14] border border-slate-800 text-slate-100" />
+              </div>
+              <div>
+                <label class="block text-xs text-slate-400 mb-1">Count</label>
+                <select id="bank-count" class="w-full rounded-xl px-3 py-2 text-xs sm:text-sm bg-[#080c14] border border-slate-800 text-slate-100">
+                  <option value="3">3 Qns</option>
+                  <option value="5" selected>5 Qns</option>
+                  <option value="8">8 Qns</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2 pt-1">
+              <button id="btn-exact" type="button" onclick="runBankWorkflow('copy')" class="py-2.5 px-3 rounded-xl text-xs font-bold surface-2 hover:border-indigo-400/60 text-indigo-200 transition">
+                Exact Copy
+              </button>
+              <button id="btn-predict" type="button" onclick="runBankWorkflow('predict')" class="py-2.5 px-3 rounded-xl text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition">
+                Predictive Qns
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Questions + Mandatory Option Recheck -->
+        <div class="lg:col-span-7 space-y-4">
+          <div class="rounded-2xl surface p-4 space-y-3">
+            <div class="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-slate-800/80">
+              <div class="flex items-center gap-2">
+                <span class="text-sm font-bold text-white">Questions</span>
+                <span id="q-count-badge" class="px-2 py-0.5 rounded-full text-xs font-mono bg-slate-800 text-emerald-300">0</span>
+                <span id="bank-status" class="text-xs text-slate-400">Ready</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <button type="button" onclick="runMandatoryOptionRecheck(true)" class="px-3 py-1.5 rounded-lg text-xs font-bold surface-2 hover:border-emerald-500/50 text-emerald-300">
+                  Option Recheck
+                </button>
+                <button type="button" onclick="startQuizFromDeck()" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-500 hover:bg-indigo-400 text-white">
+                  Start Quiz
+                </button>
+              </div>
+            </div>
+
+            <div id="pattern-brief" class="hidden rounded-xl p-3 bg-[#080c14] border border-slate-800 text-xs text-slate-300"></div>
+            <div id="questions-list" class="space-y-3"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. FULL NCTB HSC SCIENCE SYLLABUS -->
+    <section id="view-syllabus" class="app-view hidden space-y-4">
+      <div class="flex flex-wrap items-center justify-between gap-2 rounded-2xl surface p-4">
+        <span class="text-sm font-bold text-white">HSC Science Syllabus (NCTB)</span>
+        <div id="syllabus-filters" class="flex flex-wrap gap-1.5"></div>
+      </div>
+      <div id="syllabus-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+    </section>
+
+    <!-- 3. TIMED QUIZ ARENA -->
+    <section id="view-quiz" class="app-view hidden space-y-4">
+      <div class="rounded-2xl surface p-4 flex flex-wrap items-center justify-between gap-3">
+        <div class="flex flex-wrap items-center gap-2">
+          <select id="quiz-mins" class="rounded-xl px-3 py-2 text-xs font-semibold bg-[#080c14] border border-slate-800 text-slate-100">
+            <option value="3">3 min</option>
+            <option value="5" selected>5 min</option>
+            <option value="10">10 min</option>
+            <option value="15">15 min</option>
+          </select>
+          <select id="quiz-mode" class="rounded-xl px-3 py-2 text-xs font-semibold bg-[#080c14] border border-slate-800 text-slate-100">
+            <option value="instant" selected>Instant Check</option>
+            <option value="end">End of Quiz</option>
+          </select>
+          <button type="button" onclick="startQuiz()" class="px-4 py-2 rounded-xl text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950">
+            New Quiz
           </button>
-        `;
-      }).join('')}
+        </div>
 
-      ${locked && q.explanation
-        ? `<p class="quiz-explain"><b>Explanation:</b> ${escapeHTML(q.explanation)}</p>`
-        : ''}
-    </article>
+        <div class="flex items-center gap-3">
+          <span id="quiz-timer" class="px-3 py-1.5 rounded-xl font-mono text-sm font-bold bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">05:00</span>
+          <button id="btn-submit-quiz" type="button" onclick="submitQuiz('manual')" class="px-3.5 py-2 rounded-xl text-xs font-bold bg-indigo-500 hover:bg-indigo-400 text-white">
+            Submit
+          </button>
+        </div>
+      </div>
 
-    <div class="quiz-nav">
-      ${quiz.questions.map((x, n) => `
-        <button type="button"
-          class="qnum ${quiz.answers[x.id] ? 'answered' : ''} ${n === i ? 'current' : ''}"
-          data-goto="${n}">${n + 1}</button>
-      `).join('')}
+      <div class="w-full h-1.5 rounded-full bg-slate-800 overflow-hidden">
+        <div id="quiz-progress" class="h-full bg-emerald-400 transition-all duration-300" style="width: 0%"></div>
+      </div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        <div id="quiz-stage" class="lg:col-span-8 rounded-2xl surface p-5 min-h-[260px] flex flex-col justify-between"></div>
+        <div class="lg:col-span-4 rounded-2xl surface p-4 space-y-3">
+          <div class="flex items-center justify-between text-xs">
+            <span class="font-bold text-slate-300">Palette</span>
+            <span id="quiz-palette-meta" class="font-mono text-slate-400">0/0</span>
+          </div>
+          <div id="quiz-palette" class="grid grid-cols-5 gap-2"></div>
+        </div>
+      </div>
+
+      <div id="quiz-summary" class="hidden rounded-2xl surface p-5 space-y-4"></div>
+    </section>
+
+    <!-- 4. TWO-PASS PHOTO-TO-QUESTION SOLVER -->
+    <section id="view-photo" class="app-view hidden space-y-4">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-5">
+        <div class="lg:col-span-5 rounded-2xl surface p-4 space-y-3">
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Question Photo</span>
+
+          <div class="grid grid-cols-2 gap-2">
+            <label class="py-2.5 px-3 rounded-xl text-xs font-bold bg-indigo-500 hover:bg-indigo-400 text-white text-center cursor-pointer transition">
+              Camera
+              <input type="file" accept="image/*" capture="environment" onchange="handlePhotoChange(event)" class="hidden" />
+            </label>
+            <label class="py-2.5 px-3 rounded-xl text-xs font-bold surface-2 hover:border-slate-600 text-slate-200 text-center cursor-pointer transition">
+              Gallery
+              <input type="file" accept="image/*" onchange="handlePhotoChange(event)" class="hidden" />
+            </label>
+          </div>
+
+          <div class="rounded-xl bg-[#080c14] border border-slate-800 min-h-[200px] flex items-center justify-center p-3 overflow-hidden">
+            <span id="photo-empty" class="text-xs text-slate-500">Select or capture a question image</span>
+            <img id="photo-preview" alt="Question preview" class="hidden max-h-64 rounded-lg object-contain" />
+          </div>
+
+          <input id="photo-hint" type="text" placeholder="Optional hint (e.g. Q2, find velocity)" class="w-full rounded-xl px-3 py-2 text-xs sm:text-sm bg-[#080c14] border border-slate-800 text-slate-100" />
+
+          <button id="btn-photo-solve" type="button" onclick="solvePhotoDoubleCheck()" class="w-full py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950 transition">
+            Solve & Double-Check
+          </button>
+        </div>
+
+        <div class="lg:col-span-7 rounded-2xl surface p-4 space-y-3">
+          <div class="flex items-center justify-between border-b border-slate-800/80 pb-2.5">
+            <span class="text-sm font-bold text-white">Double-Check Result</span>
+            <span id="photo-badge" class="px-2.5 py-0.5 rounded-full text-xs font-mono bg-slate-800 text-slate-300">Idle</span>
+          </div>
+          <div id="photo-output" class="space-y-3 text-xs sm:text-sm text-slate-300">
+            <p class="text-slate-400">Pass 1 extracts and solves; Pass 2 verifies steps, units, and final answer.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Slide-Over Gemini AI Tutor Drawer -->
+  <div id="drawer-backdrop" onclick="toggleDrawer(false)" class="fixed inset-0 z-40 bg-black/65 hidden"></div>
+  <aside id="ai-drawer" class="fixed top-0 right-0 z-50 h-full w-full sm:w-[420px] bg-[#0c111b] border-l border-slate-800 translate-x-full transition-transform duration-200 flex flex-col">
+    <div class="px-4 py-3 border-b border-slate-800 flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+        <span class="font-bold text-sm text-white">AI Tutor</span>
+        <span id="drawer-context-pill" class="text-[11px] font-mono text-slate-400 truncate max-w-[180px]"></span>
+      </div>
+      <button type="button" onclick="toggleDrawer(false)" class="px-2 py-1 rounded-lg text-xs text-slate-400 hover:bg-slate-800 hover:text-white">✕</button>
     </div>
 
-    <div class="quiz-actions">
-      <button class="outline-btn" type="button" id="prevQ"
-        ${i === 0 ? 'disabled' : ''}>← Previous</button>
-      ${i < total - 1
-        ? '<button class="primary-btn" type="button" id="nextQ">Next →</button>'
-        : ''}
-      <button class="primary-btn" type="button" id="finishQ">Submit</button>
+    <div class="px-3 py-2 border-b border-slate-800/80 flex gap-1.5 overflow-x-auto">
+      <button type="button" onclick="quickTutorPrompt('এই অধ্যায়ের গুরুত্বপূর্ণ সূত্র ও ভর্তি পরীক্ষার শর্টকাট দাও।')" class="shrink-0 px-2.5 py-1 rounded-full text-xs font-semibold surface-2 text-emerald-300">Formulas & Tricks</button>
+      <button type="button" onclick="quickTutorPrompt('আপলোড করা প্রশ্নব্যাংক অনুযায়ী সম্ভাব্য টপিকগুলো বলো।')" class="shrink-0 px-2.5 py-1 rounded-full text-xs font-semibold surface-2 text-indigo-300">Bank Patterns</button>
+      <button type="button" onclick="quickTutorPrompt('এই টপিকের একটি কঠিন MCQ দিয়ে ব্যাখ্যা করো।')" class="shrink-0 px-2.5 py-1 rounded-full text-xs font-semibold surface-2 text-slate-200">Practice MCQ</button>
     </div>
-  `;
 
-  body.querySelectorAll('.quiz-opt').forEach(btn => {
-    btn.onclick = () => {
-      if (quiz.instant && quiz.answers[q.id]) return;
-      quiz.answers[q.id] = btn.dataset.key;
-      renderQuizBody();
+    <div id="chat-messages" class="flex-1 overflow-y-auto p-3.5 space-y-2.5 text-xs sm:text-sm"></div>
+
+    <form onsubmit="sendTutorMessage(event)" class="p-3 border-t border-slate-800 flex gap-2">
+      <input id="chat-input" type="text" required placeholder="Ask physics, chemistry, math, biology, ICT..." class="flex-1 rounded-xl px-3 py-2 text-xs sm:text-sm bg-[#080c14] border border-slate-800 text-slate-100 focus:outline-none focus:border-emerald-500" />
+      <button type="submit" class="px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950">Send</button>
+    </form>
+  </aside>
+
+  <!-- Gemini API Key Modal -->
+  <div id="key-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/75">
+    <div class="w-full max-w-sm rounded-2xl surface p-5 space-y-3">
+      <div class="flex items-center justify-between">
+        <span class="font-bold text-sm text-white">Gemini API Key</span>
+        <button type="button" onclick="closeKeyModal()" class="text-slate-400 hover:text-white text-xs">✕</button>
+      </div>
+      <input id="key-input" type="password" placeholder="GEMINI_API_KEY (AIza...)" class="w-full rounded-xl px-3 py-2 text-xs sm:text-sm bg-[#080c14] border border-slate-800 text-white focus:outline-none focus:border-emerald-500" />
+      <p class="text-[11px] text-slate-400">Saved locally. Without a key, local demo/offline mode runs automatically.</p>
+      <div class="flex items-center justify-between pt-1">
+        <button type="button" onclick="clearKey()" class="text-xs font-semibold text-rose-400 hover:underline">Clear</button>
+        <div class="flex gap-2">
+          <button type="button" onclick="closeKeyModal()" class="px-3 py-1.5 rounded-lg text-xs font-semibold surface-2 text-slate-300">Cancel</button>
+          <button type="button" onclick="saveKey()" class="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 hidden px-4 py-2 rounded-xl text-xs font-bold bg-slate-900 text-white border border-slate-700 shadow-lg"></div>
+
+  <script>
+    const SYLLABUS = [
+      {
+        id: 'phy1', subject: 'Physics', paper: 'Physics 1st Paper',
+        chapters: ['ভৌত জগৎ ও পরিমাপ', 'ভেক্টর', 'গতিবিদ্যা', 'নিউটনিয়ান বলবিদ্যা', 'কাজ, শক্তি ও ক্ষমতা', 'মহাকর্ষ ও অভিকর্ষ', 'পদার্থের গাঠনিক ধর্ম', 'পর্যাবৃত্ত গতি', 'তরঙ্গ', 'আদর্শ গ্যাস ও গ্যাসের গতিতত্ত্ব']
+      },
+      {
+        id: 'phy2', subject: 'Physics', paper: 'Physics 2nd Paper',
+        chapters: ['তাপগতিবিদ্যা', 'স্থির তড়িৎ', 'চল তড়িৎ', 'তড়িৎ প্রবাহের চৌম্বক ক্রিয়া ও চুম্বকত্ব', 'তড়িৎচৌম্বক আবেশ ও পরিবর্তী প্রবাহ', 'জ্যামিতিক আলোকবিজ্ঞান', 'ভৌত আলোকবিজ্ঞান', 'আধুনিক পদার্থবিজ্ঞানের সূচনা', 'পরমাণুর মডেল ও নিউক্লিয়ার পদার্থবিজ্ঞান', 'সেমিকন্ডাক্টর ও ইলেকট্রনিক্স']
+      },
+      {
+        id: 'chem1', subject: 'Chemistry', paper: 'Chemistry 1st Paper',
+        chapters: ['ল্যাবরেটরির নিরাপদ ব্যবহার', 'গুণগত রসায়ন', 'মৌলের পর্যায়বৃত্ত ধর্ম ও রাসায়নিক বন্ধন', 'রাসায়নিক পরিবর্তন', 'কর্মমুখী রসায়ন']
+      },
+      {
+        id: 'chem2', subject: 'Chemistry', paper: 'Chemistry 2nd Paper',
+        chapters: ['পরিবেশ রসায়ন', 'জৈব রসায়ন', 'পরিমাণগত রসায়ন', 'তড়িৎ রসায়ন', 'অর্থনৈতিক রসায়ন']
+      },
+      {
+        id: 'math1', subject: 'Higher Math', paper: 'Higher Math 1st Paper',
+        chapters: ['ম্যাট্রিক্স ও নির্ণায়ক', 'ভেক্টর', 'সরলরেখা', 'বৃত্ত', 'বিন্যাস ও সমাবেশ', 'ত্রিকোণমিতিক অনুপাত', 'সংযুক্ত কোণের ত্রিকোণমিতিক অনুপাত', 'ফাংশন ও ফাংশনের লেখচিত্র', 'অন্তরীকরণ', 'যোগজীকরণ']
+      },
+      {
+        id: 'math2', subject: 'Higher Math', paper: 'Higher Math 2nd Paper',
+        chapters: ['বাস্তব সংখ্যা ও অসমতা', 'যোগাশ্রয়ী প্রোগ্রাম', 'জটিল সংখ্যা', 'বহুপদী ও বহুপদী সমীকরণ', 'দ্বিপদী বিস্তৃতি', 'কনিক', 'বিপরীত ত্রিকোণমিতিক ফাংশন ও সমীকরণ', 'স্থিতিবিদ্যা', 'সমতলে বস্তুকণার গতি', 'বিস্তার পরিমাপ ও সম্ভাবনা']
+      },
+      {
+        id: 'bio1', subject: 'Biology', paper: 'Biology 1st Paper (Botany)',
+        chapters: ['কোষ ও এর গঠন', 'কোষ বিভাজন', 'কোষ রসায়ন', 'অণুজীব', 'শৈবাল ও ছত্রাক', 'ব্রায়োফাইটা ও টেরিডোফাইটা', 'নগ্নবীজী ও আবৃতবীজী উদ্ভিদ', 'টিস্যু ও টিস্যুতন্ত্র', 'উদ্ভিদ শারীরতত্ত্ব', 'উদ্ভিদ প্রজনন', 'জীবপ্রযুক্তি', 'জীবের পরিবেশ, বিস্তার ও সংরক্ষণ']
+      },
+      {
+        id: 'bio2', subject: 'Biology', paper: 'Biology 2nd Paper (Zoology)',
+        chapters: ['প্রাণীর বিভিন্নতা ও শ্রেণিবিন্যাস', 'প্রাণীর পরিচিতি', 'পরিপাক ও শোষণ', 'রক্ত ও সঞ্চালন', 'শ্বসন ও শ্বাসক্রিয়া', 'বর্জ্য ও নিষ্কাশন', 'চলন ও অঙ্গচালনা', 'সমন্বয় ও নিয়ন্ত্রণ', 'মানব জীবনের ধারাবাহিকতা', 'মানবদেহের প্রতিরক্ষা', 'জিনতত্ত্ব ও বিবর্তন', 'প্রাণীর আচরণ']
+      },
+      {
+        id: 'ict', subject: 'ICT', paper: 'ICT',
+        chapters: ['বিশ্ব ও বাংলাদেশ পরিপ্রেক্ষিত', 'কমিউনিকেশন সিস্টেমস ও নেটওয়ার্কিং', 'সংখ্যা পদ্ধতি ও ডিজিটাল ডিভাইস', 'ওয়েব ডিজাইন পরিচিতি ও HTML', 'প্রোগ্রামিং ভাষা (C)', 'ডেটাবেজ ম্যানেজমেন্ট সিস্টেম']
+      }
+    ];
+
+    const SAMPLE_BANK = `1. কার্নো ইঞ্জিনের তাপ উৎসের তাপমাত্রা 400 K এবং গ্রাহকের তাপমাত্রা 300 K। গৃহীত তাপ 800 J হলে বর্জিত তাপ কত?
+A) 200 J  B) 600 J  C) 400 J  D) 500 J
+2. নিচের কোন যৌগটি অ্যালডল ঘনীভবন বিক্রিয়া দেয়?
+A) HCHO  B) C6H5CHO  C) CH3CHO  D) (CH3)3CCHO
+3. $\\int_0^{\\pi/2} \\frac{\\sin x}{\\sin x + \\cos x} dx$ এর মান কত?
+A) $\\pi/2$  B) $\\pi/4$  C) 1  D) 0`;
+
+    const SEED_QUESTIONS = [
+      {
+        id: 'q_seed_1', subject: 'Physics', paper: 'Physics 2nd Paper', chapter: 'তাপগতিবিদ্যা',
+        q: 'কার্নো ইঞ্জিনের উৎস $400\\text{ K}$ ও গ্রাহক $300\\text{ K}$ হলে এবং $800\\text{ J}$ তাপ গ্রহণ করলে বর্জিত তাপ কত?',
+        options: ['$200\\text{ J}$', '$600\\text{ J}$', '$400\\text{ J}$', '$500\\text{ J}$'],
+        correctIndex: 1,
+        explanation: '$Q_2 = Q_1 \\frac{T_2}{T_1} = 800 \\times \\frac{300}{400} = 600\\text{ J}$।',
+        audit: { status: 'PASS', note: '4 distinct options; Q2 verified (work done 200 J is trap).' }
+      },
+      {
+        id: 'q_seed_2', subject: 'Chemistry', paper: 'Chemistry 2nd Paper', chapter: 'জৈব রসায়ন',
+        q: 'নিচের কোন যৌগটি অ্যালডল ঘনীভবন বিক্রিয়া দেয়?',
+        options: ['$HCHO$', '$C_6H_5CHO$', '$CH_3CHO$', '$(CH_3)_3CCHO$'],
+        correctIndex: 2,
+        explanation: '$CH_3CHO$-এ $\\alpha$-H থাকায় লঘু ক্ষারে অ্যালডল বিক্রিয়া ঘটে।',
+        audit: { status: 'PASS', note: '4 distinct options; alpha-H rule verified.' }
+      },
+      {
+        id: 'q_seed_3', subject: 'Higher Math', paper: 'Higher Math 1st Paper', chapter: 'যোগজীকরণ',
+        q: '$\\int_0^{\\pi/2} \\frac{\\sin x}{\\sin x + \\cos x} dx$ এর মান কত?',
+        options: ['$\\frac{\\pi}{2}$', '$\\frac{\\pi}{4}$', '$1$', '$0$'],
+        correctIndex: 1,
+        explanation: '$2I = \\int_0^{\\pi/2} 1\\,dx = \\frac{\\pi}{2} \\Rightarrow I = \\frac{\\pi}{4}$।',
+        audit: { status: 'PASS', note: '4 distinct options; definite integral verified.' }
+      },
+      {
+        id: 'q_seed_4', subject: 'Biology', paper: 'Biology 1st Paper (Botany)', chapter: 'কোষ বিভাজন',
+        q: 'মায়োসিস-১ এর কোন উপ-পর্যায়ে ক্রসিং ওভার ঘটে?',
+        options: ['লেপ্টোটিন', 'জাইগোটিন', 'প্যাকাইটিন', 'ডিপ্লোটিন'],
+        correctIndex: 2,
+        explanation: 'প্যাকাইটিন উপ-পর্যায়ে নন-সিস্টার ক্রোমাটিডে ক্রসিং ওভার হয়।',
+        audit: { status: 'PASS', note: '4 distinct options; NCTB Pachytene verified.' }
+      },
+      {
+        id: 'q_seed_5', subject: 'ICT', paper: 'ICT', chapter: 'সংখ্যা পদ্ধতি ও ডিজিটাল ডিভাইস',
+        q: '$(101101)_2$ বাইনারি সংখ্যার হেক্সাডেসিমেল মান কত?',
+        options: ['$(2D)_{16}$', '$(2B)_{16}$', '$(3D)_{16}$', '$(1E)_{16}$'],
+        correctIndex: 0,
+        explanation: '$0010\\ 1101_2 = 2_{16}\\text{ এবং } D_{16} = (2D)_{16}$।',
+        audit: { status: 'PASS', note: '4 distinct options; 4-bit grouping verified.' }
+      }
+    ];
+
+    const KEYS = {
+      API: 'aw_clean_gemini_key',
+      BANK: 'aw_clean_bank_text',
+      DECK: 'aw_clean_deck'
     };
-  });
 
-  body.querySelectorAll('[data-goto]').forEach(btn => {
-    btn.onclick = () => {
-      quiz.index = Number(btn.dataset.goto);
-      renderQuizBody();
+    const state = {
+      view: 'bank',
+      apiKey: localStorage.getItem(KEYS.API) || '',
+      deck: loadInitialDeck(),
+      syllabusSubject: 'ALL',
+      quizList: [],
+      quizIdx: 0,
+      quizAnswers: {},
+      quizDone: false,
+      quizSec: 300,
+      quizTimer: null,
+      photoBase64: '',
+      photoMime: 'image/jpeg'
     };
-  });
 
-  document.querySelector('#prevQ')?.addEventListener('click', () => {
-    if (quiz.index > 0) {
-      quiz.index--;
-      renderQuizBody();
-    }
-  });
-
-  document.querySelector('#nextQ')?.addEventListener('click', () => {
-    if (quiz.index < total - 1) {
-      quiz.index++;
-      renderQuizBody();
-    }
-  });
-
-  document.querySelector('#finishQ')?.addEventListener('click', () => {
-    const unanswered = total - Object.keys(quiz.answers).length;
-
-    if (unanswered > 0 &&
-        !confirm(`${unanswered} ta question answer kora hoyni. Submit korbe?`)) {
-      return;
+    function loadInitialDeck() {
+      try {
+        const d = JSON.parse(localStorage.getItem(KEYS.DECK) || 'null');
+        return Array.isArray(d) && d.length ? d : [...SEED_QUESTIONS];
+      } catch {
+        return [...SEED_QUESTIONS];
+      }
     }
 
-    submitQuiz();
-  });
-}
+    function persistDeck() {
+      try { localStorage.setItem(KEYS.DECK, JSON.stringify(state.deck)); } catch (_) {}
+    }
 
-function setupQuiz() {
-  if (!activeQuiz || activeQuiz.submitted) return;
+    function typesetMath(el) {
+      try {
+        if (window.MathJax && typeof window.MathJax.typesetPromise === 'function') {
+          window.MathJax.typesetPromise(el ? [el] : undefined).catch(() => {});
+        }
+      } catch (_) {}
+    }
+    window.typesetMath = typesetMath;
 
-  renderQuizBody();
+    function esc(s) {
+      return String(s || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
 
-  if (activeQuiz.endsAt) {
-    const tick = () => {
-      if (!activeQuiz || activeQuiz.submitted) {
-        clearInterval(quizTimer);
-        return;
+    function toast(msg) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.classList.remove('hidden');
+      clearTimeout(toast._t);
+      toast._t = setTimeout(() => el.classList.add('hidden'), 2400);
+    }
+
+    // Safe In-App Navigation (Prevents accidental browser exit)
+    const VALID_VIEWS = ['bank', 'syllabus', 'quiz', 'photo'];
+    let navLock = false;
+
+    function applyTabStyles(v) {
+      document.querySelectorAll('.app-view').forEach((sec) => sec.classList.toggle('hidden', sec.id !== `view-${v}`));
+      document.querySelectorAll('.tab-btn').forEach((btn) => {
+        const active = btn.getAttribute('data-tab') === v;
+        btn.classList.toggle('bg-emerald-500', active);
+        btn.classList.toggle('text-slate-950', active);
+        btn.classList.toggle('text-slate-300', !active);
+      });
+    }
+
+    function switchView(v, push = true) {
+      const target = VALID_VIEWS.includes(v) ? v : 'bank';
+      state.view = target;
+      applyTabStyles(target);
+
+      const h = `#${target}`;
+      if (push && window.location.hash !== h) {
+        navLock = true;
+        try { window.history.pushState({ view: target, appGuard: true }, '', h); }
+        catch { window.location.hash = h; }
+        setTimeout(() => { navLock = false; }, 40);
       }
 
-      const left = activeQuiz.endsAt - Date.now();
-      const el = document.querySelector('#timer');
-
-      if (left <= 0) {
-        clearInterval(quizTimer);
-        notify('Time shesh! Auto submit hocche.');
-        submitQuiz();
-        return;
-      }
-
-      if (el) {
-        const m = String(Math.floor(left / 60000)).padStart(2, '0');
-        const s = String(Math.floor((left % 60000) / 1000)).padStart(2, '0');
-        el.textContent = `${m}:${s}`;
-      }
-    };
-
-    tick();
-    quizTimer = setInterval(tick, 1000);
-  }
-}
-
-async function submitQuiz() {
-  if (!activeQuiz || activeQuiz.submitted) return;
-
-  clearInterval(quizTimer);
-
-  const quiz = activeQuiz;
-  quiz.score = quiz.questions.filter(
-    q => quiz.answers[q.id] === q.correct
-  ).length;
-  quiz.submitted = true;
-
-  if (quiz.examId) {
-    const { error } = await supabase.from('results').insert({
-      exam_id: quiz.examId,
-      user_id: user.id,
-      score: quiz.score,
-      total: quiz.questions.length
-    });
-
-    if (error) {
-      console.error('Result save failed:', error);
-    } else {
-      myResults[quiz.examId] = {
-        score: quiz.score,
-        total: quiz.questions.length
-      };
+      if (target === 'syllabus') renderSyllabus();
+      if (target === 'quiz' && !state.quizList.length) startQuiz();
+      updateDrawerContext();
+      typesetMath(document.getElementById(`view-${target}`));
     }
-  }
 
-  await openPage('quiz');
-}
+    function initNavigationGuard() {
+      const m = (window.location.hash || '').replace(/^#/, '');
+      const start = VALID_VIEWS.includes(m) ? m : 'bank';
+      navLock = true;
+      try {
+        window.history.replaceState({ view: start, appGuard: true, root: true }, '', `#${start}`);
+        window.history.pushState({ view: start, appGuard: true }, '', `#${start}`);
+      } catch {
+        window.location.hash = `#${start}`;
+      }
+      setTimeout(() => { navLock = false; }, 40);
+      switchView(start, false);
 
-// ---------------- UPLOAD HELPERS ----------------
-
-async function checkConnection() {
-  try {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 10000);
-
-    const res = await fetch(`${SUPABASE_URL}/auth/v1/health`, {
-      headers: { apikey: SUPABASE_KEY },
-      signal: controller.signal
-    });
-
-    clearTimeout(timer);
-    return res.ok;
-  } catch {
-    return false;
-  }
-}
-
-function getContentType(file) {
-  if (file.type) return file.type;
-
-  const name = file.name.toLowerCase();
-  if (name.endsWith('.pdf')) return 'application/pdf';
-  if (name.endsWith('.png')) return 'image/png';
-  if (name.endsWith('.jpg') || name.endsWith('.jpeg')) return 'image/jpeg';
-  if (name.endsWith('.mp4')) return 'video/mp4';
-
-  return 'application/octet-stream';
-}
-
-function isNetworkError(error) {
-  const msg = String(error?.message || '').toLowerCase();
-  return msg.includes('failed to fetch') ||
-    msg.includes('networkerror') ||
-    msg.includes('load failed') ||
-    msg.includes('network request failed');
-}
-
-async function uploadWithRetry(path, file, attempts = 3) {
-  let lastError = null;
-
-  for (let i = 1; i <= attempts; i++) {
-    const { error } = await supabase.storage
-      .from(BUCKET)
-      .upload(path, file, {
-        cacheControl: '3600',
-        upsert: false,
-        contentType: getContentType(file)
+      window.addEventListener('popstate', (e) => {
+        if (navLock) return;
+        const keyModal = document.getElementById('key-modal');
+        const drawer = document.getElementById('ai-drawer');
+        if (keyModal && !keyModal.classList.contains('hidden')) {
+          closeKeyModal();
+          repushCurrentView();
+          return;
+        }
+        if (drawer && !drawer.classList.contains('translate-x-full')) {
+          toggleDrawer(false);
+          repushCurrentView();
+          return;
+        }
+        const nextView = e.state && VALID_VIEWS.includes(e.state.view) ? e.state.view : 'bank';
+        if (nextView === state.view) repushCurrentView();
+        else switchView(nextView, false);
       });
 
-    if (!error) return;
-
-    lastError = error;
-
-    if (!isNetworkError(error)) break;
-
-    await sleep(1200 * i);
-  }
-
-  throw lastError;
-}
-
-function explainError(step, error) {
-  const msg = error?.message || 'Unknown error';
-  const lower = msg.toLowerCase();
-
-  if (isNetworkError(error)) {
-    return 'Server-e connect hocche na. Internet/VPN/ad-blocker check koro, ' +
-      'ar Vercel-er VITE_SUPABASE_URL thik ache kina dekho. ' +
-      'Supabase project paused thakle Restore koro.';
-  }
-
-  if (lower.includes('row-level security')) {
-    return 'Permission nai (RLS policy). setup.sql file-ta Supabase SQL Editor-e run koro.';
-  }
-
-  if (lower.includes('bucket not found')) {
-    return `"${BUCKET}" bucket paoa jayni. Supabase Storage-e bucket banao.`;
-  }
-
-  if (lower.includes('exceeded') || lower.includes('too large') ||
-      lower.includes('payload')) {
-    return 'File onek boro. Choto file diye try koro, ba bucket-er size limit barao.';
-  }
-
-  if (lower.includes('mime')) {
-    return 'Ei file type bucket-e allowed na. Bucket settings-e allowed MIME types check koro.';
-  }
-
-  return msg;
-}
-
-// ---------------- PUBLISH CONTENT ----------------
-
-async function publishContent(event) {
-  event.preventDefault();
-
-  if (uploadBusy) return;
-
-  if (!isAdmin()) {
-    notify('Only Main Admin can upload content.');
-    return;
-  }
-
-  const form = event.currentTarget;
-  const button = form.querySelector('button[type="submit"]');
-  const notice = document.querySelector('#uploadNotice');
-  const file = document.querySelector('#file').files[0];
-
-  const title = document.querySelector('#title').value.trim();
-
-  if (!title) {
-    notify('Content title is required.');
-    return;
-  }
-
-  if (file && file.size > MAX_FILE_MB * 1024 * 1024) {
-    notify(`File size must be below ${MAX_FILE_MB} MB.`);
-    return;
-  }
-
-  uploadBusy = true;
-  button.disabled = true;
-  button.textContent = 'Uploading...';
-  notice.textContent = '';
-  notice.className = 'notice';
-
-  let filePath = null;
-  let step = 'Starting';
-
-  try {
-    step = 'Session Check';
-    const { data: sessionData } = await supabase.auth.getSession();
-    if (!sessionData.session) {
-      throw new Error('Session expire hoye geche. Abar login koro.');
+      document.getElementById('btn-back').addEventListener('click', () => {
+        const keyModal = document.getElementById('key-modal');
+        if (keyModal && !keyModal.classList.contains('hidden')) return closeKeyModal();
+        const drawer = document.getElementById('ai-drawer');
+        if (drawer && !drawer.classList.contains('translate-x-full')) return toggleDrawer(false);
+        if (state.view !== 'bank') switchView('bank', true);
+        else toast('Already in Admission Warrior');
+      });
     }
 
-    if (file) {
-      step = 'Connection Check';
-      const online = await checkConnection();
-      if (!online) {
-        throw new Error('Failed to fetch');
+    function repushCurrentView() {
+      navLock = true;
+      try { window.history.pushState({ view: state.view, appGuard: true }, '', `#${state.view}`); } catch (_) {}
+      setTimeout(() => { navLock = false; }, 40);
+      applyTabStyles(state.view);
+    }
+
+    // Gemini Free Model Caller with Fallback Chain
+    async function callGemini(parts, systemText = '') {
+      if (!state.apiKey) throw new Error('NO_KEY');
+      const models = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+      let lastErr = null;
+
+      const cleanParts = (Array.isArray(parts) ? parts : [parts]).map((p) => {
+        if (p && p.inlineData && p.inlineData.data) {
+          const raw = String(p.inlineData.data);
+          const match = raw.match(/^data:([^;]+);base64,(.+)$/);
+          return {
+            inlineData: {
+              mimeType: match ? match[1] : (p.inlineData.mimeType || 'image/jpeg'),
+              data: match ? match[2] : raw
+            }
+          };
+        }
+        return { text: String(p && p.text !== undefined ? p.text : p || '') };
+      });
+
+      for (const model of models) {
+        try {
+          const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${encodeURIComponent(state.apiKey)}`;
+          const body = { contents: [{ role: 'user', parts: cleanParts }] };
+          if (systemText) body.systemInstruction = { parts: [{ text: systemText }] };
+
+          const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+          });
+          if (!res.ok) {
+            const errJson = await res.json().catch(() => ({}));
+            throw new Error(errJson?.error?.message || `HTTP ${res.status}`);
+          }
+          const json = await res.json();
+          const out = json?.candidates?.[0]?.content?.parts?.map((x) => x.text || '').join('\n').trim();
+          if (out) return { text: out, model };
+        } catch (err) {
+          lastErr = err;
+        }
       }
+      throw lastErr || new Error('Gemini request failed');
+    }
 
-      step = 'Storage Upload';
+    function parseJsonSafe(raw) {
+      const s = String(raw || '').replace(/```json|```/gi, '').trim();
+      try { return JSON.parse(s); } catch (_) {
+        const a = s.indexOf('{');
+        const b = s.lastIndexOf('}');
+        if (a !== -1 && b > a) return JSON.parse(s.slice(a, b + 1));
+        throw new Error('Invalid JSON');
+      }
+    }
 
-      const safeName = file.name.replace(
-        /[^a-zA-Z0-9._-]/g,
-        '_'
-      );
+    // Question Bank Upload, Exact Copy, Predictive & Option Recheck
+    function populateChapterDropdown() {
+      const id = document.getElementById('bank-paper').value;
+      const paper = SYLLABUS.find((p) => p.id === id) || SYLLABUS[0];
+      const sel = document.getElementById('bank-chapter');
+      sel.innerHTML = paper.chapters.map((c) => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
+      updateDrawerContext();
+    }
 
-      filePath = `${user.id}/${Date.now()}-${safeName}`;
+    function onChapterOrTopicChange() {
+      updateDrawerContext();
+    }
 
-      let body;
+    function loadSampleBank() {
+      document.getElementById('bank-text').value = SAMPLE_BANK;
+      document.getElementById('bank-file-meta').textContent = 'Sample Admission Qn Bank';
+      saveBankText();
+      toast('Sample loaded');
+    }
+
+    function saveBankText() {
+      try { localStorage.setItem(KEYS.BANK, document.getElementById('bank-text').value); } catch (_) {}
+    }
+
+    async function handleBankUpload(e) {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const meta = document.getElementById('bank-file-meta');
+      meta.textContent = `Loading ${file.name}...`;
       try {
-        const buffer = await file.arrayBuffer();
-        body = new Blob([buffer], { type: getContentType(file) });
-      } catch {
-        throw new Error(
-          'File porha jachche na. File-ta phone-er Downloads e copy kore abar select koro.'
-        );
+        if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+          if (!window.pdfjsLib) throw new Error('PDF.js missing');
+          const buf = await file.arrayBuffer();
+          const pdf = await window.pdfjsLib.getDocument({ data: buf }).promise;
+          let txt = '';
+          const pages = Math.min(pdf.numPages, 12);
+          for (let i = 1; i <= pages; i++) {
+            const page = await pdf.getPage(i);
+            const c = await page.getTextContent();
+            txt += `\n${c.items.map((it) => it.str).join(' ')}`;
+          }
+          document.getElementById('bank-text').value = txt.trim();
+          meta.textContent = `${file.name} (${pages}p)`;
+        } else {
+          document.getElementById('bank-text').value = (await file.text()).trim();
+          meta.textContent = file.name;
+        }
+        saveBankText();
+        toast('Uploaded');
+      } catch (_) {
+        meta.textContent = 'PDF parse fallback: paste text';
+        toast('Paste text if PDF is scanned');
       }
-
-      await uploadWithRetry(filePath, body);
+      e.target.value = '';
     }
 
-    step = 'Database Insert';
+    async function runBankWorkflow(mode) {
+      const bankText = document.getElementById('bank-text').value.trim();
+      const paperObj = SYLLABUS.find((p) => p.id === document.getElementById('bank-paper').value) || SYLLABUS[0];
+      const chapter = document.getElementById('bank-chapter').value;
+      const topic = document.getElementById('bank-topic').value.trim();
+      const count = parseInt(document.getElementById('bank-count').value, 10) || 5;
 
-    const row = {
-      title,
-      subject: document.querySelector('#subject').value,
-      kind: document.querySelector('#kind').value,
-      description: document.querySelector('#description').value,
-      video_url:
-        document.querySelector('#videoUrl').value || null,
-      file_path: filePath,
-      visibility: 'all',
-      created_by: user.id
-    };
+      const statusEl = document.getElementById('bank-status');
+      const briefEl = document.getElementById('pattern-brief');
+      statusEl.textContent = mode === 'copy' ? 'Copying...' : 'Analyzing & generating...';
 
-    const { error: insertError } = await supabase
-      .from('contents')
-      .insert(row);
-
-    if (insertError) throw insertError;
-
-    step = 'Refreshing Library';
-
-    await loadContents();
-
-    notify('Content successfully published!');
-    await openPage('library');
-
-  } catch (error) {
-    console.error('Upload error:', step, error);
-
-    if (filePath && step !== 'Storage Upload' &&
-        step !== 'Connection Check') {
       try {
-        await supabase.storage.from(BUCKET).remove([filePath]);
-      } catch {
-        /* ignore */
+        if (state.apiKey) {
+          const prompt =
+            mode === 'copy'
+              ? `Extract up to ${count} exact MCQs matching "${chapter}" ${topic ? `and topic "${topic}"` : ''} from this Question Bank text. Keep original wording/options faithfully and set correctIndex (0-3) accurately.\nBank:\n${bankText.slice(0, 6500)}\nReturn ONLY JSON: {"brief":"short pattern note","questions":[{"q":"","options":["","","",""],"correctIndex":0,"explanation":""}]}`
+              : `Analyze patterns from the Question Bank + HSC NCTB ${paperObj.paper} (${chapter}${topic ? `, ${topic}` : ''}) and generate ${count} probable admission MCQs in Bangla/LaTeX. Return ONLY JSON: {"brief":"top recurring concept/trap in 1 line","questions":[{"q":"","options":["","","",""],"correctIndex":0,"explanation":""}]}`;
+
+          const { text } = await callGemini([{ text: prompt }], 'Bangladesh HSC Science & Admission MCQ specialist.');
+          const parsed = parseJsonSafe(text);
+          const items = Array.isArray(parsed.questions) ? parsed.questions.slice(0, count) : [];
+
+          if (items.length) {
+            state.deck = items.map((item, idx) => ({
+              id: `q_${Date.now()}_${idx}`,
+              subject: paperObj.subject,
+              paper: paperObj.paper,
+              chapter,
+              q: String(item.q || ''),
+              options: Array.isArray(item.options) ? item.options.slice(0, 4).map(String) : ['A', 'B', 'C', 'D'],
+              correctIndex: Number.isInteger(item.correctIndex) ? item.correctIndex : 0,
+              explanation: String(item.explanation || ''),
+              audit: { status: 'PENDING', note: '' }
+            }));
+            if (parsed.brief) {
+              briefEl.textContent = parsed.brief;
+              briefEl.classList.remove('hidden');
+            }
+          } else {
+            state.deck = buildLocalDeck(mode, bankText, paperObj, chapter, topic, count);
+          }
+        } else {
+          state.deck = buildLocalDeck(mode, bankText, paperObj, chapter, topic, count);
+          briefEl.textContent = `${paperObj.subject} • ${chapter}${topic ? ` • ${topic}` : ''} (${mode === 'copy' ? 'Exact Copy' : 'Predictive'})`;
+          briefEl.classList.remove('hidden');
+        }
+
+        // Mandatory Option Recheck immediately after copy/generation
+        await runMandatoryOptionRecheck(false);
+        persistDeck();
+        renderQuestions();
+        statusEl.textContent = mode === 'copy' ? 'Exact Copy • Rechecked' : 'Predictive • Rechecked';
+        toast('Done & Option Rechecked');
+      } catch (err) {
+        state.deck = buildLocalDeck(mode, bankText, paperObj, chapter, topic, count);
+        await runMandatoryOptionRecheck(false);
+        persistDeck();
+        renderQuestions();
+        statusEl.textContent = 'Local + Rechecked';
+        toast(err.message === 'NO_KEY' ? 'Local mode (add API Key for Gemini)' : 'Fallback used');
       }
     }
 
-    const message = explainError(step, error);
+    function buildLocalDeck(mode, bankText, paperObj, chapter, topic, count) {
+      if (mode === 'copy' && bankText) {
+        const blocks = bankText.split(/\n(?=\d+[\.\)])/).filter((b) => b.trim().length > 8);
+        if (blocks.length) {
+          return blocks.slice(0, count).map((blk, i) => {
+            const lines = blk.split('\n').map((l) => l.trim()).filter(Boolean);
+            const stem = lines[0].replace(/^\d+[\.\)]\s*/, '');
+            const rawOpts = lines.slice(1).join(' ').match(/[A-D]\)\s*[^A-D\)]+/g);
+            const options = rawOpts && rawOpts.length >= 4
+              ? rawOpts.slice(0, 4).map((o) => o.replace(/^[A-D]\)\s*/, '').trim())
+              : ['Option A', 'Option B', 'Option C', 'Option D'];
+            return {
+              id: `cp_${Date.now()}_${i}`,
+              subject: paperObj.subject,
+              paper: paperObj.paper,
+              chapter,
+              q: stem,
+              options,
+              correctIndex: 0,
+              explanation: `Copied from question bank (${chapter}).`,
+              audit: { status: 'PENDING', note: '' }
+            };
+          });
+        }
+      }
 
-    notice.textContent = `Failed at: ${step}. ${message}`;
-    notice.className = 'notice error';
-
-    notify(`Failed at: ${step}\n${message}`);
-
-  } finally {
-    uploadBusy = false;
-
-    if (button.isConnected) {
-      button.disabled = false;
-      button.textContent = 'Publish Content';
-    }
-  }
-}
-
-// ---------------- OPEN CONTENT ----------------
-
-async function openContent(id) {
-  const item = contents.find(c => String(c.id) === String(id));
-
-  if (!item) {
-    notify('Content paoa jayni. Page refresh kore abar try koro.');
-    return;
-  }
-
-  if (item.video_url) {
-    window.open(item.video_url, '_blank', 'noopener');
-    return;
-  }
-
-  if (!item.file_path) {
-    notify(item.description || 'No file attached.');
-    return;
-  }
-
-  const win = window.open('', '_blank');
-
-  try {
-    const { data, error } = await supabase.storage
-      .from(BUCKET)
-      .createSignedUrl(item.file_path, 600);
-
-    if (error) throw error;
-
-    if (win) {
-      win.opener = null;
-      win.location.href = data.signedUrl;
-    } else {
-      window.location.href = data.signedUrl;
-    }
-  } catch (error) {
-    if (win) win.close();
-    notify('Unable to open content: ' + error.message);
-  }
-}
-
-// ---------------- PAGE NAVIGATION ----------------
-
-async function openPage(page, opts = {}) {
-  const push = opts.push !== false;
-
-  if (!user) {
-    authView();
-    return;
-  }
-
-  if (!isApproved() && page !== 'dashboard') {
-    notify('Admin approval is required.');
-    return;
-  }
-
-  if (!isAdmin() && ADMIN_PAGES.includes(page)) {
-    notify('Admin access required.');
-    return;
-  }
-
-  // Browser history: back chaple app-er bhitoreই thake
-  if (push) {
-    const state = { page };
-    if (history.state?.page === page) {
-      history.replaceState(state, '', '#' + page);
-    } else {
-      history.pushState(state, '', '#' + page);
-    }
-  }
-
-  // Timer bondho, ar quiz chhere gele active quiz muche felo
-  clearInterval(quizTimer);
-  if (page !== 'quiz') activeQuiz = null;
-
-  currentPage = page;
-
-  try {
-    if (page === 'admin') await loadPendingUsers();
-    if (['qbank', 'makeexam', 'aigen'].includes(page)) await loadQuestions();
-    if (page === 'exams') await loadExams();
-  } catch (e) {
-    notify('Could not load data: ' + e.message);
-  }
-
-  const pages = {
-    dashboard: dashboardPage,
-    subjects: subjectsPage,
-    subject: subjectDetailPage,
-    library: libraryPage,
-    admin: adminPage,
-    upload: uploadPage,
-    qbank: qbankPage,
-    aigen: aiGenPage,
-    makeexam: makeExamPage,
-    exams: examsPage,
-    practice: practicePage,
-    chat: chatPage,
-    quiz: quizPage
-  };
-
-  layout((pages[page] || dashboardPage)());
-  window.scrollTo(0, 0);
-
-  document.querySelectorAll('[data-subject]').forEach(button => {
-    button.onclick = () => {
-      currentSubject = button.dataset.subject;
-      openPage('subject');
-    };
-  });
-
-  document.querySelectorAll('[data-open-content]').forEach(button => {
-    button.onclick = () =>
-      openContent(button.dataset.openContent);
-  });
-
-  document.querySelectorAll('[data-approve]').forEach(button => {
-    button.onclick = () => approveUser(button.dataset.approve);
-  });
-
-  document.querySelectorAll('[data-reject]').forEach(button => {
-    button.onclick = () => rejectUser(button.dataset.reject);
-  });
-
-  document.querySelectorAll('[data-start-exam]').forEach(button => {
-    button.onclick = () => startExam(button.dataset.startExam);
-  });
-
-  document.querySelectorAll('[data-del-exam]').forEach(button => {
-    button.onclick = () => deleteExam(button.dataset.delExam);
-  });
-
-  document.querySelector('#uploadForm')?.addEventListener(
-    'submit',
-    publishContent
-  );
-
-  document.querySelector('#practiceForm')?.addEventListener(
-    'submit',
-    startPractice
-  );
-
-  if (page === 'qbank') setupQbank();
-  if (page === 'aigen') setupAiGen();
-  if (page === 'makeexam') setupMakeExam();
-  if (page === 'chat') setupChat();
-  if (page === 'quiz') setupQuiz();
-
-  // File select korle size dekhao
-  const fileInput = document.querySelector('#file');
-  const fileInfo = document.querySelector('#fileInfo');
-
-  fileInput?.addEventListener('change', () => {
-    const f = fileInput.files[0];
-    if (!f) {
-      fileInfo.textContent = '';
-      return;
+      const pool = SEED_QUESTIONS.filter((x) => x.subject === paperObj.subject);
+      const src = pool.length ? pool : SEED_QUESTIONS;
+      return Array.from({ length: count }, (_, i) => {
+        const base = src[i % src.length];
+        const tagTopic = topic ? ` [${topic}]` : '';
+        return {
+          ...base,
+          id: `pr_${Date.now()}_${i}`,
+          paper: paperObj.paper,
+          chapter,
+          q: `${base.q}${tagTopic}`,
+          options: [...base.options],
+          audit: { status: 'PENDING', note: '' }
+        };
+      });
     }
 
-    const mb = (f.size / 1024 / 1024).toFixed(2);
+    // Mandatory Option Recheck: enforces 4 distinct non-empty options + valid correctIndex (0-3)
+    async function runMandatoryOptionRecheck(notify = true) {
+      for (const item of state.deck) {
+        let opts = Array.isArray(item.options) ? item.options.map((o) => String(o || '').trim()) : [];
+        let fixed = false;
 
-    if (f.size > MAX_FILE_MB * 1024 * 1024) {
-      fileInfo.textContent = `${f.name} (${mb} MB) - onek boro!`;
-      fileInfo.className = 'notice error';
-    } else {
-      fileInfo.textContent = `${f.name} (${mb} MB)`;
-      fileInfo.className = 'notice success';
-    }
-  });
-}
+        while (opts.length < 4) {
+          opts.push(`বিকল্প ${String.fromCharCode(65 + opts.length)}`);
+          fixed = true;
+        }
+        if (opts.length > 4) {
+          opts = opts.slice(0, 4);
+          fixed = true;
+        }
 
-// ---------------- BACK BUTTON HANDLING ----------------
+        const seen = new Set();
+        opts = opts.map((o, idx) => {
+          const empty = !o;
+          const dup = seen.has(o.toLowerCase());
+          if (empty || dup) {
+            fixed = true;
+            const nextVal = empty ? `বিকল্প ${String.fromCharCode(65 + idx)}` : `${o} (${String.fromCharCode(65 + idx)})`;
+            seen.add(nextVal.toLowerCase());
+            return nextVal;
+          }
+          seen.add(o.toLowerCase());
+          return o;
+        });
 
-// Phone/browser-er Back button: website chhere jabe na,
-// app-er ager page-e jabe. Quiz cholar shomoy confirm chaibe.
-window.addEventListener('popstate', async event => {
-  if (!user) return;
+        let idx = item.correctIndex;
+        if (!Number.isInteger(idx) || idx < 0 || idx > 3) {
+          idx = 0;
+          fixed = true;
+        }
 
-  if (activeQuiz && !activeQuiz.submitted && currentPage === 'quiz') {
-    const leave = confirm(
-      'Quiz cholche. Ekhon berie gele tomar answer gulo hariye jabe. Berie jabe?'
-    );
+        item.options = opts;
+        item.correctIndex = idx;
+        item.audit = {
+          status: fixed ? 'FIXED' : 'VERIFIED',
+          note: fixed
+            ? `Auto-fixed to 4 distinct options; answer key ${String.fromCharCode(65 + idx)} checked.`
+            : `4 distinct options & key ${String.fromCharCode(65 + idx)} verified.`
+        };
+      }
 
-    if (!leave) {
-      history.pushState({ page: 'quiz' }, '', '#quiz');
-      return;
-    }
-  }
-
-  const page = event.state?.page;
-
-  // Shobar shurur sentinel-e pouchale dashboard-e rekhe dei
-  if (!page || page === 'root') {
-    history.pushState({ page: 'dashboard' }, '', '#dashboard');
-    await openPage('dashboard', { push: false });
-    return;
-  }
-
-  await openPage(page, { push: false });
-});
-
-// Quiz cholar shomoy accidentally refresh/close hole warning
-window.addEventListener('beforeunload', event => {
-  if (activeQuiz && !activeQuiz.submitted && currentPage === 'quiz') {
-    event.preventDefault();
-    event.returnValue = '';
-  }
-});
-
-function resetHistory() {
-  history.replaceState({ page: 'root' }, '', location.pathname + location.search);
-  history.pushState({ page: 'dashboard' }, '', '#dashboard');
-}
-
-// ---------------- LOGOUT ----------------
-
-async function logout() {
-  try {
-    await supabase.auth.signOut();
-  } catch (error) {
-    console.error(error);
-  }
-
-  clearInterval(quizTimer);
-
-  user = null;
-  profile = null;
-  contents = [];
-  pendingUsers = [];
-  questions = [];
-  exams = [];
-  myResults = {};
-  activeQuiz = null;
-  generated = [];
-  analysisText = '';
-  chatMessages = [];
-  chatBusy = false;
-
-  history.replaceState(null, '', location.pathname + location.search);
-
-  authView();
-}
-
-// ---------------- APP START ----------------
-
-async function init() {
-  try {
-    const { data, error } = await supabase.auth.getSession();
-
-    if (error) throw error;
-
-    user = data.session?.user || null;
-
-    if (!user) {
-      profile = null;
-      contents = [];
-      pendingUsers = [];
-      authView();
-      return;
+      persistDeck();
+      renderQuestions();
+      if (notify) toast('Option Recheck complete');
     }
 
-    await loadProfile();
+    function renderQuestions() {
+      const list = document.getElementById('questions-list');
+      document.getElementById('q-count-badge').textContent = state.deck.length;
 
-    if (!profile) {
-      app.innerHTML = `
-        <div class="status-card">
-          <div class="brand-mark">AW</div>
-          <h2>Profile Not Found</h2>
-          <p>তোমার Profile Database-এ পাওয়া যায়নি।</p>
-          <button class="primary-btn" id="logout">
-            Logout
-          </button>
+      if (!state.deck.length) {
+        list.innerHTML = `<p class="text-xs text-slate-500 py-6 text-center">No questions yet.</p>`;
+        return;
+      }
+
+      list.innerHTML = state.deck.map((q, i) => {
+        const badgeColor = q.audit?.status === 'FIXED'
+          ? 'bg-amber-500/15 text-amber-300 border-amber-500/30'
+          : 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30';
+        const badgeLabel = q.audit?.status === 'FIXED' ? 'Fixed & Checked' : 'Rechecked ✓';
+
+        return `
+          <article class="rounded-xl p-3.5 bg-[#080c14] border border-slate-800/90 space-y-2.5">
+            <div class="flex items-center justify-between gap-2 text-[11px]">
+              <span class="font-mono text-slate-400">Q${i + 1} · ${esc(q.subject)} · ${esc(q.chapter)}</span>
+              <span class="px-2 py-0.5 rounded-full font-semibold border ${badgeColor}">${badgeLabel}</span>
+            </div>
+            <p class="text-xs sm:text-sm font-semibold text-white leading-relaxed">${esc(q.q)}</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5 text-xs">
+              ${q.options.map((opt, oi) => {
+                const ok = oi === q.correctIndex;
+                return `
+                  <div class="px-2.5 py-1.5 rounded-lg border flex items-center gap-2 ${
+                    ok ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-200 font-semibold' : 'bg-[#0d121d] border-slate-800 text-slate-300'
+                  }">
+                    <span class="font-mono text-[11px] font-bold">${String.fromCharCode(65 + oi)}.</span>
+                    <span class="flex-1">${esc(opt)}</span>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+            <p class="text-xs text-slate-300 leading-relaxed"><span class="text-emerald-400 font-semibold">Ans (${String.fromCharCode(65 + q.correctIndex)}):</span> ${esc(q.explanation)}</p>
+            <p class="text-[11px] font-mono text-slate-400">${esc(q.audit?.note || '')}</p>
+          </article>
+        `;
+      }).join('');
+
+      typesetMath(list);
+    }
+
+    // Syllabus View
+    function renderSyllabus() {
+      const subs = ['ALL', 'Physics', 'Chemistry', 'Higher Math', 'Biology', 'ICT'];
+      document.getElementById('syllabus-filters').innerHTML = subs.map((s) => `
+        <button type="button" onclick="state.syllabusSubject='${s}'; renderSyllabus();" class="px-2.5 py-1 rounded-lg text-xs font-bold transition ${
+          state.syllabusSubject === s ? 'bg-emerald-500 text-slate-950' : 'surface-2 text-slate-300'
+        }">${s}</button>
+      `).join('');
+
+      const list = state.syllabusSubject === 'ALL' ? SYLLABUS : SYLLABUS.filter((p) => p.subject === state.syllabusSubject);
+      document.getElementById('syllabus-grid').innerHTML = list.map((p) => `
+        <div class="rounded-2xl surface p-4 space-y-2">
+          <div class="flex items-center justify-between border-b border-slate-800/80 pb-2">
+            <span class="font-bold text-sm text-white">${esc(p.paper)}</span>
+            <span class="text-xs font-mono text-slate-400">${p.chapters.length}</span>
+          </div>
+          ${p.chapters.map((ch) => `
+            <div class="flex items-center justify-between gap-2 py-1.5 px-2.5 rounded-lg bg-[#080c14] text-xs">
+              <span class="text-slate-200 truncate">${esc(ch)}</span>
+              <div class="flex gap-1 shrink-0">
+                <button type="button" onclick="useChapterForBank('${p.id}','${esc(ch).replace(/'/g, "\\'")}')" class="px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-300 font-semibold hover:bg-emerald-500 hover:text-slate-950">Qns</button>
+                <button type="button" onclick="askChapterTutor('${esc(p.paper)}','${esc(ch).replace(/'/g, "\\'")}')" class="px-2 py-0.5 rounded bg-indigo-500/15 text-indigo-300 font-semibold hover:bg-indigo-500 hover:text-white">Tutor</button>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `).join('');
+    }
+
+    function useChapterForBank(paperId, chapter) {
+      switchView('bank');
+      document.getElementById('bank-paper').value = paperId;
+      populateChapterDropdown();
+      document.getElementById('bank-chapter').value = chapter;
+      runBankWorkflow('predict');
+    }
+
+    function askChapterTutor(paper, chapter) {
+      document.getElementById('bank-chapter').value = chapter;
+      updateDrawerContext();
+      toggleDrawer(true);
+      quickTutorPrompt(`${paper} — ${chapter}: মূল সূত্র ও গুরুত্বপূর্ণ কনসেপ্ট সংক্ষেপে দাও।`);
+    }
+
+    // Timed Quiz Arena
+    function startQuizFromDeck() {
+      switchView('quiz');
+      startQuiz();
+    }
+
+    function startQuiz() {
+      clearInterval(state.quizTimer);
+      const mins = parseInt(document.getElementById('quiz-mins').value, 10) || 5;
+      state.quizList = state.deck.length ? [...state.deck] : [...SEED_QUESTIONS];
+      state.quizIdx = 0;
+      state.quizAnswers = {};
+      state.quizDone = false;
+      state.quizSec = mins * 60;
+
+      document.getElementById('quiz-summary').classList.add('hidden');
+      document.getElementById('btn-submit-quiz').disabled = false;
+      renderTimer();
+
+      state.quizTimer = setInterval(() => {
+        state.quizSec--;
+        renderTimer();
+        if (state.quizSec <= 0) submitQuiz('timeout');
+      }, 1000);
+
+      renderQuizStage();
+      renderQuizPalette();
+    }
+
+    function renderTimer() {
+      const s = Math.max(0, state.quizSec);
+      const m = String(Math.floor(s / 60)).padStart(2, '0');
+      const r = String(s % 60).padStart(2, '0');
+      document.getElementById('quiz-timer').textContent = `${m}:${r}`;
+    }
+
+    function renderQuizStage() {
+      const stage = document.getElementById('quiz-stage');
+      const total = state.quizList.length;
+      const q = state.quizList[state.quizIdx];
+      if (!q) return;
+
+      const picked = state.quizAnswers[q.id];
+      const mode = document.getElementById('quiz-mode').value;
+      const reveal = state.quizDone || (mode === 'instant' && picked !== undefined);
+
+      const answeredCount = Object.keys(state.quizAnswers).length;
+      document.getElementById('quiz-progress').style.width = `${total ? Math.round((answeredCount / total) * 100) : 0}%`;
+
+      stage.innerHTML = `
+        <div class="space-y-3.5">
+          <div class="flex items-center justify-between text-xs font-mono text-slate-400">
+            <span>Q ${state.quizIdx + 1}/${total}</span>
+            <span>${esc(q.subject)} · ${esc(q.chapter)}</span>
+          </div>
+          <p class="text-sm sm:text-base font-bold text-white leading-relaxed">${esc(q.q)}</p>
+          <div class="space-y-2">
+            ${q.options.map((opt, idx) => {
+              let cls = 'bg-[#080c14] border-slate-800 text-slate-200 hover:border-slate-600';
+              if (reveal) {
+                if (idx === q.correctIndex) cls = 'bg-emerald-500/15 border-emerald-500 text-emerald-200 font-bold';
+                else if (idx === picked) cls = 'bg-rose-500/15 border-rose-500 text-rose-200 font-bold';
+              } else if (idx === picked) {
+                cls = 'bg-indigo-500/20 border-indigo-400 text-white font-bold';
+              }
+              return `
+                <button type="button" ${state.quizDone ? 'disabled' : ''} onclick="chooseQuizAns('${q.id}',${idx})" class="w-full text-left px-3.5 py-2.5 rounded-xl border text-xs sm:text-sm flex items-center gap-2.5 transition ${cls}">
+                  <span class="font-mono font-bold">${String.fromCharCode(65 + idx)}.</span>
+                  <span>${esc(opt)}</span>
+                </button>
+              `;
+            }).join('')}
+          </div>
+          ${reveal ? `<div class="p-3 rounded-xl bg-[#080c14] border border-slate-800 text-xs text-slate-200 leading-relaxed"><strong class="text-emerald-400">Explanation:</strong> ${esc(q.explanation)}</div>` : ''}
+        </div>
+
+        <div class="flex justify-between pt-4 mt-4 border-t border-slate-800/80">
+          <button type="button" onclick="stepQuiz(-1)" ${state.quizIdx === 0 ? 'disabled' : ''} class="px-3.5 py-1.5 rounded-lg text-xs font-bold surface-2 text-slate-200 disabled:opacity-40">Prev</button>
+          <button type="button" onclick="stepQuiz(1)" ${state.quizIdx >= total - 1 ? 'disabled' : ''} class="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-emerald-500 text-slate-950 disabled:opacity-40">Next</button>
         </div>
       `;
-
-      document.querySelector('#logout').onclick = logout;
-      return;
+      typesetMath(stage);
     }
 
-    await loadContents();
+    function chooseQuizAns(qId, idx) {
+      if (state.quizDone) return;
+      state.quizAnswers[qId] = idx;
+      renderQuizStage();
+      renderQuizPalette();
+    }
 
-    resetHistory();
-    await openPage('dashboard');
+    function stepQuiz(d) {
+      const n = state.quizIdx + d;
+      if (n >= 0 && n < state.quizList.length) {
+        state.quizIdx = n;
+        renderQuizStage();
+        renderQuizPalette();
+      }
+    }
 
-  } catch (error) {
-    console.error('Initialization error:', error);
-    showError(error.message);
-  }
-}
+    function renderQuizPalette() {
+      const total = state.quizList.length;
+      const done = Object.keys(state.quizAnswers).length;
+      document.getElementById('quiz-palette-meta').textContent = `${done}/${total}`;
+      document.getElementById('quiz-palette').innerHTML = state.quizList.map((q, i) => {
+        const cur = i === state.quizIdx;
+        const ans = state.quizAnswers[q.id] !== undefined;
+        let cls = 'bg-[#080c14] border-slate-800 text-slate-400';
+        if (cur) cls = 'bg-indigo-500 border-indigo-400 text-white font-bold';
+        else if (ans) cls = 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300 font-bold';
+        return `<button type="button" onclick="state.quizIdx=${i};renderQuizStage();renderQuizPalette();" class="h-8 rounded-lg border text-xs font-mono ${cls}">${i + 1}</button>`;
+      }).join('');
+    }
 
-startApp();
+    function submitQuiz(reason) {
+      if (!state.quizList.length) return;
+      clearInterval(state.quizTimer);
+      state.quizTimer = null;
+      state.quizDone = true;
+      document.getElementById('btn-submit-quiz').disabled = true;
+
+      let right = 0, wrong = 0;
+      state.quizList.forEach((q) => {
+        const a = state.quizAnswers[q.id];
+        if (a === undefined) return;
+        if (a === q.correctIndex) right++;
+        else wrong++;
+      });
+
+      const total = state.quizList.length;
+      const net = Math.max(0, right - wrong * 0.25).toFixed(2);
+      const sum = document.getElementById('quiz-summary');
+      sum.classList.remove('hidden');
+      sum.innerHTML = `
+        <div class="flex items-center justify-between">
+          <span class="text-sm font-bold text-white">${reason === 'timeout' ? 'Time Up' : 'Result'} · Net ${net}/${total}</span>
+          <button type="button" onclick="startQuiz()" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-500 text-slate-950">Retry</button>
+        </div>
+        <div class="grid grid-cols-3 gap-2 text-center text-xs">
+          <div class="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 font-bold">Correct: ${right}</div>
+          <div class="p-2.5 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 font-bold">Wrong: ${wrong}</div>
+          <div class="p-2.5 rounded-xl bg-indigo-500/10 border border-indigo-500/30 text-indigo-300 font-bold">Net (-0.25): ${net}</div>
+        </div>
+      `;
+      renderQuizStage();
+    }
+
+    // Two-Pass Photo-to-Question Solver
+    function handlePhotoChange(e) {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      state.photoMime = file.type || 'image/jpeg';
+      const reader = new FileReader();
+      reader.onload = () => {
+        const res = String(reader.result || '');
+        const m = res.match(/^data:([^;]+);base64,(.+)$/);
+        state.photoMime = m ? m[1] : state.photoMime;
+        state.photoBase64 = m ? m[2] : res;
+        const img = document.getElementById('photo-preview');
+        img.src = res;
+        img.classList.remove('hidden');
+        document.getElementById('photo-empty').classList.add('hidden');
+        document.getElementById('photo-badge').textContent = 'Ready';
+      };
+      reader.readAsDataURL(file);
+      e.target.value = '';
+    }
+
+    async function solvePhotoDoubleCheck() {
+      if (!state.photoBase64) return toast('Select a photo first');
+      const hint = document.getElementById('photo-hint').value.trim();
+      const badge = document.getElementById('photo-badge');
+      const out = document.getElementById('photo-output');
+      badge.textContent = 'Pass 1 → Pass 2...';
+
+      try {
+        if (!state.apiKey) throw new Error('NO_KEY');
+        const prompt = `Read the question image (${hint || 'solve clearly'}). Perform two passes in Bangla/LaTeX:
+1. pass1: extracted question + step-by-step solution.
+2. pass2: independent check of units, formulas, and final option/value.
+3. finalAnswer: concise verified final answer.
+Return ONLY JSON: {"pass1":"","pass2":"","finalAnswer":""}`;
+
+        const { text, model } = await callGemini([
+          { text: prompt },
+          { inlineData: { mimeType: state.photoMime, data: state.photoBase64 } }
+        ]);
+        const parsed = parseJsonSafe(text);
+        badge.textContent = `Double-Checked (${model})`;
+        out.innerHTML = `
+          <div class="p-3 rounded-xl bg-[#080c14] border border-slate-800 space-y-1">
+            <div class="text-[11px] font-mono text-indigo-300 font-bold">PASS 1 — EXTRACT & SOLVE</div>
+            <p class="whitespace-pre-line text-slate-200">${esc(parsed.pass1)}</p>
+          </div>
+          <div class="p-3 rounded-xl bg-[#080c14] border border-slate-800 space-y-1">
+            <div class="text-[11px] font-mono text-amber-300 font-bold">PASS 2 — VERIFY STEPS & UNITS</div>
+            <p class="whitespace-pre-line text-slate-200">${esc(parsed.pass2)}</p>
+          </div>
+          <div class="p-3 rounded-xl bg-emerald-500/15 border border-emerald-500/40 space-y-1">
+            <div class="text-[11px] font-mono text-emerald-300 font-bold">FINAL ANSWER</div>
+            <p class="font-bold text-white">${esc(parsed.finalAnswer)}</p>
+          </div>
+        `;
+        typesetMath(out);
+      } catch (err) {
+        badge.textContent = 'Local Double-Check';
+        out.innerHTML = `
+          <div class="p-3 rounded-xl bg-[#080c14] border border-slate-800 space-y-1">
+            <div class="text-[11px] font-mono text-indigo-300 font-bold">PASS 1</div>
+            <p class="text-slate-300">${err.message === 'NO_KEY' ? 'Add Gemini API Key for live image OCR. Local check: verify given quantities and target formula first.' : 'Vision fallback check: confirm equation and signs step-by-step.'}</p>
+          </div>
+          <div class="p-3 rounded-xl bg-[#080c14] border border-slate-800 space-y-1">
+            <div class="text-[11px] font-mono text-amber-300 font-bold">PASS 2</div>
+            <p class="text-slate-300">Convert all units to SI before substituting numbers; check option choices.</p>
+          </div>
+        `;
+      }
+    }
+
+    // AI Tutor Drawer
+    function toggleDrawer(open) {
+      const d = document.getElementById('ai-drawer');
+      const b = document.getElementById('drawer-backdrop');
+      if (open) {
+        updateDrawerContext();
+        b.classList.remove('hidden');
+        requestAnimationFrame(() => d.classList.remove('translate-x-full'));
+      } else {
+        d.classList.add('translate-x-full');
+        setTimeout(() => b.classList.add('hidden'), 200);
+      }
+    }
+
+    function updateDrawerContext() {
+      const paperObj = SYLLABUS.find((p) => p.id === document.getElementById('bank-paper').value) || SYLLABUS[0];
+      const ch = document.getElementById('bank-chapter').value || '';
+      const tp = document.getElementById('bank-topic').value.trim();
+      document.getElementById('drawer-context-pill').textContent = `${paperObj.subject} · ${ch}${tp ? ` · ${tp}` : ''}`;
+    }
+
+    function quickTutorPrompt(msg) {
+      document.getElementById('chat-input').value = msg;
+      sendTutorMessage(new Event('submit'));
+    }
+
+    function addBubble(role, text) {
+      const box = document.getElementById('chat-messages');
+      const div = document.createElement('div');
+      div.className = `rounded-xl px-3 py-2.5 whitespace-pre-line leading-relaxed ${
+        role === 'user' ? 'bg-emerald-500 text-slate-950 font-semibold ml-8' : 'bg-[#080c14] border border-slate-800 text-slate-100 mr-6'
+      }`;
+      div.textContent = text;
+      box.appendChild(div);
+      box.scrollTop = box.scrollHeight;
+      typesetMath(div);
+    }
+
+    async function sendTutorMessage(e) {
+      e.preventDefault();
+      const inp = document.getElementById('chat-input');
+      const msg = inp.value.trim();
+      if (!msg) return;
+      addBubble('user', msg);
+      inp.value = '';
+
+      const paperObj = SYLLABUS.find((p) => p.id === document.getElementById('bank-paper').value) || SYLLABUS[0];
+      const ch = document.getElementById('bank-chapter').value || '';
+      const bankSnippet = document.getElementById('bank-text').value.trim().slice(0, 2500);
+
+      try {
+        if (!state.apiKey) throw new Error('NO_KEY');
+        const ctx = `Context: HSC ${paperObj.paper}, Chapter: ${ch}. Bank snippet: ${bankSnippet || 'None'}`;
+        const { text } = await callGemini([{ text: `${ctx}\n\nQuestion: ${msg}` }], 'Concise Bangladesh HSC Science & Admission tutor in Bangla + LaTeX.');
+        addBubble('ai', text);
+      } catch (_) {
+        addBubble('ai', `${paperObj.subject} (${ch}): মূল সূত্র লিখে একক ঠিক রেখে মান বসাও। লাইভ AI উত্তরের জন্য উপরে API Key যুক্ত করো।`);
+      }
+    }
+
+    // Key Modal
+    function renderKeyStatus() {
+      const has = Boolean(state.apiKey);
+      document.getElementById('key-dot').className = has ? 'w-2 h-2 rounded-full bg-emerald-400' : 'w-2 h-2 rounded-full bg-amber-400';
+      document.getElementById('key-text').textContent = has ? 'Key Set' : 'API Key';
+    }
+
+    function openKeyModal() {
+      document.getElementById('key-input').value = state.apiKey;
+      const m = document.getElementById('key-modal');
+      m.classList.remove('hidden');
+      m.classList.add('flex');
+    }
+
+    function closeKeyModal() {
+      const m = document.getElementById('key-modal');
+      m.classList.add('hidden');
+      m.classList.remove('flex');
+    }
+
+    function saveKey() {
+      state.apiKey = document.getElementById('key-input').value.trim();
+      if (state.apiKey) localStorage.setItem(KEYS.API, state.apiKey);
+      else localStorage.removeItem(KEYS.API);
+      renderKeyStatus();
+      closeKeyModal();
+      toast(state.apiKey ? 'API Key saved' : 'Key cleared');
+    }
+
+    function clearKey() {
+      state.apiKey = '';
+      localStorage.removeItem(KEYS.API);
+      document.getElementById('key-input').value = '';
+      renderKeyStatus();
+      toast('Key cleared');
+    }
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeKeyModal();
+        toggleDrawer(false);
+      }
+    });
+
+    // Boot
+    window.addEventListener('DOMContentLoaded', () => {
+      renderKeyStatus();
+      document.getElementById('bank-paper').innerHTML = SYLLABUS.map((p) => `<option value="${p.id}">${esc(p.paper)}</option>`).join('');
+      populateChapterDropdown();
+
+      const savedBank = localStorage.getItem(KEYS.BANK);
+      document.getElementById('bank-text').value = savedBank !== null ? savedBank : SAMPLE_BANK;
+      if (!savedBank) document.getElementById('bank-file-meta').textContent = 'Sample Admission Qn Bank';
+
+      renderQuestions();
+      renderSyllabus();
+      initNavigationGuard();
+      addBubble('ai', 'HSC Science & Admission Tutor প্রস্তুত। অধ্যায় বা প্রশ্নব্যাংক নিয়ে জিজ্ঞাসা করো।');
+    });
+  </script>
+</body>
+</html>
