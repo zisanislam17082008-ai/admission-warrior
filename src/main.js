@@ -23,6 +23,7 @@ let supabase = null;
 let user = null;
 let profile = null;
 let contents = [];
+let pendingUsers = [];
 let currentPage = 'dashboard';
 let uploadBusy = false;
 let currentSubject = null;
@@ -241,6 +242,59 @@ async function loadContents() {
   contents = data || [];
 }
 
+// Pending user list (shudhu admin-er jonno)
+async function loadPendingUsers() {
+  if (!isAdmin()) {
+    pendingUsers = [];
+    return;
+  }
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('status', 'pending')
+    .order('created_at', { ascending: true });
+
+  if (error) throw error;
+
+  pendingUsers = data || [];
+}
+
+async function approveUser(id) {
+  if (!isAdmin()) return;
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({ status: 'approved' })
+    .eq('id', id);
+
+  if (error) {
+    notify('Approve failed: ' + error.message);
+    return;
+  }
+
+  notify('User approved!');
+  await openPage('admin');
+}
+
+async function rejectUser(id) {
+  if (!isAdmin()) return;
+  if (!confirm('Reject this user?')) return;
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({ status: 'rejected' })
+    .eq('id', id);
+
+  if (error) {
+    notify('Reject failed: ' + error.message);
+    return;
+  }
+
+  notify('User rejected.');
+  await openPage('admin');
+}
+
 // ---------------- LAYOUT ----------------
 
 function layout(content) {
@@ -300,6 +354,8 @@ function layout(content) {
 // ---------------- DASHBOARD ----------------
 
 function dashboardPage() {
+  const status = profile?.status;
+
   return `
     <div class="topbar">
       <div>
@@ -316,16 +372,20 @@ function dashboardPage() {
         <h2>স্বাগতম, Warrior!</h2>
         <p>${isApproved()
           ? 'তোমার পড়াশোনা শুরু করো।'
-          : 'তোমার Account অনুমোদনের অপেক্ষায় আছে।'}
+          : status === 'rejected'
+            ? 'তোমার Account অনুমোদন পায়নি।'
+            : 'তোমার Account অনুমোদনের অপেক্ষায় আছে।'}
         </p>
       </div>
     </section>
 
     ${!isApproved() ? `
       <div class="empty-state">
-        <span>⏳</span>
-        <h3>Pending Approval</h3>
-        <p>Admin অনুমোদন দিলে Study Library ব্যবহার করতে পারবে।</p>
+        <span>${status === 'rejected' ? '❌' : '⏳'}</span>
+        <h3>${status === 'rejected' ? 'Not Approved' : 'Pending Approval'}</h3>
+        <p>${status === 'rejected'
+          ? 'Admin-er shathe jogajog koro.'
+          : 'Admin অনুমোদন দিলে Study Library ব্যবহার করতে পারবে।'}</p>
       </div>
     ` : `
       <div class="subject-grid">
@@ -477,11 +537,53 @@ function adminPage() {
       </article>
 
       <article class="subject-card">
+        <span>⏳</span>
+        <h3>${pendingUsers.length}</h3>
+        <p>Pending Approvals</p>
+      </article>
+
+      <article class="subject-card">
         <span>🛡️</span>
         <h3>Main Admin</h3>
         <p>${escapeHTML(user.email)}</p>
       </article>
     </div>
+
+    <section class="section-heading">
+      <div>
+        <p class="eyebrow">USER REQUESTS</p>
+        <h2>Pending Approvals (${pendingUsers.length})</h2>
+      </div>
+    </section>
+
+    ${pendingUsers.length ? `
+      <div class="content-grid">
+        ${pendingUsers.map(u => `
+          <article class="content-card">
+            <p class="eyebrow">PENDING</p>
+            <h3>${escapeHTML(u.email || u.id)}</h3>
+            <p>${u.created_at
+              ? escapeHTML(new Date(u.created_at).toLocaleString())
+              : ''}</p>
+
+            <button class="primary-btn"
+              data-approve="${escapeHTML(u.id)}">
+              Approve
+            </button>
+            <button class="outline-btn"
+              data-reject="${escapeHTML(u.id)}">
+              Reject
+            </button>
+          </article>
+        `).join('')}
+      </div>
+    ` : `
+      <div class="empty-state">
+        <span>✅</span>
+        <h3>No pending users</h3>
+        <p>Notun keu signup korle ekhane dekhabe.</p>
+      </div>
+    `}
 
     <div class="subject-grid">
       <article class="subject-card">
@@ -830,7 +932,6 @@ async function openContent(id) {
       // Popup block hole same tab-e kholo
       window.location.href = data.signedUrl;
     }
-
   } catch (error) {
     if (win) win.close();
     notify('Unable to open content: ' + error.message);
@@ -857,6 +958,16 @@ async function openPage(page) {
 
   currentPage = page;
 
+  // Admin page khulle pending user list notun kore load hobe
+  if (page === 'admin') {
+    try {
+      await loadPendingUsers();
+    } catch (e) {
+      pendingUsers = [];
+      notify('Could not load users: ' + e.message);
+    }
+  }
+
   const pages = {
     dashboard: dashboardPage,
     subjects: subjectsPage,
@@ -878,6 +989,14 @@ async function openPage(page) {
   document.querySelectorAll('[data-open-content]').forEach(button => {
     button.onclick = () =>
       openContent(button.dataset.openContent);
+  });
+
+  document.querySelectorAll('[data-approve]').forEach(button => {
+    button.onclick = () => approveUser(button.dataset.approve);
+  });
+
+  document.querySelectorAll('[data-reject]').forEach(button => {
+    button.onclick = () => rejectUser(button.dataset.reject);
   });
 
   document.querySelector('#uploadForm')?.addEventListener(
@@ -920,6 +1039,7 @@ async function logout() {
   user = null;
   profile = null;
   contents = [];
+  pendingUsers = [];
 
   authView();
 }
@@ -937,6 +1057,7 @@ async function init() {
     if (!user) {
       profile = null;
       contents = [];
+      pendingUsers = [];
       authView();
       return;
     }
