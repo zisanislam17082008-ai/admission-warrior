@@ -446,6 +446,7 @@ function uploadPage() {
   `;
 }
 
+
 async function publishContent(event) {
   event.preventDefault();
 
@@ -455,6 +456,8 @@ async function publishContent(event) {
   }
 
   const button = event.submitter;
+  let step = 'Starting upload';
+
   button.disabled = true;
   button.textContent = 'Uploading...';
 
@@ -463,6 +466,8 @@ async function publishContent(event) {
     let filePath = null;
 
     if (file) {
+      step = 'Storage Upload';
+
       const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
       filePath = `${user.id}/${Date.now()}-${safeName}`;
 
@@ -472,6 +477,8 @@ async function publishContent(event) {
 
       if (upload.error) throw upload.error;
     }
+
+    step = 'Database Insert';
 
     const row = {
       title: document.querySelector('#title').value.trim(),
@@ -495,130 +502,14 @@ async function publishContent(event) {
     openPage('library');
 
   } catch (error) {
-    notify('Upload failed: ' + error.message);
+    notify(
+      'Failed at: ' + step +
+      '\nError: ' + error.message
+    );
   } finally {
     button.disabled = false;
     button.textContent = 'Publish Content';
   }
 }
 
-async function openContent(id) {
-  const item = contents.find(c => c.id === id);
-  if (!item) return;
-
-  if (item.video_url) {
-    window.open(item.video_url, '_blank', 'noopener');
-    return;
-  }
-
-  if (!item.file_path) {
-    notify(item.description || 'No file attached.');
-    return;
-  }
-
-  const { data, error } = await supabase.storage
-    .from('study-content')
-    .createSignedUrl(item.file_path, 300);
-
-  if (error) {
-    notify(error.message);
-    return;
-  }
-
-  window.open(data.signedUrl, '_blank', 'noopener');
-}
-
-async function openPage(page) {
-  if (!user) return authView();
-
-  if (!isApproved() && page !== 'dashboard') {
-    notify('Admin approval is required.');
-    return;
-  }
-
-  if (!isAdmin() && ['admin', 'upload'].includes(page)) {
-    notify('Admin access required.');
-    return;
-  }
-
-  currentPage = page;
-
-  const pages = {
-    dashboard: dashboardPage,
-    subjects: subjectsPage,
-    library: libraryPage,
-    admin: adminPage,
-    upload: uploadPage
-  };
-
-  layout((pages[page] || dashboardPage)());
-
-  document.querySelectorAll('[data-subject]').forEach(button => {
-    button.onclick = () => {
-      notify(`${button.dataset.subject} materials coming soon.`);
-    };
-  });
-
-  document.querySelectorAll('[data-open-content]').forEach(button => {
-    button.onclick = () => openContent(button.dataset.openContent);
-  });
-
-  document.querySelector('#uploadForm')?.addEventListener(
-    'submit',
-    publishContent
-  );
-}
-
-async function logout() {
-  await supabase.auth.signOut();
-  user = null;
-  profile = null;
-  contents = [];
-  authView();
-}
-
-async function init() {
-  try {
-    const { data, error } = await supabase.auth.getSession();
-    if (error) throw error;
-
-    user = data.session?.user || null;
-
-    if (!user) {
-      authView();
-      return;
-    }
-
-    await loadProfile();
-
-    if (!profile) {
-      app.innerHTML = `
-        <div class="status-card">
-          <div class="brand-mark">AW</div>
-          <h2>Profile Not Found</h2>
-          <p>তোমার Profile Database-এ পাওয়া যায়নি। Admin-এর সাহায্য প্রয়োজন।</p>
-          <button class="primary-btn" id="logout">Logout</button>
-        </div>
-      `;
-      document.querySelector('#logout').onclick = logout;
-      return;
-    }
-
-    await loadContents();
-    await openPage('dashboard');
-
-  } catch (error) {
-    app.innerHTML = `
-      <div class="status-card">
-        <h2>Something went wrong</h2>
-        <p>${escapeHTML(error.message)}</p>
-        <button class="primary-btn" id="retry">Try Again</button>
-      </div>
-    `;
-    document.querySelector('#retry').onclick = init;
-  }
-}
-
-// Initialize the app once.
-init();
 
