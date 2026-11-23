@@ -1,23 +1,36 @@
-import { createServerClient } from "@supabase/ssr";
+
+import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 // সেশন সতেজ রাখে এবং লগইন ছাড়া /dashboard ও /admin খুলতে দেয় না।
-// আসল অনুমতি যাচাই হয় প্রতিটি পাতায় ও ডাটাবেসে।
 export async function middleware(request: NextRequest) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
   let response = NextResponse.next({ request });
+
   if (!url || !key) return response;
 
   const supabase = createServerClient(url, key, {
     cookies: {
       getAll: () => request.cookies.getAll(),
-      setAll(list) {
-        list.forEach(({ name, value }) => request.cookies.set(name, value));
+
+      setAll(
+        list: {
+          name: string;
+          value: string;
+          options: CookieOptions;
+        }[]
+      ) {
+        list.forEach(({ name, value }) => {
+          request.cookies.set(name, value);
+        });
+
         response = NextResponse.next({ request });
-        list.forEach(({ name, value, options }) =>
-          response.cookies.set(name, value, options)
-        );
+
+        list.forEach(({ name, value, options }) => {
+          response.cookies.set(name, value, options);
+        });
       },
     },
   });
@@ -27,13 +40,16 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const path = request.nextUrl.pathname;
-  const isProtected = path.startsWith("/dashboard") || path.startsWith("/admin");
+  const isProtected =
+    path.startsWith("/dashboard") || path.startsWith("/admin");
+
   if (!user && isProtected) {
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = "/login";
     loginUrl.search = "";
     return NextResponse.redirect(loginUrl);
   }
+
   return response;
 }
 
